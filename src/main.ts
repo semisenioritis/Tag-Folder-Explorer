@@ -96,7 +96,9 @@ class TagExplorerView extends ItemView {
   component: ReturnType<typeof TagExplorer> | undefined;
   plugin: TagFolderPlugin;
   private currentTreeVersion: number = 0;
-  private currentPath: string = "";
+  // in the future we can maintain a currentPath variable inside the tagexplorerview itself instead of storing it inside the state. 
+  // that way when we want to upgrade the lazy update to happen only on those who need it, this can come handy
+  // private currentPath: string = "";
 
   constructor(leaf: WorkspaceLeaf, plugin: TagFolderPlugin) { 
     super(leaf)
@@ -172,16 +174,7 @@ class TagExplorerView extends ItemView {
     }
   }
   
-  /**
-   * Set the current path being viewed in the main panel
-   * Called by the Svelte component when the path changes
-   * 
-   * @param path - The current tag path
-   */
-  setCurrentPath(path: string): void {
-    this.currentPath = path;
-  }
-  
+
   private renderView() {
     const c = this.contentEl
     c.empty()

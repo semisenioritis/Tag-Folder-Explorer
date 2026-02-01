@@ -34,10 +34,6 @@
   let focusedObjectPath = $state<string>("");
   let focusedObjectParent = $state<string>("");
   
-  // Tree state management
-  let treeData = $state<unknown>(initialTreeData);
-  let treeVersion = $state<number>(initialVersion);
-  
   // Reference to TagTreeView component for updates
   let tagTreeViewRef: any = $state(null);
   
@@ -53,16 +49,11 @@
 
   /**
    * Update tree data - called by TagExplorerView when tree changes
-   * This function is exported and called from the TypeScript side
+   * Passes the update directly to TagTreeView which holds the state
    */
   export function updateTreeData(newTreeData: unknown, newVersion: number): void {
-    treeData = newTreeData;
-    treeVersion = newVersion;
-    
-    // Notify the TagTreeView component to update
-    if (tagTreeViewRef?.updateTreeData) {
-      tagTreeViewRef.updateTreeData(newTreeData, newVersion);
-    }
+    // Pass update directly to TagTreeView - no duplicate state here
+    tagTreeViewRef?.updateTreeData?.(newTreeData, newVersion);
   }
   
   /**
@@ -159,8 +150,8 @@
         currentPath={currentPath}  
         onUpdate={handleUpdate} 
         onFocusChange={handleFocusChange}
-        initialTreeData={treeData}
-        initialVersion={treeVersion}
+        initialTreeData={initialTreeData}
+        initialVersion={initialVersion}
       />
     </div>
   </div>
