@@ -7,6 +7,7 @@
   import type {TagFolderPluginSettings} from '../settings';
 
   import {getVaultName} from '../modelInterface'
+	import BottomStatusBar from './BottomStatusBar.svelte';
 
 
  
@@ -234,6 +235,10 @@
       onUpdate={handleUpdate} 
       onFocusChange={handleFocusChange}
       refreshKey={mainViewRefreshKey}
+    />
+
+    <BottomStatusBar
+      
     />
   </div>
 

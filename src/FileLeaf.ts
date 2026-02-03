@@ -142,6 +142,23 @@ export class FileLeaf implements IFileLeaf {
                     allTags.push(tagName);
                 }
             }
+
+            if (!metadata?.frontmatter) {
+                return allTags;
+            }
+            else {
+                const frontmatter = metadata.frontmatter
+                const cleanTag = (tag:string) => tag.replace(/^#/, '');
+                if (frontmatter.tags) {
+                    if (Array.isArray(metadata.frontmatter.tags)) {
+                        allTags.push(...frontmatter.tags.map(cleanTag));
+                    } else if (typeof frontmatter.tags === 'string') {
+                        allTags.push(cleanTag(frontmatter.tags));
+                    }
+                }
+            }
+
+
             
             // Since metadata.tags already includes both frontmatter and inline tags,
             // we don't need to check frontmatter.tags separately
