@@ -38,42 +38,31 @@ export async function createNewFile(
 }
 
 /**
- * Create frontmatter in a file if it doesn't already exist
+ * Create tags frontmatter property in a file if it doesn't already exist
  * @param app - Obsidian App instance
  * @param file - TFile object to add frontmatter to
  * @returns Object with success status and the file
  */
-export async function createFrontMatter(
+export async function createTagsFrontMatter(
 	app: App,
 	file: TFile
 ): Promise<{ success: boolean; file: TFile }> {
 	try {
-		await app.vault.process(file, (content) => {
-			// Check if frontmatter already exists
-            console.log('File content before frontmatter check:', content); 
-			if (app.metadataCache.getFileCache(file)?.frontmatter) {
-                console.log('Frontmatter already exists. No changes made.');
-				return content;
+		await app.fileManager.processFrontMatter(file, (frontmatter) => {
+			// Initialize tags array if it doesn't exist
+			if (!frontmatter.tags) {
+				console.log('Creating frontmatter for file.')
+				frontmatter.tags = [];
+			}else{
+				console.log('Frontmatter tags already exists. No changes made.');
 			}
-            console.log('Creating frontmatter for file.');
-			// Create frontmatter and prepend to existing content
-			// return `---\ntags: []\n---\n${content}`;
-            return `---\n---\n${content}`;
-
-
-		});
+		})
 		return { success: true, file };
 	} catch (error) {
 		console.error("Error creating frontmatter:", error);
 		return { success: false, file };
 	}
 }
-
-
-
-
-
-
 
 /**
  * Check if a file has frontmatter
@@ -393,6 +382,9 @@ export async function removeTagFromFileYaml(
  * @param tag - Tag to remove (with or without '#' prefix)
  * @returns Boolean indicating if the operation was successful
  */
+// 🔴🔴 DEPRECATED 
+// Major issue with this function is that it manually slices the files based on a cache. this is ok as long as the cache is consistently updated. 
+// However when the function to remove tags is called conscutively for different tags without updating the cache, we endup in a situation where the the cache is old and the function ends up slicing the wrong parts of the file, thus corrupting it. 
 export async function removeTagFromFileBody(
 	app: App,
 	file: TFile,
@@ -449,18 +441,34 @@ export async function removeTagFromFileBody(
  * @param tag - Tag to remove (with or without '#' prefix)
  * @returns Boolean indicating if the operation was successful
  */
+// 🔴🔴 DEPRECATED 
+// Major issue with this function is that it manually slices the files based on a cache. this is ok as long as the cache is consistently updated. 
+// However when the function to remove tags is called conscutively for different tags without updating the cache, we endup in a situation where the the cache is old and the function ends up slicing the wrong parts of the file, thus corrupting it. 
 export async function removeTagFromFile(
 	app: App,
 	file: TFile,
 	tag: string
 ): Promise<boolean> {
 	try {
-		// Remove from YAML frontmatter
-		const yamlSuccess = await removeTagFromFileYaml(app, file, tag);
-		
+
+
+
+		// Removing from body first and then yaml, since once a single function is complete, cache isnt refreshed. so indexing gets messed up. deleting yaml first would mess up the indexing for body. 
+
 		// Remove from file body
 		const bodySuccess = await removeTagFromFileBody(app, file, tag);
-		
+		console.log("part1")
+		console.log(bodySuccess)
+
+		// Remove from YAML frontmatter
+		const yamlSuccess = await removeTagFromFileYaml(app, file, tag);
+		console.log("part2")
+		console.log(yamlSuccess)
+
+
+
+
+
 		// Return true only if both operations succeeded
 		return yamlSuccess && bodySuccess;
 	} catch (error) {
@@ -569,6 +577,9 @@ export async function replaceTagInFileYaml(
  * @param newTag - New tag to replace with (with or without '#' prefix)
  * @returns Boolean indicating if the operation was successful
  */
+// 🔴🔴 DEPRECATED 
+// Major issue with this function is that it manually slices the files based on a cache. this is ok as long as the cache is consistently updated. 
+// However when the function to remove tags is called conscutively for different tags without updating the cache, we endup in a situation where the the cache is old and the function ends up slicing the wrong parts of the file, thus corrupting it. 
 export async function replaceTagInFileBody(
 	app: App,
 	file: TFile,
@@ -630,6 +641,9 @@ export async function replaceTagInFileBody(
  * @param newTag - New tag to replace with (with or without '#' prefix)
  * @returns Boolean indicating if the operation was successful
  */
+// 🔴🔴 DEPRECATED 
+// Major issue with this function is that it manually slices the files based on a cache. this is ok as long as the cache is consistently updated. 
+// However when the function to remove tags is called conscutively for different tags without updating the cache, we endup in a situation where the the cache is old and the function ends up slicing the wrong parts of the file, thus corrupting it. 
 export async function replaceTagInFile(
 	app: App,
 	file: TFile,
@@ -637,12 +651,14 @@ export async function replaceTagInFile(
 	newTag: string
 ): Promise<boolean> {
 	try {
-		// Replace in YAML frontmatter
-		const yamlSuccess = await replaceTagInFileYaml(app, file, oldTag, newTag);
-		
+
 		// Replace in file body
 		const bodySuccess = await replaceTagInFileBody(app, file, oldTag, newTag);
 		
+		// Replace in YAML frontmatter
+		const yamlSuccess = await replaceTagInFileYaml(app, file, oldTag, newTag);
+		
+
 		// Return true only if both operations succeeded
 		return yamlSuccess && bodySuccess;
 	} catch (error) {
@@ -692,6 +708,9 @@ export async function shiftTagsFromBodyToMetadata(
  * @param file - TFile object to modify
  * @returns Boolean indicating if the operation was successful
  */
+// 🔴🔴 DEPRECATED 
+// Major issue with this function is that it manually slices the files based on a cache. this is ok as long as the cache is consistently updated. 
+// However when the function to remove tags is called conscutively for different tags without updating the cache, we endup in a situation where the the cache is old and the function ends up slicing the wrong parts of the file, thus corrupting it. 
 export async function convertBodyTagsToYaml(
 	app: App,
 	file: TFile
@@ -805,16 +824,41 @@ export async function addNewMetadataSection(
 ): Promise<boolean> {
 	try {
 		// Process frontmatter to add new keys
+
+		// Retrive the fields and their types
+		// @ts-ignore
+		const properties = app.metadataTypeManager?.properties;
+
 		await app.fileManager.processFrontMatter(file, (frontmatter) => {
 			// Iterate through each key in the content object
 			for (const key in content) {
 				// Only add if the key doesn't already exist
 				if (!(key in frontmatter)) {
-					frontmatter[key] = content[key];
+					// check if the field already exists in the types.json
+					if (key in properties){
+						// if it does then check if the type matches
+						// calculate key type
+						console.log(key)
+						let keyType = getObsidianMetadataType(content[key])
+						console.log(keyType)
+						// calculate my content type
+						// if key exists then extract widget else return null
+						let actualType = properties[key].widget ? properties[key].widget : "text";
+						// check if they match
+						// if they do match 
+						if (areMetadataTypesCompatible(actualType,keyType)){
+							frontmatter[key] = content[key];	
+						}else{
+							console.warn(`Skipping key '${key}': type mismatch (expected ${actualType}, got ${keyType})`);
+							continue;
+						}
+					}else{
+						// if it doesnt exist just create it. 
+						frontmatter[key] = content[key];
+					}					
 				}
 			}
 		});
-		
 		return true;
 	} catch (error) {
 		console.error("Error adding new metadata section:", error);
@@ -837,11 +881,37 @@ export async function replaceMetadataSection(
 ): Promise<boolean> {
 	try {
 		// Process frontmatter to update/add keys
+ 
+		// Retrive the fields and their types
+		// @ts-ignore
+		const properties = app.metadataTypeManager?.properties;
+
 		await app.fileManager.processFrontMatter(file, (frontmatter) => {
 			// Iterate through each key in the content object
 			for (const key in content) {
-				// Update if exists, create if doesn't exist
-				frontmatter[key] = content[key];
+				// check if the field already exists in the types.json
+				if (key in properties){
+					// if it does then check if the type matches
+					// calculate key type
+					console.log(key)
+					let keyType = getObsidianMetadataType(content[key])
+					console.log(keyType)
+					// calculate my content type
+					// if key exists then extract widget else return null
+					let actualType = properties[key].widget ? properties[key].widget : "text";
+					// check if they match
+					// if they do match 
+					if (areMetadataTypesCompatible(actualType,keyType)){
+						frontmatter[key] = content[key];	
+					}else{
+						console.warn(`Skipping key '${key}': type mismatch (expected ${actualType}, got ${keyType})`);
+						continue;
+					}
+				}else{
+					// if it doesnt exist just create it. 
+					frontmatter[key] = content[key];
+				}					
+				
 			}
 		});
 		
@@ -867,33 +937,54 @@ export async function appendMetadataSection(
 ): Promise<boolean> {
 	try {
 		// Process frontmatter to append/add keys
+
+		// Retrive the fields and their types
+		// @ts-ignore
+		const properties = app.metadataTypeManager?.properties;
+
 		await app.fileManager.processFrontMatter(file, (frontmatter) => {
 			// Iterate through each key in the content object
 			for (const key in content) {
-				if (key in frontmatter) {
-					// Key exists - append to it
-					const existingValue = frontmatter[key];
-					const newValue = content[key];
-					
-					if (Array.isArray(existingValue)) {
-						// If existing is array, append new value(s)
-						if (Array.isArray(newValue)) {
-							frontmatter[key] = [...existingValue, ...newValue];
-						} else {
-							frontmatter[key] = [...existingValue, newValue];
+				// check if the field already exists in the types.json
+				if (key in properties){
+					// if it does then check if the type matches
+					// calculate key type
+					console.log(key)
+					let keyType = getObsidianMetadataType(content[key])
+					console.log(keyType)
+					// calculate my content type
+					// if key exists then extract widget else return null
+					let actualType = properties[key].widget ? properties[key].widget : "text";
+					// check if they match
+					// if they do match 
+					if (areMetadataTypesCompatible(actualType,keyType)){
+						// if actual type is date or datetime or checkbox, dont 
+                        if (actualType === 'date' || actualType === 'datetime' || actualType === 'checkbox') {
+                            // Skip appending for these types as they don't support appending
+                            console.warn(`Skipping key '${key}': type '${actualType}' does not support appending`);
+                            continue;
+                        } else if(actualType === 'tags' || actualType === 'multitext'){
+							if(frontmatter[key] == null){
+								frontmatter[key] = content[key];	
+							} 
+							else {	
+								frontmatter[key]  = [...frontmatter[key], ...content[key]];
+							}
 						}
-					} else {
-						// If existing is not array, convert to array with both values
-						if (Array.isArray(newValue)) {
-							frontmatter[key] = [existingValue, ...newValue];
-						} else {
-							frontmatter[key] = [existingValue, newValue];
+						
+						else {
+							frontmatter[key] = frontmatter[key] + content[key];	
 						}
+						
+					}else{
+						console.warn(`Skipping key '${key}': type mismatch (expected ${actualType}, got ${keyType})`);
+						continue;
 					}
-				} else {
-					// Key doesn't exist - create it
+				}else{
+					// if it doesnt exist just create it. 
 					frontmatter[key] = content[key];
-				}
+				}					
+				
 			}
 		});
 		
@@ -991,5 +1082,104 @@ export function checkIfTagIsValid(tag: string): boolean {
 	} catch (error) {
 		console.error("Error validating tag:", error);
 		return false;
+	}
+}
+
+/**
+ * Determine the Obsidian metadata type for a given key-value pair
+ * @param value - The metadata value to type-check
+ * @returns The Obsidian metadata type: 'multitext', 'date', 'datetime', 'number', 'checkbox', or 'text'
+ */
+function getObsidianMetadataType(value: any): string {
+	// Check for multitext (array of strings)
+	if (Array.isArray(value)) {
+		if (value.every(item => typeof item === 'string')) {
+			return 'multitext';
+		}
+	}
+	
+	// Check for checkbox (boolean)
+	if (typeof value === 'boolean') {
+		return 'checkbox';
+	}
+	
+	// Check for number
+	if (typeof value === 'number') {
+		return 'number';
+	}
+	
+	// Check for string-based types (date, datetime, text)
+	if (typeof value === 'string') {
+		// Check for datetime format: YYYY-MM-DDTHH:mm (more specific, check first)
+		// Examples: 2026-02-04T18:05, 2024-12-31T23:59
+		const datetimePattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+		if (datetimePattern.test(value)) {
+			return 'datetime';
+		}
+		
+		// Check for date format: YYYY-MM-DD
+		// Examples: 2026-02-04, 2024-12-31
+		const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+		if (datePattern.test(value)) {
+			return 'date';
+		}
+		
+		// Default to text for any other string
+		return 'text';
+	}
+	
+	// Default fallback for any other type
+	return 'text';
+}
+
+/**
+ * Check if two Obsidian metadata types are compatible
+ * @param targetType - The expected/target metadata type
+ * @param sourceType - The actual/source metadata type to check compatibility
+ * @returns Boolean indicating if sourceType is compatible with targetType
+ */
+function areMetadataTypesCompatible(sourceType: string, targetType: string): boolean {
+	// Exact match is always compatible
+	if (targetType === sourceType) {
+		return true;
+	}
+	
+	// Type-specific compatibility rules
+	switch (sourceType) {
+		case 'multitext':
+			// multitext only accepts multitext
+			return targetType === 'multitext';
+			
+		case 'date':
+			// date accepts date or datetime
+			return targetType === 'date' || targetType === 'datetime';
+			
+		case 'datetime':
+			// datetime accepts date or datetime
+			return targetType === 'date' || targetType === 'datetime';
+			
+		case 'number':
+			// number only accepts number
+			return targetType === 'number';
+			
+		case 'checkbox':
+			// checkbox only accepts checkbox
+			return targetType === 'checkbox';
+			
+		case 'text':
+			// text accepts anything (most permissive)
+			return true;
+
+		case 'tags':
+			// tags only accepts multitext
+			return targetType === 'multitext';
+
+		case 'aliases':
+			// aliases only accepts multitext
+			return targetType === 'multitext';
+
+		default:
+			// Unknown target type, default to false
+			return false;
 	}
 }

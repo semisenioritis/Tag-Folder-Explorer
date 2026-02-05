@@ -11,7 +11,6 @@ import { TreeRoot } from './TreeRoot';
 **/
 
 
-import { createNewFile, createFrontMatter, extractAllTagsFromYaml, extractAllTagsFromFileBody, removeTagFromFileBody, replaceTagInFileBody } from './fileEditor';
 
 // Import the Counter Svelte component and the `mount` and `unmount` methods.
 
@@ -258,7 +257,7 @@ export default class TagFolderPlugin extends Plugin {
 		this.addSettingTab(new TagFolderSettingTab(this.app, this));
 
 
-  }  
+  }
 
 	/**
 	 * Initializes the tag tree after the metadata cache is ready.

@@ -134,14 +134,16 @@ export class FileLeaf implements IFileLeaf {
             
             const allTags: string[] = [];
             
-            // Extract all tags (both frontmatter and inline) from metadata
-            if (metadata?.tags) {
-                for (const tagCache of metadata.tags) {
-                    // Remove the # prefix from tag names
-                    const tagName = tagCache.tag.startsWith('#') ? tagCache.tag.slice(1) : tagCache.tag;
-                    allTags.push(tagName);
-                }
-            }
+            // Extract all tags from file body
+            // 🔴🔴 DEPRECATED 
+            // Since we are not handling the existence of tags inside the body, because deleting them from the body is a very tedious task, right now we are not using this at all. 
+            // if (metadata?.tags) {
+            //     for (const tagCache of metadata.tags) {
+            //         // Remove the # prefix from tag names
+            //         const tagName = tagCache.tag.startsWith('#') ? tagCache.tag.slice(1) : tagCache.tag;
+            //         allTags.push(tagName);
+            //     }
+            // }
 
             if (!metadata?.frontmatter) {
                 return allTags;
