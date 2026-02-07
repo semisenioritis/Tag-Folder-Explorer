@@ -248,8 +248,8 @@ export interface ITagNode {
      * Checks if a metadata file corresponding to this node exists, creates it if it doesn't
      * 
      * Creates a new metadata file in the `.TagNodeMeta` hidden folder at vault root.
-     * The filename follows the convention: `{path_with_underscores}_{base64_encoded_path}.md`
-     * For example, path "subject/math" becomes "subject_math_c3ViamVjdC9tYXRo.md"
+     * The filename follows the convention: `{path_with_underscores}_{base64_encoded_path}.json`
+     * For example, path "subject/math" becomes "subject_math_c3ViamVjdC9tYXRo.json"
      * The file contains YAML frontmatter between --- delimiters for metadata storage.
      * 
      * @returns boolean - true if created successfully, false if already exists or other issues
@@ -332,10 +332,10 @@ export interface ITagNode {
      * Retrieves the metadata inside the metadata file corresponding to this node
      * 
      * Reads and parses the metadata file from `.TagNodeMeta` folder for this tag node.
-     * Extracts the YAML frontmatter content between --- delimiters and returns it
+     * Extracts the json content in the file as an object and returns it
      * as a dictionary/object. Uses the path-based filename convention to locate the file.
      * 
-     * @returns Record<string, any> - Contents of metadata file YAML frontmatter as dictionary
+     * @returns Record<string, any> - Contents of metadata json file as dictionary
      * 
      * Used when: Reading tag properties, loading tag settings, metadata operations
      */
@@ -380,15 +380,16 @@ export interface ITagNode {
      * Updates an existing metadata file with the payload that is provided
      * 
      * Modifies the metadata file in `.TagNodeMeta` folder corresponding to this node.
-     * The payload data is written as YAML frontmatter between --- delimiters.
+     * The payload data is written as json object in the file.
      * The filename is generated using the path-to-filename convention with base64 encoding.
      * 
-     * @param payload - The metadata content to write as YAML frontmatter
+     * @param payload - The metadata content to write as json
+     * @param operation - The operation to perform: 'add' (only add new keys), 'replace' (replace existing or add new), 'append' (append to existing or add new)
      * @returns boolean - true if update successful, false otherwise
      * 
      * Used when: Updating tag properties, modifying tag settings, metadata synchronization
      */
-    updateMeta(payload: Record<string, any>): boolean;
+    updateMeta(payload: Record<string, any>, operation?: 'add' | 'replace' | 'append'): boolean;
     
 
     

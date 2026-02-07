@@ -787,8 +787,8 @@ export class TreeRoot implements ITreeRoot {
             
             // Process each metadata file
             for (const filename of metadataFiles) {
-                // Skip non-.md files
-                if (!filename.endsWith('.md')) {
+                // Skip non-.json files
+                if (!filename.endsWith('.json')) {
                     continue;
                 }
                 
@@ -821,9 +821,9 @@ export class TreeRoot implements ITreeRoot {
      * Extracts the tag path from a metadata filename
      * 
      * Parses the metadata filename which follows the format:
-     * {path_with_underscores}_{base64_encoded_path}.md
+     * {path_with_underscores}_{base64_encoded_path}.json
      * 
-     * For example: "subject_math_c3ViamVjdC9tYXRo.md" -> "subject/math"
+     * For example: "subject_math_c3ViamVjdC9tYXRo.json" -> "subject/math"
      * 
      * @param filename - The name of the metadata file
      * @returns string - The extracted tag path, or empty string if not found
@@ -831,7 +831,7 @@ export class TreeRoot implements ITreeRoot {
     private extractTagPathFromFilename(filename: string): string {
         try {
             // Remove the .md extension
-            const nameWithoutExtension = filename.replace(/\.md$/, '');
+            const nameWithoutExtension = filename.replace(/\.json$/, '');
             
             // Find the last underscore which separates the base64 part
             const lastUnderscoreIndex = nameWithoutExtension.lastIndexOf('_');

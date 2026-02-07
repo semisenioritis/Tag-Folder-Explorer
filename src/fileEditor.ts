@@ -1,4 +1,6 @@
 import { App, TFile } from "obsidian";
+import * as path from 'path';
+import * as fs from 'fs';
 
 /**
  * Create a new file at the specified path with automatic name conflict resolution
@@ -15,7 +17,6 @@ export async function createNewFile(
 
 	try {
 		const extension = ".md"
-		
 		// Build the full path
 		const folderPath = path ? `${path}/` : "";
 		
@@ -832,25 +833,25 @@ export async function addNewMetadataSection(
 		await app.fileManager.processFrontMatter(file, (frontmatter) => {
 			// Iterate through each key in the content object
 			for (const key in content) {
+				console.log(content)
+				console.log(key)
 				// Only add if the key doesn't already exist
 				if (!(key in frontmatter)) {
 					// check if the field already exists in the types.json
 					if (key in properties){
 						// if it does then check if the type matches
 						// calculate key type
-						console.log(key)
-						let keyType = getObsidianMetadataType(content[key])
-						console.log(keyType)
+						let keyType = getObsidianMetadataType(key)
 						// calculate my content type
 						// if key exists then extract widget else return null
 						let actualType = properties[key].widget ? properties[key].widget : "text";
+
 						// check if they match
 						// if they do match 
 						if (areMetadataTypesCompatible(actualType,keyType)){
 							frontmatter[key] = content[key];	
 						}else{
-							console.warn(`Skipping key '${key}': type mismatch (expected ${actualType}, got ${keyType})`);
-							continue;
+							return false
 						}
 					}else{
 						// if it doesnt exist just create it. 
@@ -882,36 +883,55 @@ export async function replaceMetadataSection(
 	try {
 		// Process frontmatter to update/add keys
  
-		// Retrive the fields and their types
+		let namee = "date8"
 		// @ts-ignore
 		const properties = app.metadataTypeManager?.properties;
+		// console.log(properties["date3"])
+		// switch (properties[name].widget) {
+		// 	case 'text':      // 
+		// 		console.log(name);
+		// 		console.log("text");
+		// 		break
+		// 	case 'multitext': // List
+		// 		console.log(name);
+		// 		console.log("multitext");
+		// 		break
+		// 	case 'number':    // Number
+		// 		console.log(name);
+		// 		console.log("number");
+		// 		break
+		// 	case 'checkbox':  // Checkbox
+		// 		console.log(name);
+		// 		console.log("checkbox");
+		// 		break
+		// 	case 'date':      // Date
+		// 		console.log(name);
+		// 		console.log("date");
+		// 		break
+		// 	case 'datetime':  // Date & time
+		// 		console.log(name);
+		// 		console.log("datetime");
+		// 		break
+		// 	case 'aliases':   // Aliases
+		// 		console.log(name);
+		// 		console.log("aliases");
+		// 		break
+		// 	case 'tags':      // Tags
+		// 		console.log(name);
+		// 		console.log("tags");
+		// 		break
+		// 	}		
 
 		await app.fileManager.processFrontMatter(file, (frontmatter) => {
 			// Iterate through each key in the content object
 			for (const key in content) {
-				// check if the field already exists in the types.json
-				if (key in properties){
-					// if it does then check if the type matches
-					// calculate key type
-					console.log(key)
-					let keyType = getObsidianMetadataType(content[key])
-					console.log(keyType)
-					// calculate my content type
-					// if key exists then extract widget else return null
-					let actualType = properties[key].widget ? properties[key].widget : "text";
-					// check if they match
-					// if they do match 
-					if (areMetadataTypesCompatible(actualType,keyType)){
-						frontmatter[key] = content[key];	
-					}else{
-						console.warn(`Skipping key '${key}': type mismatch (expected ${actualType}, got ${keyType})`);
-						continue;
-					}
-				}else{
-					// if it doesnt exist just create it. 
-					frontmatter[key] = content[key];
-				}					
-				
+
+				console.log(key)
+				console.log(properties[key].widget)
+				// only check if the key already exists. only if exists get its widget. else if it is new then just create it
+				console.log("----------------")
+				// Update if exists, create if doesn't exist
+				frontmatter[key] = content[key];
 			}
 		});
 		
@@ -937,54 +957,33 @@ export async function appendMetadataSection(
 ): Promise<boolean> {
 	try {
 		// Process frontmatter to append/add keys
-
-		// Retrive the fields and their types
-		// @ts-ignore
-		const properties = app.metadataTypeManager?.properties;
-
 		await app.fileManager.processFrontMatter(file, (frontmatter) => {
 			// Iterate through each key in the content object
 			for (const key in content) {
-				// check if the field already exists in the types.json
-				if (key in properties){
-					// if it does then check if the type matches
-					// calculate key type
-					console.log(key)
-					let keyType = getObsidianMetadataType(content[key])
-					console.log(keyType)
-					// calculate my content type
-					// if key exists then extract widget else return null
-					let actualType = properties[key].widget ? properties[key].widget : "text";
-					// check if they match
-					// if they do match 
-					if (areMetadataTypesCompatible(actualType,keyType)){
-						// if actual type is date or datetime or checkbox, dont 
-                        if (actualType === 'date' || actualType === 'datetime' || actualType === 'checkbox') {
-                            // Skip appending for these types as they don't support appending
-                            console.warn(`Skipping key '${key}': type '${actualType}' does not support appending`);
-                            continue;
-                        } else if(actualType === 'tags' || actualType === 'multitext'){
-							if(frontmatter[key] == null){
-								frontmatter[key] = content[key];	
-							} 
-							else {	
-								frontmatter[key]  = [...frontmatter[key], ...content[key]];
-							}
+				if (key in frontmatter) {
+					// Key exists - append to it
+					const existingValue = frontmatter[key];
+					const newValue = content[key];
+					
+					if (Array.isArray(existingValue)) {
+						// If existing is array, append new value(s)
+						if (Array.isArray(newValue)) {
+							frontmatter[key] = [...existingValue, ...newValue];
+						} else {
+							frontmatter[key] = [...existingValue, newValue];
 						}
-						
-						else {
-							frontmatter[key] = frontmatter[key] + content[key];	
+					} else {
+						// If existing is not array, convert to array with both values
+						if (Array.isArray(newValue)) {
+							frontmatter[key] = [existingValue, ...newValue];
+						} else {
+							frontmatter[key] = [existingValue, newValue];
 						}
-						
-					}else{
-						console.warn(`Skipping key '${key}': type mismatch (expected ${actualType}, got ${keyType})`);
-						continue;
 					}
-				}else{
-					// if it doesnt exist just create it. 
+				} else {
+					// Key doesn't exist - create it
 					frontmatter[key] = content[key];
-				}					
-				
+				}
 			}
 		});
 		
@@ -1181,5 +1180,428 @@ function areMetadataTypesCompatible(sourceType: string, targetType: string): boo
 		default:
 			// Unknown target type, default to false
 			return false;
+	}
+}
+
+// ==================== JSON METADATA FILE FUNCTIONS ====================
+// These functions work with JSON metadata files outside the vault using fs
+
+
+
+
+/**
+ * Compute the metadata filename for a nested tag path using base64 encoding
+ * @param tagPath - The nested tag path (e.g., "folder/subfolder/tag")
+ * @returns The base64-encoded filename string
+ */
+export function metadataRecomputeName( app: App, tagPath: string): string {
+	
+	// Get the vault's base path from the app
+	const vaultPath = (app.vault.adapter as any).basePath || '';
+
+	// Normalize the tag path by removing leading '#' if present
+	const normalizedPath = tagPath.startsWith('#') ? tagPath.slice(1) : tagPath;
+	
+	// Replace / with _ for human-readable part
+	const humanReadablePath = normalizedPath.replace(/\//g, '_');
+
+	// Base64 encode the original path
+	const base64Path = btoa(normalizedPath);
+
+	// Combine both parts with underscore separator and .json extension
+	const filename = `${humanReadablePath}_${base64Path}.json`;
+
+	// Return absolute path
+	return path.join(vaultPath, '.TagNodeMeta', filename);
+}
+
+/**
+ * Check if a metadata JSON file exists for a given tag path
+ * @param app - Obsidian App instance
+ * @param tagPath - The nested tag path (used to compute the actual filename)
+ * @returns Boolean indicating if the metadata file exists
+ */
+export function checkIfMetadataFileExists(
+	app: App,
+	tagPath: string
+): boolean {
+	try {
+		// Compute the actual filename from the tag path
+		const computedFilename = metadataRecomputeName(app, tagPath);
+		
+		// Use file system to check if the file exists (for hidden folders)
+		return fs.existsSync(computedFilename);
+	} catch (error) {
+		console.error("Error checking if metadata file exists:", error);
+		return false;
+	}
+}
+
+/**
+ * Create an empty frontmatter field in a metadata JSON file
+ * @param app - Obsidian App instance
+ * @param tagPath - The nested tag path (used to compute the actual filename)
+ * @param frontmatterName - The name of the frontmatter field to create
+ * @returns Boolean indicating if the operation was successful
+ */
+export function metadataCreateSpecificEmptyFrontmatter(
+	app: App,
+	tagPath: string,
+	frontmatterName: string
+): boolean {
+	try {
+		// Compute the actual filename from the tag path
+		const computedFilename = metadataRecomputeName(app, tagPath);
+		
+		let jsonData: any = {};
+		
+		// Check if file exists and read it
+		if (fs.existsSync(computedFilename)) {
+			const fileContent = fs.readFileSync(computedFilename, 'utf-8');
+			jsonData = JSON.parse(fileContent);
+		}
+		
+		// Create empty field with the frontmatter name
+		jsonData[frontmatterName] = null;
+		
+		// Write back to the file
+		fs.writeFileSync(computedFilename, JSON.stringify(jsonData, null, 2), 'utf-8');
+		
+		return true;
+	} catch (error) {
+		console.error("Error creating empty frontmatter:", error);
+		return false;
+	}
+}
+
+/**
+ * Add a "created" property to a metadata JSON file
+ * @param app - Obsidian App instance
+ * @param tagPath - The nested tag path (used to compute the actual filename)
+ * @returns Boolean indicating if the operation was successful
+ */
+export function metadataAddCreatedProperty(
+	app: App,
+	tagPath: string
+): boolean {
+	return metadataCreateSpecificEmptyFrontmatter(app, tagPath, 'created');
+}
+
+/**
+ * Add a "modified" property to a metadata JSON file
+ * @param app - Obsidian App instance
+ * @param tagPath - The nested tag path (used to compute the actual filename)
+ * @returns Boolean indicating if the operation was successful
+ */
+export function metadataAddModifiedProperty(
+	app: App,
+	tagPath: string
+): boolean {
+	return  metadataCreateSpecificEmptyFrontmatter(app, tagPath, 'modified');
+}
+
+/**
+ * Rename a metadata JSON file by computing new filename from new tag path
+ * @param app - Obsidian App instance
+ * @param tagPath - The current nested tag path (used to compute the current filename)
+ * @param newTagPath - The new nested tag path (used to compute the new filename)
+ * @returns Boolean indicating if the operation was successful
+ */
+export function metadataRenameFile(
+	app: App,
+	tagPath: string,
+	newTagPath: string
+): boolean {
+	try {
+		// Compute the actual filenames from the tag paths
+		const oldFilename = metadataRecomputeName(app, tagPath);
+		const newFilename = metadataRecomputeName(app, newTagPath);
+		
+		// Check if the old file exists
+		if (!fs.existsSync(oldFilename)) {
+			console.error("Old metadata file does not exist:", oldFilename);
+			return false;
+		}
+		
+		// Check if the new filename already exists
+		if (fs.existsSync(newFilename)) {
+			console.error("New metadata file already exists:", newFilename);
+			return false;
+		}
+		
+		// Rename the file using filesystem
+		fs.renameSync(oldFilename, newFilename);
+		
+		return true;
+	} catch (error) {
+		console.error("Error renaming metadata file:", error);
+		return false;
+	}
+}
+
+/**
+ * Read all frontmatter data from a metadata JSON file
+ * @param app - Obsidian App instance
+ * @param tagPath - The nested tag path (used to compute the actual filename)
+ * @returns JSON object containing all metadata, or null if file doesn't exist or error occurs
+ */
+export function metadataReadAllFrontmatter(
+	app: App,
+	tagPath: string
+):any | null{
+	try {
+		// Compute the actual filename from the tag path
+		const computedFilename = metadataRecomputeName(app, tagPath);
+		
+		// Check if file exists
+		if (!fs.existsSync(computedFilename)) {
+			console.warn("Metadata file does not exist:", computedFilename);
+			return null;
+		}
+		
+		// Read the file content
+		const fileContent = fs.readFileSync(computedFilename, 'utf-8');
+		
+		// Parse and return the JSON object
+		const jsonData = JSON.parse(fileContent);
+		return jsonData;
+	} catch (error) {
+		console.error("Error reading metadata frontmatter:", error);
+		return null;
+	}
+}
+
+/**
+ * Read a specific property from a metadata JSON file
+ * @param app - Obsidian App instance
+ * @param tagPath - The nested tag path (used to compute the actual filename)
+ * @param frontmatterName - The name of the specific property to extract
+ * @returns The value of the specified property, or undefined if not found
+ */
+export function metadataReadSpecificProperty(
+	app: App,
+	tagPath: string,
+	frontmatterName: string
+): any | undefined {
+	try {
+		// Read all frontmatter from the file
+		const allMetadata = metadataReadAllFrontmatter(app, tagPath);
+		
+		// Return undefined if file doesn't exist or is empty
+		if (!allMetadata) {
+			return undefined;
+		}
+		
+		// Extract and return the specific property
+		return allMetadata[frontmatterName];
+	} catch (error) {
+		console.error("Error reading specific metadata property:", error);
+		return undefined;
+	}
+}
+
+/**
+ * Remove all metadata by deleting the entire metadata JSON file
+ * @param app - Obsidian App instance
+ * @param tagPath - The nested tag path (used to compute the actual filename)
+ * @returns Boolean indicating if the operation was successful
+ */
+export function metadataRemoveAllMetadata(
+	app: App,
+	tagPath: string
+): boolean {
+	try {
+		// Compute the actual filename from the tag path
+		const computedFilename = metadataRecomputeName(app, tagPath);
+		
+		// Check if file exists
+		if (!fs.existsSync(computedFilename)) {
+			console.warn("Metadata file does not exist:", computedFilename);
+			return true; // File doesn't exist, consider it a success
+		}
+		
+		// Delete the file
+		fs.unlinkSync(computedFilename);
+		
+		return true;
+	} catch (error) {
+		console.error("Error removing metadata file:", error);
+		return false;
+	}
+}
+
+/**
+ * Remove a specific property from a metadata JSON file
+ * @param app - Obsidian App instance
+ * @param tagPath - The nested tag path (used to compute the actual filename)
+ * @param frontmatterName - The name of the property to remove
+ * @returns Boolean indicating if the operation was successful
+ */
+export function metadataRemoveSpecificProperty(
+	app: App,
+	tagPath: string,
+	frontmatterName: string
+): boolean {
+	try {
+		// Read all metadata from the file
+		const jsonData = metadataReadAllFrontmatter(app, tagPath);
+		
+		// If file doesn't exist or is empty, nothing to remove
+		if (!jsonData) {
+			console.warn("Metadata file does not exist or is empty");
+			return true;
+		}
+		
+		// Delete the specific property
+		delete jsonData[frontmatterName];
+		
+		// Compute the filename and write back to file
+		const computedFilename = metadataRecomputeName(app, tagPath);
+		fs.writeFileSync(computedFilename, JSON.stringify(jsonData, null, 2), 'utf-8');
+		
+		return true;
+	} catch (error) {
+		console.error("Error removing specific metadata property:", error);
+		return false;
+	}
+}
+
+/**
+ * Add new properties to a metadata JSON file (only if they don't already exist)
+ * @param app - Obsidian App instance
+ * @param tagPath - The nested tag path (used to compute the actual filename)
+ * @param jsonObject - Object containing new properties to add
+ * @returns Boolean indicating if the operation was successful
+ */
+export function metadataAddNewProperty(
+	app: App,
+	tagPath: string,
+	jsonObject: Record<string, any>
+): boolean {
+	try {
+		// Read existing metadata from the file
+		let existingData = metadataReadAllFrontmatter(app, tagPath);
+		
+		// If file doesn't exist, start with empty object
+		if (!existingData) {
+			existingData = {};
+		}
+		
+		// Add only new keys that don't already exist
+		const updatedData = { ...existingData };
+		for (const key in jsonObject) {
+			if (!(key in existingData)) {
+				updatedData[key] = jsonObject[key];
+			}
+		}
+		
+		// Compute the filename and write back to file
+		const computedFilename = metadataRecomputeName(app, tagPath);
+		fs.writeFileSync(computedFilename, JSON.stringify(updatedData, null, 2), 'utf-8');
+		
+		return true;
+	} catch (error) {
+		console.error("Error adding new metadata properties:", error);
+		return false;
+	}
+}
+
+/**
+ * Replace existing properties in a metadata JSON file (only if they already exist)
+ * @param app - Obsidian App instance
+ * @param tagPath - The nested tag path (used to compute the actual filename)
+ * @param jsonObject - Object containing properties to replace
+ * @returns Boolean indicating if the operation was successful
+ */
+export function metadataReplaceExistingProperty(
+	app: App,
+	tagPath: string,
+	jsonObject: Record<string, any>
+): boolean {
+	try {
+		// Read existing metadata from the file
+		const existingData = metadataReadAllFrontmatter(app, tagPath);
+		
+		// If file doesn't exist, nothing to replace
+		if (!existingData) {
+			console.warn("Metadata file does not exist, nothing to replace");
+			return true;
+		}
+		
+		// Replace only keys that already exist
+		const updatedData = { ...existingData };
+		for (const key in jsonObject) {
+			if (key in existingData) {
+				updatedData[key] = jsonObject[key];
+			}
+		}
+		
+		// Compute the filename and write back to file
+		const computedFilename = metadataRecomputeName(app, tagPath);
+		fs.writeFileSync(computedFilename, JSON.stringify(updatedData, null, 2), 'utf-8');
+		
+		return true;
+	} catch (error) {
+		console.error("Error replacing existing metadata properties:", error);
+		return false;
+	}
+}
+
+/**
+ * Append to existing properties or add new ones in a metadata JSON file
+ * If property exists and is an array, appends to it. Otherwise creates/replaces the property.
+ * @param app - Obsidian App instance
+ * @param tagPath - The nested tag path (used to compute the actual filename)
+ * @param jsonObject - Object containing properties to append or add
+ * @returns Boolean indicating if the operation was successful
+ */
+export function metadataAppendToProperty(
+	app: App,
+	tagPath: string,
+	jsonObject: Record<string, any>
+): boolean {
+	try {
+		// Read existing metadata from the file
+		let existingData = metadataReadAllFrontmatter(app, tagPath);
+		
+		// If file doesn't exist, start with empty object
+		if (!existingData) {
+			existingData = {};
+		}
+		
+		// Process each key in the jsonObject
+		const updatedData = { ...existingData };
+		for (const key in jsonObject) {
+			if (key in existingData) {
+				// Key exists - append if it's an array, otherwise replace
+				if (Array.isArray(existingData[key])) {
+					// Append to existing array
+					if (Array.isArray(jsonObject[key])) {
+						updatedData[key] = [...existingData[key], ...jsonObject[key]];
+					} else {
+						updatedData[key] = [...existingData[key], jsonObject[key]];
+					}
+				} else {
+					// Not an array - convert to array and append
+					if (Array.isArray(jsonObject[key])) {
+						updatedData[key] = [existingData[key], ...jsonObject[key]];
+					} else {
+						updatedData[key] = [existingData[key], jsonObject[key]];
+					}
+				}
+			} else {
+				// Key doesn't exist - create new field
+				updatedData[key] = jsonObject[key];
+			}
+		}
+		
+		// Compute the filename and write back to file
+		const computedFilename = metadataRecomputeName(app, tagPath);
+		fs.writeFileSync(computedFilename, JSON.stringify(updatedData, null, 2), 'utf-8');
+		
+		return true;
+	} catch (error) {
+		console.error("Error appending to metadata properties:", error);
+		return false;
 	}
 }

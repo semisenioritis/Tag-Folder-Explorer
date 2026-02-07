@@ -47,9 +47,24 @@
         });
     }
 
-    function parseLegend(legendText: string): Array<{emoji: string, label: string}> {
-        if (!legendText) return [];
-        const lines = legendText.trim().split('\n');
+    function parseLegend(legendData: string | string[]): Array<{emoji: string, label: string}> {
+        if (!legendData) return [];
+        
+        // If it's already an array (JSON format), parse each item directly
+        if (Array.isArray(legendData)) {
+            return legendData
+                .map(item => {
+                    const match = String(item).match(/([^,]+),\s*(.+)/);
+                    if (match) {
+                        return { emoji: match[1].trim(), label: match[2].trim() };
+                    }
+                    return null;
+                })
+                .filter(item => item !== null) as Array<{emoji: string, label: string}>;
+        }
+        
+        // Fallback: parse as string with newline-separated lines (legacy YAML format)
+        const lines = legendData.trim().split('\n');
         return lines
             .filter(line => line.trim().startsWith('-'))
             .map(line => {

@@ -3,6 +3,7 @@ import type { ITagNode, IFileLeaf, ISerializedTagNode  } from './interfaces';
 import { FileLeaf } from './FileLeaf';
 import * as fs from 'fs';
 import * as path from 'path';
+import {metadataAddNewProperty, metadataReplaceExistingProperty, metadataAppendToProperty} from "./fileEditor"
 
 /**
  * TagNode class - represents tag nodes in the hierarchical tag tree
@@ -162,9 +163,9 @@ export class TagNode implements ITagNode {
      * Checks if a metadata file corresponding to this node exists, creates it if it doesn't
      * 
      * Creates a new metadata file in the `.TagNodeMeta` hidden folder at vault root.
-     * The filename follows the convention: `{path_with_underscores}_{base64_encoded_path}.md`
-     * For example, path "subject/math" becomes "subject_math_c3ViamVjdC9tYXRo.md"
-     * The file contains YAML frontmatter between --- delimiters for metadata storage.
+     * The filename follows the convention: `{path_with_underscores}_{base64_encoded_path}.json`
+     * For example, path "subject/math" becomes "subject_math_c3ViamVjdC9tYXRo.json"
+     * The file contains a JSON object for metadata storage.
      * 
      * @returns boolean - true if created successfully, false if already exists or other issues
      * 
@@ -185,28 +186,28 @@ export class TagNode implements ITagNode {
                 fs.mkdirSync(metaFolderPath, { recursive: true });
             }
             
-            // Create initial metadata content with YAML frontmatter
-            const initialContent = `---
-path: "${this.path}"
-name: "${this.name}"
-created: "${new Date().toISOString()}"
-modified: "${new Date().toISOString()}"
-description: |-
-  TagNode Metadata for ${this.name}
-  This file contains metadata for the TagNode at path: \`${this.path}\`
-legend: |-
-  - 🔴, label one
-  - 🟠, label two
-  - 🟡, label three
-  - 🟢, label four
-  - 🔵, label five
-  - 🟣, label six
----
-
-`;
+            // Create initial metadata object
+            const metadataObject = {
+                path: this.path,
+                name: this.name,
+                created: new Date().toISOString(),
+                modified: new Date().toISOString(),
+                description: `TagNode Metadata for ${this.name}\nThis file contains metadata for the TagNode at path: \`${this.path}\``,
+                legend: [
+                    "🔴, label one",
+                    "🟠, label two",
+                    "🟡, label three",
+                    "🟢, label four",
+                    "🔵, label five",
+                    "🟣, label six"
+                ]
+            };
+            
+            // Convert to JSON string with formatting
+            const jsonContent = JSON.stringify(metadataObject, null, 2);
             
             // Create the metadata file
-            fs.writeFileSync(metadataPath, initialContent, 'utf8');
+            fs.writeFileSync(metadataPath, jsonContent, 'utf8');
             
             return true;
         } catch (error) {
@@ -310,8 +311,8 @@ legend: |-
     /**
      * Generates the absolute file system path for this TagNode's metadata file
      * 
-     * Creates the full path using the convention: {vault_path}/.TagNodeMeta/{path_with_underscores}_{base64_encoded_path}.md
-     * For example, path "subject/math" becomes "{vault}/.TagNodeMeta/subject_math_c3ViamVjdC5tYXRo.md"
+     * Creates the full path using the convention: {vault_path}/.TagNodeMeta/{path_with_underscores}_{base64_encoded_path}.json
+     * For example, path "subject/math" becomes "{vault}/.TagNodeMeta/subject_math_c3ViamVjdC5tYXRo.json"
      * 
      * @returns string - The absolute file system path to the metadata file
      */
@@ -325,8 +326,8 @@ legend: |-
         // Base64 encode the original path
         const base64Path = btoa(this.path);
         
-        // Combine both parts with underscore separator and .md extension
-        const filename = `${humanReadablePath}_${base64Path}.md`;
+        // Combine both parts with underscore separator and .json extension
+        const filename = `${humanReadablePath}_${base64Path}.json`;
         
         // Return absolute path
         return path.join(vaultPath, '.TagNodeMeta', filename);
@@ -337,10 +338,10 @@ legend: |-
      * Retrieves the metadata inside the metadata file corresponding to this node
      * 
      * Reads and parses the metadata file from `.TagNodeMeta` folder for this tag node.
-     * Extracts the YAML frontmatter content between --- delimiters and returns it
-     * as a dictionary/object. Uses the path-based filename convention to locate the file.
+     * Parses the JSON content and returns it as a dictionary/object.
+     * Uses the path-based filename convention to locate the file.
      * 
-     * @returns Record<string, any> - Contents of metadata file YAML frontmatter as dictionary
+     * @returns Record<string, any> - Contents of metadata JSON file as dictionary
      * 
      * Used when: Reading tag properties, loading tag settings, metadata operations
      */
@@ -356,73 +357,10 @@ legend: |-
             // Read file content
             const fileContent = fs.readFileSync(metadataPath, 'utf8');
             
-            // Extract YAML frontmatter
-            const yamlMatch = fileContent.match(/^---\n([\s\S]*?)\n---/);
-            if (!yamlMatch) {
-                return {}; // No YAML frontmatter found
-            }
+            // Parse JSON content
+            const metadata = JSON.parse(fileContent);
             
-            const yamlContent = yamlMatch[1];
-            
-            // Parse frontmatter supporting scalars, block scalars, and block lists
-            function parseFrontmatter(yaml: string): Record<string, any> {
-                const result: Record<string, any> = {};
-                if (!yaml) return result;
-
-                const lines = yaml.split('\n');
-                let i = 0;
-                while (i < lines.length) {
-                    const line = lines[i];
-                    // skip empty lines
-                    if (/^\s*$/.test(line)) { i++; continue; }
-
-                    // block list (key:) followed by indented - items
-                    const listKeyMatch = line.match(/^(\w[\w-]*):\s*$/);
-                    if (listKeyMatch) {
-                        const key = listKeyMatch[1];
-                        const items: string[] = [];
-                        i++;
-                        while (i < lines.length && /^\s*-\s+/.test(lines[i])) {
-                            const item = lines[i].replace(/^\s*-\s+/, '').trim();
-                            items.push(item.replace(/^"|"$/g, ''));
-                            i++;
-                        }
-                        result[key] = items;
-                        continue;
-                    }
-
-                    // block scalar (key: | or key: |-) followed by indented lines
-                    const blockMatch = line.match(/^(\w[\w-]*):\s*\|[-]?\s*$/);
-                    if (blockMatch) {
-                        const key = blockMatch[1];
-                        i++;
-                        const blockLines: string[] = [];
-                        while (i < lines.length && /^(\s+).*/.test(lines[i])) {
-                            // remove leading indentation (at least one space)
-                            blockLines.push(lines[i].replace(/^\s{1,}/, ''));
-                            i++;
-                        }
-                        result[key] = blockLines.join('\n');
-                        continue;
-                    }
-
-                    // single-line scalar
-                    const scalarMatch = line.match(/^(\w[\w-]*):\s*(?:"([^"]*)"|'([^']*)'|([^#].*))?$/);
-                    if (scalarMatch) {
-                        const key = scalarMatch[1];
-                        const val = scalarMatch[2] ?? scalarMatch[3] ?? (scalarMatch[4] ? scalarMatch[4].trim() : '');
-                        result[key] = val;
-                        i++;
-                        continue;
-                    }
-
-                    // If none matched, skip the line
-                    i++;
-                }
-                return result;
-            }
-            
-            return parseFrontmatter(yamlContent);
+            return metadata;
         } catch (error) {
             console.error('Error reading metadata file:', error);
             return {};
@@ -511,15 +449,16 @@ legend: |-
      * Updates an existing metadata file with the payload that is provided
      * 
      * Modifies the metadata file in `.TagNodeMeta` folder corresponding to this node.
-     * The payload data is written as YAML frontmatter between --- delimiters.
+     * The payload data is written as JSON.
      * The filename is generated using the path-to-filename convention with base64 encoding.
      * 
-     * @param payload - The metadata content to write as YAML frontmatter
+     * @param payload - The metadata content to write as JSON
+     * @param operation - The operation to perform: 'add' (only add new keys), 'replace' (replace existing or add new), 'append' (append to existing or add new)
      * @returns boolean - true if update successful, false otherwise
      * 
      * Used when: Updating tag properties, modifying tag settings, metadata synchronization
      */
-    updateMeta(payload: Record<string, any>): boolean {
+    updateMeta(payload: Record<string, any>, operation: 'add' | 'replace' | 'append' = 'replace'): boolean {
         try {
             const metadataPath = this.getMetadataFilePath();
             
@@ -527,164 +466,20 @@ legend: |-
             if (!fs.existsSync(metadataPath)) {
                 return false; // File doesn't exist
             }
-            // Read full file and extract frontmatter + body
-            const fileContent = fs.readFileSync(metadataPath, 'utf8');
-            const fmMatch = fileContent.match(/^(---\n[\s\S]*?\n---)\n*/);
-            let existingFm = '';
-            let body = '';
-            if (fmMatch) {
-                existingFm = fmMatch[1];
-                body = fileContent.slice(fmMatch[0].length);
+            
+
+            // Call the appropriate function based on operation
+            switch (operation) {
+                case 'add':
+                    return metadataAddNewProperty(this.app, this.path, payload);
+                case 'replace':
+                    return metadataReplaceExistingProperty(this.app, this.path, payload);
+                case 'append':
+                    return metadataAppendToProperty(this.app, this.path, payload);
+                default:
+                    console.error('Invalid operation type:', operation);
+                    return false;
             }
-
-            const fmInner = existingFm ? existingFm.replace(/^---\n/, '').replace(/\n---$/, '') : '';
-
-            // Simple frontmatter parser supporting:
-            // - single-line scalars: key: "value" or key: value
-            // - block scalars: key: |-\n  line\n  line
-            // - block lists: key:\n  - item1\n  - item2
-            function parseFrontmatter(yaml: string): Record<string, any> {
-                const result: Record<string, any> = {};
-                if (!yaml) return result;
-
-                const lines = yaml.split('\n');
-                let i = 0;
-                while (i < lines.length) {
-                    const line = lines[i];
-                    // skip empty lines
-                    if (/^\s*$/.test(line)) { i++; continue; }
-
-                    // block list (key:) followed by indented - items
-                    const listKeyMatch = line.match(/^(\w[\w-]*):\s*$/);
-                    if (listKeyMatch) {
-                        const key = listKeyMatch[1];
-                        const items: string[] = [];
-                        i++;
-                        while (i < lines.length && /^\s*-\s+/.test(lines[i])) {
-                            const item = lines[i].replace(/^\s*-\s+/, '').trim();
-                            items.push(item.replace(/^"|"$/g, ''));
-                            i++;
-                        }
-                        result[key] = items;
-                        continue;
-                    }
-
-                    // block scalar (key: | or key: |-) followed by indented lines
-                    const blockMatch = line.match(/^(\w[\w-]*):\s*\|[-]?\s*$/);
-                    if (blockMatch) {
-                        const key = blockMatch[1];
-                        i++;
-                        const blockLines: string[] = [];
-                        while (i < lines.length && /^(\s+).*/.test(lines[i])) {
-                            // remove leading indentation (at least one space)
-                            blockLines.push(lines[i].replace(/^\s{1,}/, ''));
-                            i++;
-                        }
-                        result[key] = blockLines.join('\n');
-                        continue;
-                    }
-
-                    // single-line scalar
-                    const scalarMatch = line.match(/^(\w[\w-]*):\s*(?:"([^"]*)"|'([^']*)'|([^#].*))?$/);
-                    if (scalarMatch) {
-                        const key = scalarMatch[1];
-                        const val = scalarMatch[2] ?? scalarMatch[3] ?? (scalarMatch[4] ? scalarMatch[4].trim() : '');
-                        result[key] = val;
-                        i++;
-                        continue;
-                    }
-
-                    // If none matched, skip the line
-                    i++;
-                }
-                return result;
-            }
-
-            const existingData = parseFrontmatter(fmInner);
-
-            // Merge payload into existingData
-            for (const [key, incoming] of Object.entries(payload)) {
-                const existing = existingData[key];
-
-                // Normalize incoming to either array or scalar/string
-                const incomingVal = Array.isArray(incoming) ? incoming.slice() : incoming;
-
-                if (existing === undefined) {
-                    // property doesn't exist -> create
-                    existingData[key] = incomingVal;
-                    continue;
-                }
-
-                // If existing is array
-                if (Array.isArray(existing)) {
-                    const toAdd = Array.isArray(incomingVal) ? incomingVal : [incomingVal];
-                    const merged = existing.concat(toAdd).map(String);
-                    // dedupe
-                    existingData[key] = Array.from(new Set(merged));
-                    continue;
-                }
-
-                // If existing is string
-                if (typeof existing === 'string') {
-                    if (Array.isArray(incomingVal)) {
-                        // convert existing string to array and merge
-                        existingData[key] = Array.from(new Set([existing].concat(incomingVal.map(String))));
-                    } else {
-                        // append incoming to existing string separated by newline
-                        const incStr = incomingVal === null || incomingVal === undefined ? '' : String(incomingVal);
-                        if (incStr === '') {
-                            // nothing to append
-                            existingData[key] = existing;
-                        } else if (existing.includes(incStr)) {
-                            existingData[key] = existing; // avoid exact duplicate append
-                        } else {
-                            existingData[key] = existing + '\n' + incStr;
-                        }
-                    }
-                    continue;
-                }
-
-                // Fallback: replace
-                existingData[key] = incomingVal;
-            }
-
-            // Serialize frontmatter
-            function serializeFrontmatter(obj: Record<string, any>): string {
-                const lines: string[] = [];
-                for (const [k, v] of Object.entries(obj)) {
-                    if (Array.isArray(v)) {
-                        lines.push(`${k}:`);
-                        for (const item of v) {
-                            // quote items that contain special chars or leading/trailing spaces
-                            const s = String(item);
-                            lines.push(`  - ${s}`);
-                        }
-                    } else if (typeof v === 'string' && v.includes('\n')) {
-                        lines.push(`${k}: |-`);
-                        for (const l of v.split('\n')) {
-                            lines.push(`  ${l}`);
-                        }
-                    } else if (typeof v === 'string') {
-                        // scalar string
-                        const s = v.replace(/"/g, '\\"');
-                        lines.push(`${k}: "${s}"`);
-                    } else if (v === null || v === undefined) {
-                        lines.push(`${k}: ""`);
-                    } else {
-                        // numbers, booleans
-                        lines.push(`${k}: ${String(v)}`);
-                    }
-                }
-                return lines.join('\n');
-            }
-
-            const newFmInner = serializeFrontmatter(existingData);
-            const newFm = `---\n${newFmInner}\n---\n\n`;
-
-            // Write back file preserving body
-            fs.writeFileSync(metadataPath, newFm + body, 'utf8');
-
-            return true;
         } catch (error) {
             console.error('Error updating metadata file:', error);
             return false;
@@ -715,7 +510,7 @@ legend: |-
             
             // Get the child node
             const childNode = this.children[childTagName];
-                        
+            
             // Remove from children dictionary
             delete this.children[childTagName];
 
