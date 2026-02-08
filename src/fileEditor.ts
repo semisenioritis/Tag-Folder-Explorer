@@ -255,8 +255,11 @@ export async function readAllTagsFromFile(
 		
 		// Combine and deduplicate tags
 		const allTags = [...new Set([...yamlTags, ...bodyTags])];
+
+		// Filter out invalid tags
+		const validTags = allTags.filter(tag => checkIfTagIsValid(tag));
 		
-		return allTags;
+		return validTags;
 	} catch (error) {
 		console.error("Error reading all tags from file:", error);
 		return [];
@@ -276,9 +279,15 @@ export async function hasTag(
 	tag: string
 ): Promise<boolean> {
 	try {
+
+		// Check if the tag is valid
+		if (!checkIfTagIsValid(tag)) {
+			return false;
+		}
+
 		// Normalize the search tag (remove '#' if present)
 		const normalizedSearchTag = tag.startsWith('#') ? tag.slice(1) : tag;
-		
+
 		// Get all tags from the file (already without '#')
 		const allTags = await readAllTagsFromFile(app, file);
 		
@@ -308,6 +317,11 @@ export async function hasTagAnywhere(
 	tag: string
 ): Promise<boolean> {
 	try {
+		// Check if the tag is valid
+		if (!checkIfTagIsValid(tag)) {
+			return false;
+		}
+
 		// Normalize the search tag (remove '#' if present)
 		const normalizedSearchTag = tag.startsWith('#') ? tag.slice(1) : tag;
 		
@@ -339,6 +353,11 @@ export async function removeTagFromFileYaml(
 	tag: string
 ): Promise<boolean> {
 	try {
+		// Check if the tag is valid
+		if (!checkIfTagIsValid(tag)) {
+			return false;
+		}
+
 		// Normalize the tag (remove '#' if present)
 		const normalizedTag = tag.startsWith('#') ? tag.slice(1) : tag;
 		
@@ -392,6 +411,11 @@ export async function removeTagFromFileBody(
 	tag: string
 ): Promise<boolean> {
 	try {
+		// Check if the tag is valid
+		if (!checkIfTagIsValid(tag)) {
+			return false;
+		}
+
 		// Normalize the tag (ensure it has '#' prefix for matching)
 		const normalizedTag = tag.startsWith('#') ? tag : '#' + tag;
 		
@@ -451,8 +475,10 @@ export async function removeTagFromFile(
 	tag: string
 ): Promise<boolean> {
 	try {
-
-
+		// Check if the tag is valid
+		if (!checkIfTagIsValid(tag)) {
+			return false;
+		}
 
 		// Removing from body first and then yaml, since once a single function is complete, cache isnt refreshed. so indexing gets messed up. deleting yaml first would mess up the indexing for body. 
 
@@ -491,6 +517,11 @@ export async function addTagToFileYaml(
 	tag: string
 ): Promise<boolean> {
 	try {
+		// Check if the tag is valid
+		if (!checkIfTagIsValid(tag)) {
+			return false;
+		}
+
 		// Normalize the tag (remove '#' if present)
 		const normalizedTag = tag.startsWith('#') ? tag.slice(1) : tag;
 		
@@ -540,6 +571,16 @@ export async function replaceTagInFileYaml(
 	newTag: string
 ): Promise<boolean> {
 	try {
+		// Check if the tag is valid
+		if (!checkIfTagIsValid(oldTag)) {
+			return false;
+		}
+
+		// Check if the tag is valid
+		if (!checkIfTagIsValid(newTag)) {
+			return false;
+		}
+
 		// Normalize both tags (remove '#' if present)
 		const normalizedOldTag = oldTag.startsWith('#') ? oldTag.slice(1) : oldTag;
 		const normalizedNewTag = newTag.startsWith('#') ? newTag.slice(1) : newTag;
@@ -588,6 +629,15 @@ export async function replaceTagInFileBody(
 	newTag: string
 ): Promise<boolean> {
 	try {
+		// Check if the tag is valid
+		if (!checkIfTagIsValid(oldTag)) {
+			return false;
+		}
+
+		// Check if the tag is valid
+		if (!checkIfTagIsValid(newTag)) {
+			return false;
+		}
 		// Normalize the tags (ensure they have '#' prefix for matching)
 		const normalizedOldTag = oldTag.startsWith('#') ? oldTag : '#' + oldTag;
 		const normalizedNewTag = newTag.startsWith('#') ? newTag : '#' + newTag;
@@ -652,7 +702,15 @@ export async function replaceTagInFile(
 	newTag: string
 ): Promise<boolean> {
 	try {
+		// Check if the tag is valid
+		if (!checkIfTagIsValid(oldTag)) {
+			return false;
+		}
 
+		// Check if the tag is valid
+		if (!checkIfTagIsValid(newTag)) {
+			return false;
+		}
 		// Replace in file body
 		const bodySuccess = await replaceTagInFileBody(app, file, oldTag, newTag);
 		
@@ -1020,10 +1078,12 @@ export async function normalizeFrontmatter(
 		
 		// Convert to set and back to array to remove duplicates
 		// Also normalize by removing '#' prefix if present
-		const normalizedTags = [...new Set(tags.map((tag: string) => {
+		const normalizedTags: string[] = Array.from(new Set(tags.map((tag: string) => {
 			return tag.startsWith('#') ? tag.slice(1) : tag;
-		}))];
+		})));
 		
+		
+
 		// Update frontmatter with normalized tags
 		await app.fileManager.processFrontMatter(file, (frontmatter) => {
 			frontmatter.tags = normalizedTags;
@@ -1192,10 +1252,16 @@ function areMetadataTypesCompatible(sourceType: string, targetType: string): boo
 /**
  * Compute the metadata filename for a nested tag path using base64 encoding
  * @param tagPath - The nested tag path (e.g., "folder/subfolder/tag")
- * @returns The base64-encoded filename string
+ * @returns The base64-encoded filename string or false if the tagpath is invalid
  */
 export function metadataRecomputeName( app: App, tagPath: string): string {
 	
+	// Validate the tag path
+	if (!checkIfTagIsValid(tagPath)) {
+		console.error('Invalid tag path:', tagPath);
+		return '';
+	}
+
 	// Get the vault's base path from the app
 	const vaultPath = (app.vault.adapter as any).basePath || '';
 
@@ -1226,6 +1292,9 @@ export function checkIfMetadataFileExists(
 	tagPath: string
 ): boolean {
 	try {
+		// Validate the tag path
+		if (!checkIfTagIsValid(tagPath)) return false;
+
 		// Compute the actual filename from the tag path
 		const computedFilename = metadataRecomputeName(app, tagPath);
 		
@@ -1250,6 +1319,9 @@ export function metadataCreateSpecificEmptyFrontmatter(
 	frontmatterName: string
 ): boolean {
 	try {
+		// Validate the tag path
+		if (!checkIfTagIsValid(tagPath)) return false;
+
 		// Compute the actual filename from the tag path
 		const computedFilename = metadataRecomputeName(app, tagPath);
 		
@@ -1313,6 +1385,9 @@ export function metadataRenameFile(
 	newTagPath: string
 ): boolean {
 	try {
+		// Validate both tag paths
+		if (!checkIfTagIsValid(tagPath) || !checkIfTagIsValid(newTagPath)) return false;
+
 		// Compute the actual filenames from the tag paths
 		const oldFilename = metadataRecomputeName(app, tagPath);
 		const newFilename = metadataRecomputeName(app, newTagPath);
@@ -1350,6 +1425,9 @@ export function metadataReadAllFrontmatter(
 	tagPath: string
 ):any | null{
 	try {
+		// Validate the tag path
+		if (!checkIfTagIsValid(tagPath)) return null;
+
 		// Compute the actual filename from the tag path
 		const computedFilename = metadataRecomputeName(app, tagPath);
 		
@@ -1384,6 +1462,9 @@ export function metadataReadSpecificProperty(
 	frontmatterName: string
 ): any | undefined {
 	try {
+		// Validate the tag path
+		if (!checkIfTagIsValid(tagPath)) return undefined;
+
 		// Read all frontmatter from the file
 		const allMetadata = metadataReadAllFrontmatter(app, tagPath);
 		
@@ -1411,6 +1492,9 @@ export function metadataRemoveAllMetadata(
 	tagPath: string
 ): boolean {
 	try {
+		// Validate the tag path
+		if (!checkIfTagIsValid(tagPath)) return false;
+
 		// Compute the actual filename from the tag path
 		const computedFilename = metadataRecomputeName(app, tagPath);
 		
@@ -1443,6 +1527,9 @@ export function metadataRemoveSpecificProperty(
 	frontmatterName: string
 ): boolean {
 	try {
+		// Validate the tag path
+		if (!checkIfTagIsValid(tagPath)) return false;
+
 		// Read all metadata from the file
 		const jsonData = metadataReadAllFrontmatter(app, tagPath);
 		
@@ -1479,6 +1566,9 @@ export function metadataAddNewProperty(
 	jsonObject: Record<string, any>
 ): boolean {
 	try {
+		// Validate the tag path
+		if (!checkIfTagIsValid(tagPath)) return false;
+
 		// Read existing metadata from the file
 		let existingData = metadataReadAllFrontmatter(app, tagPath);
 		
@@ -1519,6 +1609,9 @@ export function metadataReplaceExistingProperty(
 	jsonObject: Record<string, any>
 ): boolean {
 	try {
+		// Validate the tag path
+		if (!checkIfTagIsValid(tagPath)) return false;
+
 		// Read existing metadata from the file
 		const existingData = metadataReadAllFrontmatter(app, tagPath);
 		
@@ -1561,6 +1654,9 @@ export function metadataAppendToProperty(
 	jsonObject: Record<string, any>
 ): boolean {
 	try {
+		// Validate the tag path
+		if (!checkIfTagIsValid(tagPath)) return false;
+
 		// Read existing metadata from the file
 		let existingData = metadataReadAllFrontmatter(app, tagPath);
 		
