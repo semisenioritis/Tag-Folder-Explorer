@@ -58,7 +58,27 @@ export class TreeRoot implements ITreeRoot {
      */
     private cachedSerializedTree: unknown = null 
 
+    /**
+     * Dictionary mapping file paths to their corresponding FileLeaf objects.
+     * Created before tree construction to enable fast file lookups.
+     * Key: file path (relative to vault root), Value: FileLeaf object
+     */
+    private filePathToLeafMap: Map<string, IFileLeaf> = new Map() 
 
+
+
+    /**
+     * The ITagNode Version of the Root of the file structure. 
+     * Orignally the constructRootNode function was used to just wrap the properties of the TreeRoot such as untaggedFiles etc and allow direct manipulation without a middle man.
+     * The root-tag-node technically didnt exist and was just a way to interact with the tree root in a tagnode format. 
+     * But it creates unnecesary duplications such as:
+     *      the original way to delete from a tree would be via delChildFile, and that should hand over to the tagnode.removeFile
+     *      But instead when it comes to the root tag node, delChildFile takes things into its own hands and makes the changes itself. 
+     *      Not a big deal now, but will lead to inconsistencies later. 
+     * 
+     * Simply put it is the Root Tag Node.
+     */
+    private rootTagNode: ITagNode;
 
     // ==================== CONSTRUCTOR ====================
     
@@ -76,7 +96,7 @@ export class TreeRoot implements ITreeRoot {
         this.excludedFolders = new Set<string>();
 
         // retrieve the excluded folders from the obsidian settings. in obsidian, the excluded folders is a simple text box where each path to be expluded is placed on a separate line. 
-        // TODO   
+
         this.settings = settings;
 
         this.rootTags = new Set<ITagNode>();
@@ -86,6 +106,8 @@ export class TreeRoot implements ITreeRoot {
         // console.log (settings)
 
         this.recomputeTree(settings);
+ 
+        this.rootTagNode = this.constructRootNode()
 
 
 
@@ -170,6 +192,38 @@ export class TreeRoot implements ITreeRoot {
     }
     
     /**
+     * Gets the file path to FileLeaf dictionary
+     * 
+     * @returns Map<string, IFileLeaf> - Dictionary mapping file paths to FileLeaf objects
+     * 
+     * Used when: Fast lookups of FileLeaf objects by path, checking if file exists in vault
+     */
+    public getFilePathMap(): Map<string, IFileLeaf> {
+        return this.filePathToLeafMap;
+    }
+    
+    /**
+     * Retrieves a FileLeaf object by its file path
+     * 
+     * Uses the pre-built file path dictionary for O(1) lookup time.
+     * This is the primary method for retrieving FileLeaf objects by path.
+     * 
+     * @param filepath - The path of the file relative to vault root
+     * @returns IFileLeaf | null - The FileLeaf object if found, null otherwise
+     * 
+     * Used when: Fast file lookups, getting FileLeaf reference, checking file existence
+     */
+    public fileLeafRetriever(filepath: string): IFileLeaf | null {
+        if (!filepath || filepath.trim() === '') {
+            return null;
+        }
+        
+        return this.filePathToLeafMap.get(filepath) || null;
+    }
+    
+
+
+    /**
      * Invalidates the cached serialized tree and increments version.
      * Should be called whenever the tree structure is modified without full recomputation.
      */
@@ -195,7 +249,7 @@ export class TreeRoot implements ITreeRoot {
         
         // Check untagged files
         for (const file of this.untaggedFiles) {
-            if (file.getName() === filename && file.getPath() === filepath) {
+            if (file.getPath() === filepath) {
                 instances.push(''); // Empty string represents untagged
                 break;
             }
@@ -257,7 +311,7 @@ export class TreeRoot implements ITreeRoot {
                     }
                     
                     // Create new root tag node
-                    const childNode = new TagNode(childName, childName, null, this.app);
+                    const childNode = new TagNode(childName, childName, null, this.app, this.filePathToLeafMap);
                     this.rootTags.add(childNode);
                     
                     return true;
@@ -276,14 +330,26 @@ export class TreeRoot implements ITreeRoot {
                     
                     // Check if file already exists in untaggedFiles
                     for (const file of this.untaggedFiles) {
-                        if (file.getName() === nameOfFile) {
+                        if (file.getPath() === pathToFile) {
                             return false; // File already exists
                         }
                     }
                     
                     // Create FileLeaf instance and add to untaggedFiles
-                    const fileLeaf = new FileLeaf(nameOfFile.trim(), pathToFile.trim(), '', this.app);
-                    this.untaggedFiles.add(fileLeaf);
+                    // const fileLeaf = new FileLeaf(nameOfFile.trim(), pathToFile.trim(), this.app);
+                    
+                    
+                    // Retriveing the file from the file map
+                    const fileLeaf = this.fileLeafRetriever(pathToFile.trim())
+
+
+                    if (fileLeaf){
+                        this.untaggedFiles.add(fileLeaf);
+                    }else{
+                        console.error('File map did not contain the required FileLeaf');
+                        return false
+                    }
+                    
                     
                     return true;
                 } catch (error) {
@@ -320,9 +386,9 @@ export class TreeRoot implements ITreeRoot {
             getFiles: () => this.untaggedFiles,
             
             // Returns specific file from untaggedFiles
-            getFile: (nameOfFile: string): IFileLeaf | null => {
+            getFile: (pathToFile: string): IFileLeaf | null => {
                 for (const file of this.untaggedFiles) {
-                    if (file.getName() === nameOfFile) {
+                    if (file.getPath() === pathToFile) {
                         return file;
                     }
                 }
@@ -352,11 +418,11 @@ export class TreeRoot implements ITreeRoot {
             },
             
             // Removes specific file from untaggedFiles
-            removeFile: (filename: string): boolean => {
+            removeFile: (filePath: string): boolean => {
                 try {
                     // Find and remove the file from untaggedFiles
                     for (const file of this.untaggedFiles) {
-                        if (file.getName() === filename) {
+                        if (file.getPath() === filePath) {
                             this.untaggedFiles.delete(file);
                             return true;
                         }
@@ -391,7 +457,44 @@ export class TreeRoot implements ITreeRoot {
                 };
 
 
-            }
+            }, 
+
+            addFileLeaftoFiles: (fileLeaf:IFileLeaf):boolean =>{
+                if(fileLeaf){
+                    this.untaggedFiles.add(fileLeaf);
+                    return true
+                } else{
+                    return false
+                }
+
+            },
+
+            fileLeafIndexUpdater: (oldfilepath: string, newfilepath: string): boolean =>{
+                // Validate inputs
+                if (!oldfilepath || !newfilepath || oldfilepath.trim() === '' || newfilepath.trim() === '') {
+                    return false;
+                }
+                
+                // Check if old path exists in the map
+                const fileLeaf = this.filePathToLeafMap.get(oldfilepath);
+                if (!fileLeaf) {
+                    console.error(`Old file path not found in map: ${oldfilepath}`);
+                    return false;
+                }
+                
+                // Check if new path already exists (avoid overwriting)
+                if (this.filePathToLeafMap.has(newfilepath)) {
+                    console.error(`New file path already exists in map: ${newfilepath}`);
+                    return false;
+                }
+                
+                // Remove the old key and add the new key with the same FileLeaf reference
+                this.filePathToLeafMap.delete(oldfilepath);
+                this.filePathToLeafMap.set(newfilepath, fileLeaf);
+                
+                return true;
+
+            },  
         };
         return rootNode;
     }
@@ -411,7 +514,7 @@ export class TreeRoot implements ITreeRoot {
      */
     public getNode(tagpath: string): ITagNode | null {
         if (!tagpath || tagpath.trim() === '') {{
-            let rootNode = this.constructRootNode()
+            let rootNode = this.rootTagNode
             return rootNode;
         }}
         
@@ -419,7 +522,7 @@ export class TreeRoot implements ITreeRoot {
         const tagSegments = tagpath.split('/').filter(segment => segment.length > 0);
         
         if (tagSegments.length === 0) {
-            let rootNode = this.constructRootNode()
+            let rootNode = this.rootTagNode
             return rootNode;
         }
         
@@ -466,16 +569,9 @@ export class TreeRoot implements ITreeRoot {
      * Used when: File lookup, file-based operations, file queries
      */
     public getFile(filename: string, filepath: string, tagpath: string): IFileLeaf | null {
-        // If tagpath is empty, check untagged files
-        if (!tagpath || tagpath.trim() === '') {
-            for (const file of this.untaggedFiles) {
-                if (file.getName() === filename && file.getPath() === filepath) {
-                    return file;
-                }
-            }
-            return null;
-        }
+        // If tagpath is empty follow the same method as before. this time getNode will return the rootTagNode
         
+    
         // Navigate to the specific tag node
         const tagNode = this.getNode(tagpath);
         if (!tagNode) {
@@ -483,7 +579,7 @@ export class TreeRoot implements ITreeRoot {
         }
         
         // Get the file from that specific node
-        return tagNode.getFile(filename);
+        return tagNode.getFile(filepath);
     }
     
     // ==================== TREE COMPUTATION & MANIPULATION ====================
@@ -517,7 +613,8 @@ export class TreeRoot implements ITreeRoot {
 
         this.excludedFolders= new Set(currentSettings.folderPathsToSkip.split("\n").filter(line => line.length > 0));
 
-        
+        // Build file path dictionary BEFORE tree construction
+        this.filePathToLeafMap = this.buildFilePathDictionary();
         // Recursively process all files
         this.processVaultFolder(vaultRoot);
 
@@ -527,6 +624,9 @@ export class TreeRoot implements ITreeRoot {
         // Increment version counter and invalidate cache after tree recomputation
         this.treeVersion++;
         this.cachedSerializedTree = null;
+
+        // console.log("test map")
+        // console.log(this.filePathToLeafMap)
     }
     
     /**
@@ -612,17 +712,8 @@ export class TreeRoot implements ITreeRoot {
      * Used when: File removal, file deletion handling, tree maintenance
      */
     public delChildFile(filename: string, filepath: string, tagpath: string): boolean | null {
-        // If tagpath is empty, delete from untagged files
-        if (!tagpath || tagpath.trim() === '') {
-            for (const file of this.untaggedFiles) {
-                if (file.getName() === filename && file.getPath() === filepath) {
-                    this.untaggedFiles.delete(file);
-                    return true;
-                }
-            }
-            return null; // Not found
-        }
-        
+        // If tagpath is empty follow the same method as before. this time getNode will return the rootTagNode
+    
         // Navigate to the specific tag node
         const tagNode = this.getNode(tagpath);
         if (!tagNode) {
@@ -631,10 +722,67 @@ export class TreeRoot implements ITreeRoot {
         
         // Remove the file from that specific node
         
-        return tagNode.removeFile(filename);
+        return tagNode.removeFile(filepath);
     }
     
     // ==================== PRIVATE HELPER METHODS ====================
+    
+    /**
+     * Builds a dictionary mapping file paths to FileLeaf objects for all files in the vault.
+     * This function runs before tree construction to create a comprehensive lookup table.
+     * 
+     * The dictionary enables O(1) access to any FileLeaf by its path, which is useful for:
+     * - Fast file lookups during tree operations
+     * - Preventing duplicate FileLeaf creation
+     * - Maintaining consistent FileLeaf references across the tree
+     * 
+     * @returns Map<string, IFileLeaf> - Dictionary with file paths as keys and FileLeaf objects as values
+     * 
+     * Implementation notes:
+     * - Recursively scans the entire vault
+     * - Respects excluded folders (skips processing them)
+     * - Creates exactly one FileLeaf per file in the vault
+     * - If vault has n files, the returned map will have n entries
+     */
+    private buildFilePathDictionary(): Map<string, IFileLeaf> {
+        const fileMap = new Map<string, IFileLeaf>();
+        
+        // Get vault root
+        const vaultRoot = this.app.vault.getRoot();
+        if (!vaultRoot || !(vaultRoot instanceof TFolder)) {
+            console.error('Cannot access vault root for building file path dictionary');
+            return fileMap;
+        }
+        
+        // Recursive helper to scan folders and build the map
+        const scanFolder = (folder: TFolder): void => {
+            // Check if this folder should be excluded
+            if (this.isExcludedFolder(folder.path)) {
+                return;
+            }
+            
+            // Process all children
+            for (const child of folder.children) {
+                if (child instanceof TFolder) {
+                    // Recursively process subfolders
+                    scanFolder(child);
+                } else if (child instanceof TFile) {
+                    // Create FileLeaf and add to dictionary
+                    try {
+                        const fileLeaf = new FileLeaf(child.basename, child.path, this.app);
+                        fileMap.set(child.path, fileLeaf);
+                    } catch (error) {
+                        console.error(`Error creating FileLeaf for ${child.path}:`, error);
+                    }
+                }
+            }
+        };
+        
+        // Start recursive scan from vault root
+        scanFolder(vaultRoot);
+        
+        return fileMap;
+    }
     
     /**
      * Recursively processes a vault folder and extracts files and tags
@@ -667,20 +815,31 @@ export class TreeRoot implements ITreeRoot {
     private processFile(file: TFile): void {
         try {
             // Create FileLeaf for this file
-            const fileLeaf = new FileLeaf(file.basename, file.path, '', this.app);
+            // const fileLeaf = new FileLeaf(file.basename, file.path, this.app);
             
-            // Get all tags from the file
-            const tagPaths = fileLeaf.retrieveAllPaths();
-            
-            if (tagPaths.length === 0) {
-                // No tags, add to untagged files
-                this.untaggedFiles.add(fileLeaf);
-            } else {
-                // Process each tag path
-                for (const tagPath of tagPaths) {
-                    this.addFileToTagPath(fileLeaf, tagPath);
+            // Retriveing the file from the file map
+            const fileLeaf = this.fileLeafRetriever(file.path.trim())
+
+
+
+            if (fileLeaf){
+                // Get all tags from the file
+                const tagPaths = fileLeaf.retrieveAllTagPaths();
+                
+                if (tagPaths.length === 0) {
+                    // No tags, add to untagged files
+                    this.untaggedFiles.add(fileLeaf);
+                } else {
+                    // Process each tag path
+                    for (const tagPath of tagPaths) {
+                        this.addFileToTagPath(fileLeaf, tagPath);
+                    }
                 }
-            }
+            }else{
+                console.error('File map did not contain the required FileLeaf');
+
+                throw new Error("File map did not contain the required FileLeaf");
+                }
         } catch (error) {
             console.error(`Error processing file ${file.path}:`, error);
         }
@@ -720,7 +879,7 @@ export class TreeRoot implements ITreeRoot {
                 
                 if (!rootTag) {
                     // Create new root tag
-                    rootTag = new TagNode(segmentName, currentPath, null, this.app);
+                    rootTag = new TagNode(segmentName, currentPath, null, this.app, this.filePathToLeafMap);
                     this.rootTags.add(rootTag);
                 }
                 
@@ -744,7 +903,8 @@ export class TreeRoot implements ITreeRoot {
         
         // Add the file to the final node
         if (currentNode) {
-            currentNode.createNewFile(fileLeaf.getName(), fileLeaf.getPath());
+            // currentNode.createNewFile(fileLeaf.getName(), fileLeaf.getPath());
+            currentNode.addFileLeaftoFiles(fileLeaf)
         }
     }
     
@@ -897,7 +1057,7 @@ export class TreeRoot implements ITreeRoot {
                 
                 if (!rootTag) {
                     // Create new root tag
-                    rootTag = new TagNode(segmentName, currentPath, null, this.app);
+                    rootTag = new TagNode(segmentName, currentPath, null, this.app, this.filePathToLeafMap);
                     this.rootTags.add(rootTag);
                 }
                 
@@ -941,8 +1101,8 @@ export class TreeRoot implements ITreeRoot {
                 children: serializedChildren,
                 files: Array.from(node.getFiles()).map(file => ({
                     name: file.getName(),
-                    path: file.getPath(),
-                    tagpath: file.getTagPath(),
+                    path: file.getPath()
+            
                 })),
                 totalFileCount: totalFileCount,
             };
@@ -952,8 +1112,8 @@ export class TreeRoot implements ITreeRoot {
             rootTags: Array.from(this.rootTags).map(serializeNode),
             untaggedFiles: Array.from(this.untaggedFiles).map(file => ({
                 name: file.getName(),
-                path: file.getPath(),
-                tagpath: file.getTagPath(),
+                path: file.getPath()
+                
             })),
         };
     }

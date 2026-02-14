@@ -25,11 +25,7 @@ export interface IFileLeaf {
      */
     // path: string;
 
-    /**
-     * The tag path associated with this file
-     * Represents the nested tag path that leads to this file (e.g., "subject/math")
-     */
-    // tagpath: string;
+
 
     
     /**
@@ -48,7 +44,6 @@ export interface IFileLeaf {
      * 
      * @param name - The name of the file
      * @param path - The relative path of the file in the vault
-     * @param tagpath - The tag path associated with the file
      * @param file - The TFile reference of the actual file
      * @param app - The Obsidian App instance for API access
      * @returns FileLeaf - The constructed FileLeaf object
@@ -81,15 +76,6 @@ export interface IFileLeaf {
     
 
 
-    /**     
-     * Gets the tag path associated with the file
-     *
-     * @returns string - The tag path associated with the file
-     *
-     * Used when: Tag-based operations, tree positioning, file categorization
-     */
-    getTagPath(): string;
-
     /**
      * Edits/updates the name of the file
      * 
@@ -108,14 +94,7 @@ export interface IFileLeaf {
      */
     editPath(newPath: string): void;
 
-    /**
-     * Edits/updates the tag path associated with the file
-     * 
-     * @param newTagPath - The new tag path to associate with the file
-     * 
-     * Used when: Retagging files, updating file categorization
-     */
-    editTagPath(newTagPath: string): void;
+
 
     
     
@@ -130,7 +109,7 @@ export interface IFileLeaf {
      * 
      * Used when: Building tree structure, updating file positions, tree validation
      */
-    retrieveAllPaths(): string[];
+    retrieveAllTagPaths(): string[];
     
     /**
      * Retrieves the metadata of the actual file
@@ -321,12 +300,12 @@ export interface ITagNode {
     /**
      * Gets a specific file of the node object with a given name and returns it
      * 
-     * @param nameOfFile - The name of the file to retrieve
+     * @param pathOfFile - The path of the file to retrive
      * @returns IFileLeaf | null - The FileLeaf object, or null if not found
      * 
      * Used when: Finding specific file, file operations, targeted file access
      */
-    getFile(nameOfFile: string): IFileLeaf | null;
+    getFile(pathOfFile: string): IFileLeaf | null;
     
     /**
      * Retrieves the metadata inside the metadata file corresponding to this node
@@ -417,15 +396,15 @@ export interface ITagNode {
     /**
      * Given a filename, removes the FileLeaf object from this node
      * 
-     * Searches for the file with the specified name in the files array and
+     * Searches for the file with the specified path in the files array and
      * removes it from this node.
      * 
-     * @param fileName - The name of the file to remove
+     * @param filePath - The path of the file to remove
      * @returns boolean - true if successful, false otherwise
      * 
      * Used when: File deletion, tag removal from files, tree maintenance
      */
-    removeFile(fileName: string): boolean;
+    removeFile(filePath: string): boolean;
 
 
 
@@ -449,10 +428,16 @@ export interface ITagNode {
      * Returns the serialized version of the current node. Easy way to get the node to render in the frontend
      * 
      */
-    serializeTagNode(): ISerializedTagNode ; 
+    serializeTagNode(): ISerializedTagNode; 
 
     
 
+    /**
+     * Allows to take a file leaf object and add it to the tagnode files property
+     * 
+     * @param fileLeaf 
+     */
+    addFileLeaftoFiles(fileLeaf:IFileLeaf):boolean;
 
 }
 
@@ -622,9 +607,7 @@ export interface ITreeRoot {
      * 
      */
     getSkipFolderPath(): string[];
-
-  
-    
+      
     /**
      * Returns a list of paths of the current tree where the file that is passed in exists.
      * 
@@ -639,7 +622,7 @@ export interface ITreeRoot {
     // // getAllDirectChildrenFiles
 
 
-    // the two below make these redundant
+    // the two below, make these redundant
     // /**
     //  * Returns a specific node according to the name provided, only from the roottag list 
     //  * 

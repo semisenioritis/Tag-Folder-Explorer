@@ -14,7 +14,6 @@ export class FileLeaf implements IFileLeaf {
 
     private name: string;
     private path: string;
-    private tagpath: string;
     private file: TFile;
     private app: App;
     
@@ -25,16 +24,14 @@ export class FileLeaf implements IFileLeaf {
      * 
      * @param name - The name of the file
      * @param path - The relative path of the file in the vault
-     * @param tagpath - The tag path associated with the file
      * @param file - The TFile reference of the actual file
      * @param app - The Obsidian App instance for API access
      * 
      * Used when: Building the tree structure from vault scan, adding new files to tree
      */
-    constructor(name: string, path: string, tagpath: string, app: App) {
+    constructor(name: string, path: string, app: App) {
         this.name = name;
         this.path = path;
-        this.tagpath = tagpath;
         this.app = app;
         
         // Get the TFile reference from the vault using the path
@@ -72,16 +69,7 @@ export class FileLeaf implements IFileLeaf {
         return this.path;
     }
     
-    /**
-     * Gets the tag path associated with the file
-     *
-     * @returns string - The tag path associated with the file
-     * 
-     * Used when: Displaying tag paths in UI, tag-based lookups, tree navigation
-     */
-    public getTagPath(): string {
-        return this.tagpath;
-    }
+
 
     /**
      * Edits/updates the name of the file
@@ -105,16 +93,7 @@ export class FileLeaf implements IFileLeaf {
         this.path = newPath;
     }
 
-    /**
-     * Edits/updates the tag path associated with the file
-     * 
-     * @param newTagPath - The new tag path to associate with the file
-     * 
-     * Used when: Retagging files, updating file categorization
-     */
-    public editTagPath(newTagPath: string): void {
-        this.tagpath = newTagPath;
-    }
+
 
     /**
      * Retrieves all the tag paths that this file exists under
@@ -127,7 +106,7 @@ export class FileLeaf implements IFileLeaf {
      * 
      * Used when: Building tree structure, updating file positions, tree validation
      */
-    public retrieveAllPaths(): string[] {
+    public retrieveAllTagPaths(): string[] {
         try {
             // Get the cached metadata for this file
             const metadata = this.app.metadataCache.getFileCache(this.file);
@@ -135,7 +114,7 @@ export class FileLeaf implements IFileLeaf {
             const allTags: string[] = [];
             
             // Extract all tags from file body
-            // 🔴🔴 DEPRECATED 
+            // 🔴🔴  ONLY PARTIAL SECTION OF FUNCTION IS DEPRECATED 
             // Since we are not handling the existence of tags inside the body, because deleting them from the body is a very tedious task, right now we are not using this at all. 
             // if (metadata?.tags) {
             //     for (const tagCache of metadata.tags) {

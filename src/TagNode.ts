@@ -48,11 +48,19 @@ export class TagNode implements ITagNode {
     private files: Set<IFileLeaf>;
     
     /**
+     * A set of FileLeaf objects present under this tag path
+     * Contains every file that has this nested tag path in it (guaranteed unique)
+     */
+    private refFilePathToLeafMap: Map<string, IFileLeaf>;
+    
+
+    /**
      * Reference to the Obsidian App instance for file operations
      * Used for metadata file operations and vault access
      */
     private app: App;
     
+
     // ==================== CONSTRUCTOR ====================
     
     /**
@@ -66,11 +74,12 @@ export class TagNode implements ITagNode {
      * @param parent - The parent TagNode object, or null if this is root
      * @param app - The Obsidian App instance for file operations
      */
-    constructor(name: string, path: string, parent: ITagNode | null, app: App) {
+    constructor(name: string, path: string, parent: ITagNode | null, app: App, fileLeafMapRef: Map<string, IFileLeaf>) {
         this.name = name;
         this.path = path;
         this.parent = parent;
-        this.children = {};
+        this.children = {}; 
+        this.refFilePathToLeafMap = fileLeafMapRef;
         this.files = new Set<IFileLeaf>();
         this.app = app;
         
@@ -110,7 +119,7 @@ export class TagNode implements ITagNode {
             const childPath = this.path === '' ? childName : this.path + '/' + childName;
             
             // Create new child node
-            const childNode = new TagNode(childName, childPath, this, this.app);
+            const childNode = new TagNode(childName, childPath, this, this.app, this.refFilePathToLeafMap);
             
             // Add to children dictionary
             this.children[childName] = childNode;
@@ -142,15 +151,25 @@ export class TagNode implements ITagNode {
             }
             
             // Check if file already exists in this node
-            if (this.getFile(nameOfFile)) {
+            if (this.getFile(pathToFile)) {
                 return false; // File already exists
             }
             
 
 
             // Create FileLeaf instance and add it to this node
-            const fileLeaf = new FileLeaf(nameOfFile.trim(), pathToFile.trim(), this.path, this.app);
-            this.files.add(fileLeaf);
+            // const fileLeaf = new FileLeaf(nameOfFile.trim(), pathToFile.trim(), this.app);
+
+            // Rather than creating a new FileLeaf, just retrive it from the filePathToLeafMap
+            const fileLeaf = this.fileLeafRetriever(pathToFile.trim())
+
+            if (fileLeaf){
+                this.files.add(fileLeaf);
+            }else{
+                console.error('File map did not contain the required FileLeaf');
+                return false
+            }
+            
             
             return true;
         } catch (error) {
@@ -298,9 +317,9 @@ export class TagNode implements ITagNode {
      * 
      * Used when: Finding specific file, file operations, targeted file access
      */
-    getFile(nameOfFile: string): IFileLeaf | null {
+    getFile(pathOfFile: string): IFileLeaf | null {
         for (const file of this.files) {
-            if (file.getName() === nameOfFile) {
+            if (file.getPath() === pathOfFile) {
                 return file;
             }
         }
@@ -411,6 +430,7 @@ export class TagNode implements ITagNode {
      * 
      * Updates the path property of this node. Should be used carefully as it
      * affects the node's position in the tree hierarchy.
+     * Technically it doesnt affect the actual position in the tree, but changes teh values that this node stores as its own path and name. 
      * Extracts the node name from the new path and updates the name property as well.
      * 
      * @param newPath - The new path for this tag node
@@ -535,11 +555,11 @@ export class TagNode implements ITagNode {
      * 
      * Used when: File deletion, tag removal from files, tree maintenance
      */
-    removeFile(fileName: string): boolean {
+    removeFile(filePath:string): boolean {
         try {
             // Find the file with the matching name
             for (const file of this.files) {
-                if (file.getName() === fileName) {
+                if (file.getPath() === filePath) {
                     // Remove the file from the set
                     this.files.delete(file);
                     return true;
@@ -620,6 +640,87 @@ export class TagNode implements ITagNode {
             children: childrenData,
             files: filesData
         };
+    }
+
+
+    /**
+     * Gets the file path to FileLeaf dictionary
+     * 
+     * @returns Map<string, IFileLeaf> - Dictionary mapping file paths to FileLeaf objects
+     * 
+     * Used when: Fast lookups of FileLeaf objects by path, checking if file exists in vault
+     */
+    public getFilePathMap(): Map<string, IFileLeaf> {
+        return this.refFilePathToLeafMap;
+    }
+    
+    /**
+     * Retrieves a FileLeaf object by its file path
+     * 
+     * Uses the pre-built file path dictionary for O(1) lookup time.
+     * This is the primary method for retrieving FileLeaf objects by path.
+     * 
+     * @param filepath - The path of the file relative to vault root
+     * @returns IFileLeaf | null - The FileLeaf object if found, null otherwise
+     * 
+     * Used when: Fast file lookups, getting FileLeaf reference, checking file existence
+     */
+    public fileLeafRetriever(filepath: string): IFileLeaf | null {
+        if (!filepath || filepath.trim() === '') {
+            return null;
+        }
+        
+        return this.refFilePathToLeafMap.get(filepath) || null;
+    }
+
+    public addFileLeaftoFiles(fileLeaf:IFileLeaf):boolean{
+
+        if(fileLeaf){
+            this.files.add(fileLeaf);
+            return true
+        }
+        else{
+            return false
+        }
+    }
+
+    /**
+     * Updates the file path key in the filePathToLeafMap dictionary
+     * 
+     * When a file is renamed or moved, this function updates the map entry
+     * by removing the old path key and adding the new path key while preserving
+     * the same FileLeaf object reference.
+     * 
+     * @param oldfilepath - The current/old file path (existing key in the map)
+     * @param newfilepath - The new file path (new key for the map)
+     * @returns boolean - true if update successful, false if old path not found or new path already exists
+     * 
+     * Used when: File rename operations, file move operations, maintaining map consistency
+     */
+    public fileLeafIndexUpdater(oldfilepath: string, newfilepath: string): boolean {
+        // Validate inputs
+        if (!oldfilepath || !newfilepath || oldfilepath.trim() === '' || newfilepath.trim() === '') {
+            return false;
+        }
+        
+        // Check if old path exists in the map
+        const fileLeaf = this.refFilePathToLeafMap.get(oldfilepath);
+        if (!fileLeaf) {
+            console.error(`Old file path not found in map: ${oldfilepath}`);
+            return false;
+        }
+        
+        // Check if new path already exists (avoid overwriting)
+        if (this.refFilePathToLeafMap.has(newfilepath)) {
+            console.error(`New file path already exists in map: ${newfilepath}`);
+            return false;
+        }
+        
+        // Remove the old key and add the new key with the same FileLeaf reference
+        this.refFilePathToLeafMap.delete(oldfilepath);
+        this.refFilePathToLeafMap.set(newfilepath, fileLeaf);
+        
+        return true;
     }
 
 }
