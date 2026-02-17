@@ -3,23 +3,35 @@
 "endTime":"",
 "actualaction":"_action_",
 "action":[
-    "createfolder",
-    "renamefile",
-    "renametag",
-    "removefile",
-    "removefolder",
-    "deletefile",
-    "movefolder",
-    "movefile",
+        "createfolder",
+        "renamefile",
+        "renametag",
+        "removefile",
+        "removefolder",
+        "deletefile",
+        "movefolder",
+        "movefile",
 
-    "copyfile",
-    "copyfiles",
-    "copyfolder",
-    "copyfolders",
-    "copymix",
 
-    "cut",
-    "paste"
+
+        "copyfile",
+        "copyfiles",
+        "copyfolder",
+        "copyfolders",
+        "copymix",
+
+        "cutfile",
+        "cutfiles",
+        "cutfolder",
+        "cutfolders",
+        "cutmix",
+
+        "pastefile",
+        "pastefiles",
+        "pastefolder",
+        "pastefolders",
+        "pastemix"
+        
 ],
 "listOfFiles":["fileNameWithPhysicalPath","fileNameWithPhysicalPath2"],
 "listOfFileLeaves":["tagpath1","tagpath2","tagpath3"],
