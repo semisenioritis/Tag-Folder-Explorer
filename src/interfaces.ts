@@ -73,6 +73,14 @@ export interface IFileLeaf {
      * Used when: File operations, path-based lookups, tree navigation
      */
     getPath(): string;
+
+    /**
+     * Gets the tFile of the file
+     * 
+     * @return tFile - The obsidian representation of the file in the vault
+     * 
+     */
+    getTFile(): TFile;
     
 
 

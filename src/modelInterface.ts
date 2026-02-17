@@ -67,6 +67,8 @@ export function getrightSidebarData(parentfolder: string, type: string, path: st
         // console.log("from inside file")
         let filename = path.split("/").pop()?.replace(/\.[^/.]+$/, "") ?? "";
         const file = treeObj?.getFile(filename, path, parentfolder)
+        let filenamestring = file?.getName()
+        let filepathstring = file?.getPath()
         let filemetadata = file?.fileMetadata()
         let fileinitial = file?.readInitial()
         let fileobsdata = file?.fileObsCreateModDate()
@@ -77,7 +79,7 @@ export function getrightSidebarData(parentfolder: string, type: string, path: st
         // console.log(fileinitial)
         // console.log(fileobsdata)
         // console.log("++++++++")
-        return {filemetadata, fileinitial, fileobsdata}
+        return {filemetadata, fileinitial, fileobsdata, filenamestring, filepathstring}
 
 
     }

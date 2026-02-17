@@ -237,6 +237,21 @@
         
         </div>
 
+        <div class="metadata-section">
+        
+            <div class="metadata-field">
+                <span class="field-label">Name:</span>
+                <span class="field-value">{metadataViewData.filenamestring || 'N/A'}</span>
+            </div>
+            
+            <div class="metadata-field">
+                <span class="field-label">Path:</span>
+                <span class="field-value path">{metadataViewData.filepathstring || 'N/A'}</span>
+            </div>
+
+
+        </div>
+
       {#if metadataViewData.filemetadata && Object.keys(metadataViewData.filemetadata).length > 0}
       {@const filteredMetadata = Object.entries(metadataViewData.filemetadata).filter(([key]) => shouldDisplayField(key))}
       {#if filteredMetadata.length > 0}

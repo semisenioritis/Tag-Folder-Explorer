@@ -221,7 +221,55 @@ export class TreeRoot implements ITreeRoot {
         return this.filePathToLeafMap.get(filepath) || null;
     }
     
+    /**
+     * Updates the file path key in the filePathToLeafMap dictionary
+     * 
+     * When a file is renamed or moved, this function updates the map entry
+     * by removing the old path key and adding the new path key while preserving
+     * the same FileLeaf object reference.
+     * 
+     * @param oldfilepath - The current/old file path (existing key in the map)
+     * @param newfilepath - The new file path (new key for the map)
+     * @returns boolean - true if update successful, false if old path not found or new path already exists
+     * 
+     * Used when: File rename operations, file move operations, maintaining map consistency
+     */
+    public fileLeafIndexUpdater(oldfilepath: string, newfilepath: string): boolean {
+        // Validate inputs
+        if (!oldfilepath || !newfilepath || oldfilepath.trim() === '' || newfilepath.trim() === '') {
+            return false;
+        }
+        
+        // Check if old path exists in the map
+        const fileLeaf = this.filePathToLeafMap.get(oldfilepath);
+        if (!fileLeaf) {
+            console.error(`Old file path not found in map: ${oldfilepath}`);
+            return false;
+        }
+        
+        // Check if new path already exists (avoid overwriting)
+        if (this.filePathToLeafMap.has(newfilepath)) {
+            console.error(`New file path already exists in map: ${newfilepath}`);
+            return false;
+        }
+        
+        // Remove the old key and add the new key with the same FileLeaf reference
+        this.filePathToLeafMap.delete(oldfilepath);
+        this.filePathToLeafMap.set(newfilepath, fileLeaf);
+        
+        return true;
+    }
 
+    /**
+     * Gets the root tag node (proxy TagNode version of TreeRoot)
+     * 
+     * @returns ITagNode - The root TagNode object
+     * 
+     * Used when: Need to treat TreeRoot as a TagNode for unified operations
+     */
+    public getRootNode(): ITagNode {
+        return this.rootTagNode;
+    }
 
     /**
      * Invalidates the cached serialized tree and increments version.

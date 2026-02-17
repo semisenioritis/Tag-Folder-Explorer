@@ -69,6 +69,16 @@ export class FileLeaf implements IFileLeaf {
         return this.path;
     }
     
+    /**
+     * Gets the tFile of the file
+     * 
+     * @return tFile - The obsidian representation of the file in the vault
+     * 
+     * 
+     */
+    public getTFile(): TFile{
+        return this.file
+    }
 
 
     /**
