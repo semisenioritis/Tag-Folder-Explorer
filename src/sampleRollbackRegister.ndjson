@@ -1,0 +1,292 @@
+{
+    "type": "action_divider"
+}
+
+{
+    "type": "action_end",
+    "timestamp": 1771327345,
+}
+
+{
+    "type": "action_start",
+    "timestamp": 1771326932,
+    "action":[
+        "createfolder",
+        "renamefile",
+        "renametag",
+        "removefile",
+        "removefolder",
+        "deletefile",
+        "movefolder",
+        "movefile",
+
+
+
+        "copyfile",
+        "copyfiles",
+        "copyfolder",
+        "copyfolders",
+        "copymix",
+
+        "cutfile",
+        "cutfiles",
+        "cutfolder",
+        "cutfolders",
+        "cutmix",
+
+        "pastefile",
+        "pastefiles",
+        "pastefolder",
+        "pastefolders",
+        "pastemix",
+        
+    ],
+    // only one of the above
+    "listOfFiles":["fileNameWithPhysicalPath","fileNameWithPhysicalPath2"],
+    "listOfFileLeaves":["tagpath1","tagpath2","tagpath3"],
+    "listOfTagNodes":["tagpath1","tagpath2","tagpath3"],
+    "listOfFolderMetadataFiles":["tagpath1","tagpath2","tagpath3"]
+    
+}
+
+{
+    "type": "action_plan",
+    "timestamp": 1771327345,
+
+    "content":{
+        "files":{
+
+            "physicalFileLocationsToEdit":["fileNameWithPhysicalPath","fileNameWithPhysicalPath2"],
+            "fileEdits":{
+                "fileNameWithPhysicalPath":{
+                    "physicalName":{
+                        "initialValue":"oldname.md",
+                        "finalValue":"newname.md"
+                    },
+                    "physicalTags":{
+                        "tagname1":{
+                            "initialValue":"oldtag1",
+                            "finalValue":"newtag1"
+                        },
+                        "tagname2":{
+                            "initialValue":"",
+                            "finalValue":"newtag2"
+                        },
+                        "tagname3":{
+                            "initialValue":"oldtag3",
+                            "finalValue":""
+                        }
+
+                    }
+                },
+
+                "fileNameWithPhysicalPath2":{
+                    "physicalName":{
+                        "initialValue":"oldname.md",
+                        "finalValue":"newname.md"
+                    }
+                }
+            }
+        },
+        "fileLeaves":{
+
+            "tagPathLocationsToEdit":["tagpath1","tagpath2","tagpath3"],
+            "fileLeafEdits":{
+                "tagpath1":{
+                    "name":{
+                        "initialValue":"oldname.md",
+                        "finalValue":"newname.md"
+                    },
+                    "path":{
+                        "initialValue":"old/path/to/file",
+                        "finalValue":"new/path/to/file"
+                    },
+                    "tagpath":{
+                        "initialValue":"old/path/to/file",
+                        "finalValue":"new/path/to/file"
+                    }
+                },
+                "tagpath2":{
+                    "name":{
+                        "initialValue":"oldname.md",
+                        "finalValue":"newname.md"
+                    },
+                    "path":{
+                        "initialValue":"old/path/to/file",
+                        "finalValue":"new/path/to/file"
+                    }
+                },
+                "tagpath3":{
+                    "name":{
+                        "initialValue":"oldname.md",
+                        "finalValue":"newname.md"
+                    },
+                    "path":{
+                        "initialValue":"old/path/to/file",
+                        "finalValue":"new/path/to/file"
+                    }
+                }
+            }
+        },
+        "tagNodes":{
+
+
+            "tagPathLocationsToEdit":["tagpath1","tagpath2","tagpath3"],
+            "tagNodeEdits":{
+                "tagpath1":{
+                    "name":{
+                        "initialValue":"oldname.md",
+                        "finalValue":"newname.md"
+                    },
+                    "tagpath":{
+                        "initialValue":"old/path/to/file",
+                        "finalValue":"new/path/to/file"
+                    },
+                    "parent":{
+                        "initialValue":"old/path/to/file",
+                        "finalValue":"new/path/to/file"
+                    },
+                    "children":{
+                        "initialValue":"old/path/to/file",
+                        "finalValue":"new/path/to/file"
+                    },
+                    "files":{
+                        "initialValue":"old/path/to/file",
+                        "finalValue":"new/path/to/file"
+                    }
+                },
+                "tagpath2":{
+                    "name":{
+                        "initialValue":"oldname.md",
+                        "finalValue":"newname.md"
+                    },
+                    "path":{
+                        "initialValue":"old/path/to/file",
+                        "finalValue":"new/path/to/file"
+                    }
+                },
+                "tagpath3":{
+                    "name":{
+                        "initialValue":"oldname.md",
+                        "finalValue":"newname.md"
+                    },
+                    "path":{
+                        "initialValue":"old/path/to/file",
+                        "finalValue":"new/path/to/file"
+                    }
+                }
+            }
+        },
+        "folderMetadataFiles":{
+            "tagPathLocationsToEdit":["tagpath1","tagpath2","tagpath3"],
+            "folderMetadataEdits":{
+                "tagpath1":{
+                    "physicalName":{
+                        "initialValue":"oldname",
+                        "finalValue":"newname"
+                    },
+                    "name":{
+                        "initialValue":"oldname",
+                        "finalValue":"newname"
+                    },
+                    "tagpath":{
+                        "initialValue":"old/tag/path/to/file",
+                        "finalValue":"new/tag/path/to/file"
+                    }
+                },
+                "tagpath2":{
+                    "physicalName":{
+                        "initialValue":"oldname",
+                        "finalValue":"newname"
+                    },
+                    "name":{
+                        "initialValue":"oldname",
+                        "finalValue":"newname"
+                    },
+                    "tagpath":{
+                        "initialValue":"old/tag/path/to/file",
+                        "finalValue":"new/tag/path/to/file"
+                    }
+                },
+                "tagpath3":{
+                    "physicalName":{
+                        "initialValue":"oldname",
+                        "finalValue":"newname"
+                    },
+                    "name":{
+                        "initialValue":"oldname",
+                        "finalValue":"newname"
+                    },
+                    "tagpath":{
+                        "initialValue":"old/tag/path/to/file",
+                        "finalValue":"new/tag/path/to/file"
+                    }
+                }
+            }
+        }
+    }
+
+
+
+}
+
+{
+    "type": "action_step",
+    "timestamp": 1771327267,
+    "content_category": ["files", "fileLeaves","tagNodes","folderMetadataFiles"],
+    // only one of the above
+    "name":"this is fileNameWithPhysicalPath or tagpath or tagpath or tagpath",
+    "edit_type": ["physicalName", "physicalTags","name","path","tagpath","parent","children","files"],
+    // only one of the above
+    // files: has options ["physicalName", "physicalTags"]
+    // fileLeaves: has options ["name","path","tagpath"]
+    // tagNodes: has options ["name","tagpath","parent","children","files"]
+    // folderMetadataFiles: has options ["physicalName","name","tagpath"]
+    "edit_type_sub":["tagname", ]
+    // above key value pair is not compulsory
+
+}
+
+{
+    "type": "action_name_checkpoint",
+    "timestamp": 1771327267,
+    "content_category": ["files", "fileLeaves","tagNodes","folderMetadataFiles"],
+    // only one of the above
+    "name":"this is fileNameWithPhysicalPath or tagpath or tagpath or tagpath",
+    // only one of the above
+    "nameOfCategoryEditsComplete":true
+
+}
+// above is a replacement for the property editsComplete
+
+
+{
+    "type": "action_category_checkpoint",
+    "timestamp": 1771327267,
+    "content_category": ["files", "fileLeaves","tagNodes","folderMetadataFiles"],
+    // only one of the above
+    "categoryEditsComplete":true
+
+}
+// above is a replacement for the properties fileManipulationComplete, fileLeafEditsComplete, tagNodeEditsComplete, folderMetadataEditsComplete
+
+
+/**
+
+So the basic structure would be
+
+action divider
+action start
+action plan
+{
+[
+action step  x p times        ...(for the same file/fileleaf/tagnode/metadatafile)
+action_name_checkpoint        ...(for above file)
+]            x q times        ...(for total number of files/fileleafs/tagnodes/metadatafiles)
+action_category_checkpoint    ...(for above category)
+}            x r times        ...(for all categories in action)
+action_end
+
+
+
+*/
