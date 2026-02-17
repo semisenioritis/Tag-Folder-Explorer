@@ -22,13 +22,11 @@ import TagFolderPlugin from "./main";
 export class Orchestrator {
     private app: App;
     private treeRoot: TreeRoot;
-    private broadcastCallback: () => void;
     private plugin: TagFolderPlugin;
 
-    constructor(app: App, treeRoot: TreeRoot, broadcastCallback: () => void, plugin: TagFolderPlugin) {
+    constructor(app: App, treeRoot: TreeRoot, plugin: TagFolderPlugin) {
         this.app = app;
         this.treeRoot = treeRoot;
-        this.broadcastCallback = broadcastCallback;
         this.plugin = plugin;
     }
 
@@ -1142,8 +1140,477 @@ export class Orchestrator {
         }
     }
 
+    /**
+     * Duplicate a folder (tag node) in the same parent folder
+     * 
+     * @param folderTagPath - The tag path of the folder to duplicate
+     * @returns Promise with success status, new path, and error if failed
+     */
+    async duplicateFolder(
+        folderTagPath: string
+    ): Promise<{ success: boolean; newPath?: string; error?: any }> {
+        try {
+            // Extract the parentfoldertagpath from foldertagpath
+            const pathSegments = folderTagPath.split('/').filter(s => s.length > 0);
+            if (pathSegments.length === 0) {
+                return { success: false, error: "Cannot duplicate root node" };
+            }
+            
+            const parentFolderTagPath = pathSegments.length === 1 
+                ? '' 
+                : pathSegments.slice(0, -1).join('/');
+
+            // Extract parent-tagnode from tree using parentfoldertagpath
+            const parentTagNode = this.treeRoot.getNode(parentFolderTagPath);
+            if (!parentTagNode) {
+                return { success: false, error: `Parent tag node not found for path: ${parentFolderTagPath}` };
+            }
+
+            // Extract main-tagnode from tree using foldertagpath
+            const mainTagNode = this.treeRoot.getNode(folderTagPath);
+            if (!mainTagNode) {
+                return { success: false, error: `Main tag node not found for path: ${folderTagPath}` };
+            }
+
+            // Verify if parent already has a child with the duplicate name and find unique name
+            const mainName = mainTagNode.getName();
+            const parentChildren = parentTagNode.getChildren();
+            let newTagNodeName = `${mainName} 1`;
+            let counter = 2;
+            
+            while (parentChildren[newTagNodeName]) {
+                newTagNodeName = `${mainName} ${counter}`;
+                counter++;
+            }
+
+            // Calculate the new path for duplicate folder
+            const newFolderTagPath = parentFolderTagPath 
+                ? `${parentFolderTagPath}/${newTagNodeName}` 
+                : newTagNodeName;
+
+            // ---(Physical File Edits - First Phase)---
+            // BFS traversal - Add new tags to all files
+            let currentLevelNodes: ITagNode[] = [mainTagNode];
+            
+            while (currentLevelNodes.length > 0) {
+                const nextLevelNodes: ITagNode[] = [];
+                
+                for (const node of currentLevelNodes) {
+                    const files = node.getFiles();
+                    const oldTagPath = node.getPath();
+                    
+                    // Calculate new tag path for this level
+                    const pathDiff = oldTagPath.substring(folderTagPath.length);
+                    const newTagPath = newFolderTagPath + pathDiff;
+                    
+                    // Add new tag to each file at this level
+                    for (const fileLeaf of files) {
+                        const tFile = fileLeaf.getTFile();
+                        
+                        const addSuccess = await fileEditor.addTagToFileYaml(
+                            this.app,
+                            tFile,
+                            newTagPath
+                        );
+                        if (!addSuccess) {
+                            console.warn(`Failed to add new tag to file: ${fileLeaf.getPath()}`);
+                        }
+                    }
+                    
+                    // Collect children for next level
+                    const children = Object.values(node.getChildren());
+                    nextLevelNodes.push(...children);
+                }
+                
+                currentLevelNodes = nextLevelNodes;
+            }
+            // ---(Physical File Edits End - First Phase)---
+
+            // Construct the duplicate-tagnode using newtagnodename
+            // Add it as a child of parent-tagnode
+            const createSuccess = parentTagNode.addChildNode(newTagNodeName);
+            if (!createSuccess) {
+                return { success: false, error: "Failed to create duplicate tag node" };
+            }
+
+            const duplicateRootNode = parentTagNode.getChild(newTagNodeName);
+            if (!duplicateRootNode) {
+                return { success: false, error: "Failed to retrieve created duplicate node" };
+            }
+
+            // ---(Virtual Edits - First Phase)---
+            // BFS traversal - Create all child tag nodes in the hierarchy
+            currentLevelNodes = [mainTagNode];
+            
+            while (currentLevelNodes.length > 0) {
+                const nextLevelNodes: ITagNode[] = [];
+                
+                for (const node of currentLevelNodes) {
+                    if (node === mainTagNode) {
+                        // Skip the root level as it's already created
+                        const children = Object.values(node.getChildren());
+                        nextLevelNodes.push(...children);
+                        continue;
+                    }
+                    
+                    const oldTagPath = node.getPath();
+                    const pathDiff = oldTagPath.substring(folderTagPath.length);
+                    const newTagPath = newFolderTagPath + pathDiff;
+                    
+                    // Get the parent path of the new node
+                    const newPathSegments = newTagPath.split('/');
+                    const parentNewPath = newPathSegments.slice(0, -1).join('/');
+                    const newNodeName = newPathSegments[newPathSegments.length - 1];
+                    
+                    // Get the parent node in the new hierarchy
+                    const parentNewNode = this.treeRoot.getNode(parentNewPath);
+                    if (parentNewNode) {
+                        parentNewNode.addChildNode(newNodeName);
+                    }
+                    
+                    // Collect children for next level
+                    const children = Object.values(node.getChildren());
+                    nextLevelNodes.push(...children);
+                }
+                
+                currentLevelNodes = nextLevelNodes;
+            }
+            // ---(Virtual Edits End - First Phase)---
+
+            // ---(Virtual Edits - Second Phase)---
+            // BFS traversal - Copy file references to new tag nodes
+            currentLevelNodes = [mainTagNode];
+            
+            while (currentLevelNodes.length > 0) {
+                const nextLevelNodes: ITagNode[] = [];
+                
+                for (const node of currentLevelNodes) {
+                    const oldTagPath = node.getPath();
+                    const pathDiff = oldTagPath.substring(folderTagPath.length);
+                    const newTagPath = newFolderTagPath + pathDiff;
+                    
+                    // Get the corresponding new node
+                    const newNode = this.treeRoot.getNode(newTagPath);
+                    if (newNode) {
+                        // Read files from original node and add to new node
+                        const files = node.getFiles();
+                        for (const fileLeaf of files) {
+                            newNode.addFileLeaftoFiles(fileLeaf);
+                        }
+                    }
+                    
+                    // Collect children for next level
+                    const children = Object.values(node.getChildren());
+                    nextLevelNodes.push(...children);
+                }
+                
+                currentLevelNodes = nextLevelNodes;
+            }
+            // ---(Virtual Edits End - Second Phase)---
+
+            // ---(Physical File Edits - Second Phase)---
+            // BFS traversal - Copy metadata files
+            currentLevelNodes = [mainTagNode];
+            
+            while (currentLevelNodes.length > 0) {
+                const nextLevelNodes: ITagNode[] = [];
+                
+                for (const node of currentLevelNodes) {
+                    const oldTagPath = node.getPath();
+                    const pathDiff = oldTagPath.substring(folderTagPath.length);
+                    const newTagPath = newFolderTagPath + pathDiff;
+                    
+                    // Read folder metadata file properties
+                    const metadata = fileEditor.metadataReadAllFrontmatter(this.app, oldTagPath);
+                    
+                    if (metadata) {
+                        // Extract description and legend
+                        const { description, legend } = metadata;
+                        const propertiesToCopy: Record<string, any> = {};
+                        
+                        if (description !== undefined) {
+                            propertiesToCopy.description = description;
+                        }
+                        if (legend !== undefined) {
+                            propertiesToCopy.legend = legend;
+                        }
+                        
+                        // Copy properties to new metadata file
+                        if (Object.keys(propertiesToCopy).length > 0) {
+                            fileEditor.metadataReplaceExistingProperty(
+                                this.app,
+                                newTagPath,
+                                propertiesToCopy
+                            );
+                        }
+                    }
+                    
+                    // Collect children for next level
+                    const children = Object.values(node.getChildren());
+                    nextLevelNodes.push(...children);
+                }
+                
+                currentLevelNodes = nextLevelNodes;
+            }
+            // ---(Physical File Edits End - Second Phase)---
+
+            // Invalidate cache
+            this.treeRoot.invalidateCache();
+
+            // ---(Frontend Refresh)---
+            this.plugin.broadcastTreeUpdate();
+            // ---(Frontend Refresh End)---
+
+            return { success: true, newPath: newFolderTagPath };
+        } catch (error) {
+            console.error("Error in duplicateFolder:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Recreate a folder from one location to another folder
+     * 
+     * @param mainFolderTagPath - The tag path of the folder to recreate
+     * @param destinationFolderTagPath - The tag path of the destination folder
+     * @returns Promise with success status, new path, and error if failed
+     */
+    async recreateFolder(
+        mainFolderTagPath: string,
+        destinationFolderTagPath: string
+    ): Promise<{ success: boolean; newPath?: string; error?: any }> {
+        try {
+            // Extract the parentfoldertagpath from mainfoldertagpath
+            const pathSegments = mainFolderTagPath.split('/').filter(s => s.length > 0);
+            if (pathSegments.length === 0) {
+                return { success: false, error: "Cannot recreate root node" };
+            }
+            
+            const parentFolderTagPath = pathSegments.length === 1 
+                ? '' 
+                : pathSegments.slice(0, -1).join('/');
+
+            // Extract parent-tagnode from tree using parentfoldertagpath
+            const parentTagNode = this.treeRoot.getNode(parentFolderTagPath);
+            if (!parentTagNode) {
+                return { success: false, error: `Parent tag node not found for path: ${parentFolderTagPath}` };
+            }
+
+            // Extract main-tagnode from tree using mainfoldertagpath
+            const mainTagNode = this.treeRoot.getNode(mainFolderTagPath);
+            if (!mainTagNode) {
+                return { success: false, error: `Main tag node not found for path: ${mainFolderTagPath}` };
+            }
+
+            // Extract destination-tagnode from tree using destinationfoldertagpath
+            const destinationTagNode = this.treeRoot.getNode(destinationFolderTagPath);
+            if (!destinationTagNode) {
+                return { success: false, error: `Destination tag node not found for path: ${destinationFolderTagPath}` };
+            }
+
+            // Validate that mainfoldertagpath is not an ancestor of destinationfoldertagpath
+            if (destinationFolderTagPath.startsWith(mainFolderTagPath + '/') || 
+                destinationFolderTagPath === mainFolderTagPath) {
+                return { success: false, error: "Cannot recreate folder into itself or its descendants" };
+            }
+
+            // Verify if destination already has a child with the same name and find unique name
+            const mainName = mainTagNode.getName();
+            const destinationChildren = destinationTagNode.getChildren();
+            let newTagNodeName = mainName;
+            let counter = 1;
+            
+            while (destinationChildren[newTagNodeName]) {
+                newTagNodeName = `${mainName} ${counter}`;
+                counter++;
+            }
+
+            // Calculate the new path for recreated folder
+            const newFolderTagPath = destinationFolderTagPath 
+                ? `${destinationFolderTagPath}/${newTagNodeName}` 
+                : newTagNodeName;
+
+            // ---(Physical File Edits - First Phase)---
+            // BFS traversal - Add new tags to all files
+            let currentLevelNodes: ITagNode[] = [mainTagNode];
+            
+            while (currentLevelNodes.length > 0) {
+                const nextLevelNodes: ITagNode[] = [];
+                
+                for (const node of currentLevelNodes) {
+                    const files = node.getFiles();
+                    const oldTagPath = node.getPath();
+                    
+                    // Calculate new tag path for this level
+                    const pathDiff = oldTagPath.substring(mainFolderTagPath.length);
+                    const newTagPath = newFolderTagPath + pathDiff;
+                    
+                    // Add new tag to each file at this level
+                    for (const fileLeaf of files) {
+                        const tFile = fileLeaf.getTFile();
+                        
+                        const addSuccess = await fileEditor.addTagToFileYaml(
+                            this.app,
+                            tFile,
+                            newTagPath
+                        );
+                        if (!addSuccess) {
+                            console.warn(`Failed to add new tag to file: ${fileLeaf.getPath()}`);
+                        }
+                    }
+                    
+                    // Collect children for next level
+                    const children = Object.values(node.getChildren());
+                    nextLevelNodes.push(...children);
+                }
+                
+                currentLevelNodes = nextLevelNodes;
+            }
+            // ---(Physical File Edits End - First Phase)---
+
+            // Construct the recreated-tagnode using newtagnodename
+            // Add it as a child of destination-tagnode
+            const createSuccess = destinationTagNode.addChildNode(newTagNodeName);
+            if (!createSuccess) {
+                return { success: false, error: "Failed to create recreated tag node" };
+            }
+
+            const recreatedRootNode = destinationTagNode.getChild(newTagNodeName);
+            if (!recreatedRootNode) {
+                return { success: false, error: "Failed to retrieve created recreated node" };
+            }
+
+            // ---(Virtual Edits - First Phase)---
+            // BFS traversal - Create all child tag nodes in the hierarchy
+            currentLevelNodes = [mainTagNode];
+            
+            while (currentLevelNodes.length > 0) {
+                const nextLevelNodes: ITagNode[] = [];
+                
+                for (const node of currentLevelNodes) {
+                    if (node === mainTagNode) {
+                        // Skip the root level as it's already created
+                        const children = Object.values(node.getChildren());
+                        nextLevelNodes.push(...children);
+                        continue;
+                    }
+                    
+                    const oldTagPath = node.getPath();
+                    const pathDiff = oldTagPath.substring(mainFolderTagPath.length);
+                    const newTagPath = newFolderTagPath + pathDiff;
+                    
+                    // Get the parent path of the new node
+                    const newPathSegments = newTagPath.split('/');
+                    const parentNewPath = newPathSegments.slice(0, -1).join('/');
+                    const newNodeName = newPathSegments[newPathSegments.length - 1];
+                    
+                    // Get the parent node in the new hierarchy
+                    const parentNewNode = this.treeRoot.getNode(parentNewPath);
+                    if (parentNewNode) {
+                        parentNewNode.addChildNode(newNodeName);
+                    }
+                    
+                    // Collect children for next level
+                    const children = Object.values(node.getChildren());
+                    nextLevelNodes.push(...children);
+                }
+                
+                currentLevelNodes = nextLevelNodes;
+            }
+            // ---(Virtual Edits End - First Phase)---
+
+            // ---(Virtual Edits - Second Phase)---
+            // BFS traversal - Copy file references to new tag nodes
+            currentLevelNodes = [mainTagNode];
+            
+            while (currentLevelNodes.length > 0) {
+                const nextLevelNodes: ITagNode[] = [];
+                
+                for (const node of currentLevelNodes) {
+                    const oldTagPath = node.getPath();
+                    const pathDiff = oldTagPath.substring(mainFolderTagPath.length);
+                    const newTagPath = newFolderTagPath + pathDiff;
+                    
+                    // Get the corresponding new node
+                    const newNode = this.treeRoot.getNode(newTagPath);
+                    if (newNode) {
+                        // Read files from original node and add to new node
+                        const files = node.getFiles();
+                        for (const fileLeaf of files) {
+                            newNode.addFileLeaftoFiles(fileLeaf);
+                        }
+                    }
+                    
+                    // Collect children for next level
+                    const children = Object.values(node.getChildren());
+                    nextLevelNodes.push(...children);
+                }
+                
+                currentLevelNodes = nextLevelNodes;
+            }
+            // ---(Virtual Edits End - Second Phase)---
+
+            // ---(Physical File Edits - Second Phase)---
+            // BFS traversal - Copy metadata files
+            currentLevelNodes = [mainTagNode];
+            
+            while (currentLevelNodes.length > 0) {
+                const nextLevelNodes: ITagNode[] = [];
+                
+                for (const node of currentLevelNodes) {
+                    const oldTagPath = node.getPath();
+                    const pathDiff = oldTagPath.substring(mainFolderTagPath.length);
+                    const newTagPath = newFolderTagPath + pathDiff;
+                    
+                    // Read folder metadata file properties
+                    const metadata = fileEditor.metadataReadAllFrontmatter(this.app, oldTagPath);
+                    
+                    if (metadata) {
+                        // Extract description and legend
+                        const { description, legend } = metadata;
+                        const propertiesToCopy: Record<string, any> = {};
+                        
+                        if (description !== undefined) {
+                            propertiesToCopy.description = description;
+                        }
+                        if (legend !== undefined) {
+                            propertiesToCopy.legend = legend;
+                        }
+                        
+                        // Copy properties to new metadata file
+                        if (Object.keys(propertiesToCopy).length > 0) {
+                            fileEditor.metadataReplaceExistingProperty(
+                                this.app,
+                                newTagPath,
+                                propertiesToCopy
+                            );
+                        }
+                    }
+                    
+                    // Collect children for next level
+                    const children = Object.values(node.getChildren());
+                    nextLevelNodes.push(...children);
+                }
+                
+                currentLevelNodes = nextLevelNodes;
+            }
+            // ---(Physical File Edits End - Second Phase)---
+
+            // Invalidate cache
+            this.treeRoot.invalidateCache();
+
+            // ---(Frontend Refresh)---
+            this.plugin.broadcastTreeUpdate();
+            // ---(Frontend Refresh End)---
+
+            return { success: true, newPath: newFolderTagPath };
+        } catch (error) {
+            console.error("Error in recreateFolder:", error);
+            return { success: false, error };
+        }
+    }
+
 
 
 
 }
-

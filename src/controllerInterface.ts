@@ -219,5 +219,31 @@ export class ControllerInterface {
         return await this.orchestrator.updateFileDescription(folderTagPath, filePath, jsonObject);
     }
 
+    /**
+     * Duplicate a folder (tag node) in the same parent folder
+     * 
+     * @param folderTagPath - The tag path of the folder to duplicate
+     * @returns Promise with success status, new path, and error if failed
+     */
+    async duplicateFolder(
+        folderTagPath: string
+    ): Promise<{ success: boolean; newPath?: string; error?: any }> {
+        return await this.orchestrator.duplicateFolder(folderTagPath);
+    }
+
+    /**
+     * Recreate a folder from one location to another folder
+     * 
+     * @param mainFolderTagPath - The tag path of the folder to recreate
+     * @param destinationFolderTagPath - The tag path of the destination folder
+     * @returns Promise with success status, new path, and error if failed
+     */
+    async recreateFolder(
+        mainFolderTagPath: string,
+        destinationFolderTagPath: string
+    ): Promise<{ success: boolean; newPath?: string; error?: any }> {
+        return await this.orchestrator.recreateFolder(mainFolderTagPath, destinationFolderTagPath);
+    }
+
 
 }
