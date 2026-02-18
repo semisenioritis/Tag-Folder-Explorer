@@ -107,7 +107,28 @@ export class ControllerInterface {
         );
     }
 
-
+    /**
+     * Copy file from one folder to another folder
+     * 
+     * @param sourceFolderTagPath - The tag path of the source folder
+     * @param destinationFolderTagPath - The tag path of the destination folder
+     * @param fileName - The file name
+     * @param filePath - The file path
+     * @returns Promise with success status and error if failed
+     */
+    async copyFileToFolder(
+        sourceFolderTagPath: string,
+        destinationFolderTagPath: string,
+        fileName: string,
+        filePath: string
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.copyFileToFolder(
+            sourceFolderTagPath,
+            destinationFolderTagPath,
+            fileName,
+            filePath
+        );
+    }
 
     // ==================== FOLDER OPERATIONS ====================
 
@@ -243,6 +264,57 @@ export class ControllerInterface {
         destinationFolderTagPath: string
     ): Promise<{ success: boolean; newPath?: string; error?: any }> {
         return await this.orchestrator.recreateFolder(mainFolderTagPath, destinationFolderTagPath);
+    }
+
+    /**
+     * Copy files and folders to clipboard with multiple MIME types
+     * 
+     * @param listOfFilePaths - Array of file paths to copy
+     * @param listOfTagPaths - Array of folder tag paths to copy
+     * @param parentTagPath - The parent tag path context for the copy operation
+     * @returns Promise with success status and error if failed
+     */
+    async copyFilesAndFolders(
+        listOfFilePaths: string[],
+        listOfTagPaths: string[],
+        parentTagPath: string
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.copyFilesAndFolders(listOfFilePaths, listOfTagPaths, parentTagPath);
+    }
+
+    /**
+     * Cut files and folders to clipboard with multiple MIME types
+     * 
+     * @param listOfFilePaths - Array of file paths to cut
+     * @param listOfTagPaths - Array of folder tag paths to cut
+     * @param parentTagPath - The parent tag path context for the cut operation
+     * @returns Promise with success status and error if failed
+     */
+    async cutFilesAndFolders(
+        listOfFilePaths: string[],
+        listOfTagPaths: string[],
+        parentTagPath: string
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.cutFilesAndFolders(listOfFilePaths, listOfTagPaths, parentTagPath);
+    }
+
+    /**
+     * Paste files and folders from clipboard to destination
+     * 
+     * @param destinationTagPath - The tag path where items should be pasted
+     * @param blind - If false, return validation errors; if true, skip invalid items and proceed
+     * @returns Promise with success status, invalid items if any, and error if failed
+     */
+    async pasteFilesAndFolders(
+        destinationTagPath: string,
+        blind: boolean = false
+    ): Promise<{ 
+        success: boolean; 
+        invalidFiles?: string[]; 
+        invalidFolders?: string[]; 
+        error?: any 
+    }> {
+        return await this.orchestrator.pasteFilesAndFolders(destinationTagPath, blind);
     }
 
 

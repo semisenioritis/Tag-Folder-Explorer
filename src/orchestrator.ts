@@ -39,7 +39,9 @@ export class Orchestrator {
      */
     async createFileInTagFolder(
         folderTagPath: string,
-        fileName: string = "Untitled"
+        fileName: string = "Untitled",
+        owner: boolean = true
+
     ): Promise<{ success: boolean; file?: TFile; error?: any }> {
         try {
             let createdFile: TFile | null = null;
@@ -115,7 +117,8 @@ export class Orchestrator {
      */
     async createFolderInFolder(
         folderTagPath: string,
-        folderName: string = "Untitled"
+        folderName: string = "Untitled",
+        owner: boolean = true
     ): Promise<{ success: boolean; nodePath?: string; error?: any }> {
         try {
             // ---(Physical File Edits)---
@@ -183,7 +186,8 @@ export class Orchestrator {
         folderTagPath: string,
         oldFileName: string,
         newFileName: string,
-        filePath: string
+        filePath: string,
+        owner: boolean = true
     ): Promise<{ success: boolean; newPath?: string; error?: any }> {
         try {
             // ---(Physical File Edits)---
@@ -246,7 +250,8 @@ export class Orchestrator {
      */
     async renameFolder(
         folderTagPath: string,
-        newTagName: string
+        newTagName: string,
+        owner: boolean = true
     ): Promise<{ success: boolean; newPath?: string; error?: any }> {
         try {
             // Retrieve tagnode for that folder
@@ -420,7 +425,8 @@ export class Orchestrator {
     async removeFileFromFolder(
         folderTagPath: string,
         fileName: string,
-        filePath: string
+        filePath: string,
+        owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
         try {
             // Extract fileleaf object from fileleaf map using filepath
@@ -483,7 +489,8 @@ export class Orchestrator {
      * @returns Object with success status and error if failed
      */
     async removeFolderFromFolder(
-        childFolderPath: string
+        childFolderPath: string,
+        owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
         try {
             // Calculate parentfoldertagpath from childfolderpath
@@ -603,7 +610,8 @@ export class Orchestrator {
     async hardDeleteFile(
         folderTagPath: string,
         fileName: string,
-        filePath: string
+        filePath: string,
+        owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
         try {
             // Get this fileleaf object from fileleaf map using filepath
@@ -670,7 +678,8 @@ export class Orchestrator {
     async moveFolderToFolder(
         sourceFolderTagPath: string,
         destinationFolderTagPath: string,
-        mainFolderTagPath: string
+        mainFolderTagPath: string,
+        owner: boolean = true
     ): Promise<{ success: boolean; newPath?: string; error?: any }> {
         try {
             // Extract main-tagnode object using mainfoldertagpath
@@ -711,7 +720,7 @@ export class Orchestrator {
 
             // If name conflict, rename main node first
             if (finalMainName !== mainName) {
-                const renameResult = await this.renameFolder(mainFolderTagPath, finalMainName);
+                const renameResult = await this.renameFolder(mainFolderTagPath, finalMainName, false);
                 if (!renameResult.success) {
                     return { success: false, error: `Failed to rename folder to avoid conflict: ${renameResult.error}` };
                 }
@@ -884,7 +893,8 @@ export class Orchestrator {
         sourceFolderTagPath: string,
         destinationFolderTagPath: string,
         fileName: string,
-        filePath: string
+        filePath: string,
+        owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
         try {
             // Extract fileleaf object from the file leaf map using filepath
@@ -905,55 +915,7 @@ export class Orchestrator {
                 return { success: false, error: `Destination tag node not found for path: ${destinationFolderTagPath}` };
             }
 
-            // Verify if destination already has a file with the same name
-            const currentFileName = fileLeaf.getName();
-            let finalFileName = currentFileName;
-            let counter = 1;
-            
-            // Check for name conflicts in destination
-            const destinationFiles = destinationTagNode.getFiles();
-            const fileNameWithoutExt = currentFileName.substring(0, currentFileName.lastIndexOf('.')) || currentFileName;
-            const fileExt = currentFileName.substring(currentFileName.lastIndexOf('.'));
-            
-            while (true) {
-                let nameExists = false;
-                for (const file of destinationFiles) {
-                    if (file.getName() === finalFileName) {
-                        nameExists = true;
-                        break;
-                    }
-                }
-                
-                if (!nameExists) break;
-                
-                finalFileName = `${fileNameWithoutExt} ${counter}${fileExt}`;
-                counter++;
-            }
 
-            // If name conflict, rename file first
-            if (finalFileName !== currentFileName) {
-                const newFileNameWithoutExt = finalFileName.substring(0, finalFileName.lastIndexOf('.')) || finalFileName;
-                const renameResult = await this.renameFile(
-                    sourceFolderTagPath,
-                    currentFileName,
-                    newFileNameWithoutExt,
-                    filePath
-                );
-                if (!renameResult.success) {
-                    return { success: false, error: `Failed to rename file to avoid conflict: ${renameResult.error}` };
-                }
-                
-                // Update filePath after rename
-                if (renameResult.newPath) {
-                    filePath = renameResult.newPath;
-                }
-                
-                // Re-fetch file leaf after rename
-                const renamedFileLeaf = this.treeRoot.fileLeafRetriever(filePath);
-                if (!renamedFileLeaf) {
-                    return { success: false, error: "Failed to retrieve renamed file leaf" };
-                }
-            }
 
             // ---(Physical File Edits)---
                 const tFile = fileLeaf.getTFile();
@@ -1010,6 +972,83 @@ export class Orchestrator {
         }
     }
 
+
+    /**
+     * Copy file from one folder to another folder
+     * 
+     * @param sourceFolderTagPath - The tag path of the source folder
+     * @param destinationFolderTagPath - The tag path of the destination folder
+     * @param fileName - The file name (used for reference)
+     * @param filePath - The file path used to retrieve the FileLeaf
+     * @returns Object with success status and error if failed
+     */
+    async copyFileToFolder(
+        sourceFolderTagPath: string,
+        destinationFolderTagPath: string,
+        fileName: string,
+        filePath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract fileleaf object from the file leaf map using filepath
+            const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
+            if (!fileLeaf) {
+                return { success: false, error: `FileLeaf not found for path: ${filePath}` };
+            }
+
+            // Extract sourcetagnode object from the tree using sourcefoldertagpath
+            const sourceTagNode = this.treeRoot.getNode(sourceFolderTagPath);
+            if (!sourceTagNode) {
+                return { success: false, error: `Source tag node not found for path: ${sourceFolderTagPath}` };
+            }
+
+            // Extract destinationtagnode object from the tree using destinationfoldertagpath
+            const destinationTagNode = this.treeRoot.getNode(destinationFolderTagPath);
+            if (!destinationTagNode) {
+                return { success: false, error: `Destination tag node not found for path: ${destinationFolderTagPath}` };
+            }
+
+
+
+            // ---(Physical File Edits)---
+                const tFile = fileLeaf.getTFile();
+                if (!(tFile instanceof TFile)) {
+                    return { success: false, error: `TFile not found at path: ${filePath}` };
+                }
+
+                // Add destination tag to physical file
+                const addSuccess = await fileEditor.addTagToFileYaml(
+                    this.app,
+                    tFile,
+                    destinationFolderTagPath
+                );
+                if (!addSuccess) {
+                    return { success: false, error: `Failed to add destination tag to file: ${filePath}` };
+                }
+            // ---(Physical File Edits End)---
+
+            // ---(Virtual Edits)---
+                // Append fileleaf reference to destinationtagnode
+                const addToDestSuccess = destinationTagNode.addFileLeaftoFiles(fileLeaf);
+                if (!addToDestSuccess) {
+                    return { success: false, error: `Failed to add file to destination tag node: ${destinationFolderTagPath}` };
+                }
+
+                // Invalidate cache
+                this.treeRoot.invalidateCache();
+            // ---(Virtual Edits End)---
+
+            // ---(Frontend Refresh)---
+                this.plugin.broadcastTreeUpdate();
+            // ---(Frontend Refresh End)---
+
+            return { success: true };
+        } catch (error) {
+            console.error("Error in copyFileToFolder:", error);
+            return { success: false, error };
+        }
+    }
+
     /**
      * Edit/update folder description
      * 
@@ -1019,7 +1058,8 @@ export class Orchestrator {
      */
     async updateFolderDescription(
         folderTagPath: string,
-        jsonObject: Record<string, any>
+        jsonObject: Record<string, any>,
+        owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
         try {
             // Retrieve tagfoldernode
@@ -1061,7 +1101,8 @@ export class Orchestrator {
      */
     async updateFolderLegend(
         folderTagPath: string,
-        jsonObject: Record<string, any>
+        jsonObject: Record<string, any>,
+        owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
         try {
             // Retrieve tagfoldernode
@@ -1105,7 +1146,8 @@ export class Orchestrator {
     async updateFileDescription(
         folderTagPath: string,
         filePath: string,
-        jsonObject: Record<string, any>
+        jsonObject: Record<string, any>,
+        owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
         try {
             // Extract file leaf using filepath
@@ -1147,7 +1189,8 @@ export class Orchestrator {
      * @returns Promise with success status, new path, and error if failed
      */
     async duplicateFolder(
-        folderTagPath: string
+        folderTagPath: string,
+        owner: boolean = true
     ): Promise<{ success: boolean; newPath?: string; error?: any }> {
         try {
             // Extract the parentfoldertagpath from foldertagpath
@@ -1377,7 +1420,8 @@ export class Orchestrator {
      */
     async recreateFolder(
         mainFolderTagPath: string,
-        destinationFolderTagPath: string
+        destinationFolderTagPath: string,
+        owner: boolean = true
     ): Promise<{ success: boolean; newPath?: string; error?: any }> {
         try {
             // Extract the parentfoldertagpath from mainfoldertagpath
@@ -1606,6 +1650,278 @@ export class Orchestrator {
             return { success: true, newPath: newFolderTagPath };
         } catch (error) {
             console.error("Error in recreateFolder:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Copy files and folders to clipboard with multiple MIME types
+     * 
+     * @param listOfFilePaths - Array of file paths to copy
+     * @param listOfTagPaths - Array of folder tag paths to copy
+     * @param parentTagPath - The parent tag path context for the copy operation
+     * @returns Promise with success status and error if failed
+     */
+    async copyFilesAndFolders(
+        listOfFilePaths: string[],
+        listOfTagPaths: string[],
+        parentTagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Construct payload object
+            const payload = {
+                files: listOfFilePaths,
+                folders: listOfTagPaths,
+                parent: parentTagPath,
+                mode: "copy"
+            };
+
+            // Convert to JSON
+            const payloadJson = JSON.stringify(payload);
+
+            // Construct rawfilesandfolders string
+            const rawFilesAndFolders = [...listOfFilePaths, ...listOfTagPaths].join('\n');
+
+            // Write to clipboard with multiple MIME types
+            const clipboardItems = [
+                new ClipboardItem({
+                    'application/x-obsidian-tag-folder-explorer': new Blob([payloadJson], { 
+                        type: 'application/x-obsidian-tag-folder-explorer' 
+                    }),
+                    'application/json': new Blob([payloadJson], { 
+                        type: 'application/json' 
+                    }),
+                    'text/plain': new Blob([rawFilesAndFolders], { 
+                        type: 'text/plain' 
+                    })
+                })
+            ];
+
+            await navigator.clipboard.write(clipboardItems);
+
+            return { success: true };
+        } catch (error) {
+            console.error("Error in copyFilesAndFolders:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Cut files and folders to clipboard with multiple MIME types
+     * 
+     * @param listOfFilePaths - Array of file paths to cut
+     * @param listOfTagPaths - Array of folder tag paths to cut
+     * @param parentTagPath - The parent tag path context for the cut operation
+     * @returns Promise with success status and error if failed
+     */
+    async cutFilesAndFolders(
+        listOfFilePaths: string[],
+        listOfTagPaths: string[],
+        parentTagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Construct payload object
+            const payload = {
+                files: listOfFilePaths,
+                folders: listOfTagPaths,
+                parent: parentTagPath,
+                mode: "cut"
+            };
+
+            // Convert to JSON
+            const payloadJson = JSON.stringify(payload);
+
+            // Construct rawfilesandfolders string
+            const rawFilesAndFolders = [...listOfFilePaths, ...listOfTagPaths].join('\n');
+
+            // Write to clipboard with multiple MIME types
+            const clipboardItems = [
+                new ClipboardItem({
+                    'application/x-obsidian-tag-folder-explorer': new Blob([payloadJson], { 
+                        type: 'application/x-obsidian-tag-folder-explorer' 
+                    }),
+                    'application/json': new Blob([payloadJson], { 
+                        type: 'application/json' 
+                    }),
+                    'text/plain': new Blob([rawFilesAndFolders], { 
+                        type: 'text/plain' 
+                    })
+                })
+            ];
+
+            await navigator.clipboard.write(clipboardItems);
+
+            return { success: true };
+        } catch (error) {
+            console.error("Error in cutFilesAndFolders:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Paste files and folders from clipboard to destination
+     * 
+     * @param destinationTagPath - The tag path where items should be pasted
+     * @param blind - If false, return validation errors; if true, skip invalid items and proceed
+     * @returns Promise with success status, invalid items if any, and error if failed
+     */
+    async pasteFilesAndFolders(
+        destinationTagPath: string,
+        blind: boolean = false, 
+        owner:boolean = true
+    ): Promise<{ 
+        success: boolean; 
+        invalidFiles?: string[]; 
+        invalidFolders?: string[]; 
+        error?: any 
+    }> {
+        try {
+            // Read the clipboard
+            const clipboardItems = await navigator.clipboard.read();
+            
+            let toPaste: any = null;
+
+            // Find item with matching MIME type
+            for (const item of clipboardItems) {
+                if (item.types.includes('application/x-obsidian-tag-folder-explorer')) {
+                    const blob = await item.getType('application/x-obsidian-tag-folder-explorer');
+                    const text = await blob.text();
+                    toPaste = JSON.parse(text);
+                    break;
+                }
+            }
+
+            if (!toPaste) {
+                return { success: false, error: "No valid clipboard data found" };
+            }
+
+            // Extract from toPaste
+            let { files, folders, parent, mode } = toPaste;
+
+            // Validate files
+            const invalidFiles: string[] = [];
+            for (const filePath of files) {
+                // Check if file still exists
+                const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
+                if (!fileLeaf) {
+                    invalidFiles.push(filePath);
+                }
+            }
+
+            // Validate folders
+            const invalidFolders: string[] = [];
+            for (const tagPath of folders) {
+                // Verify that parent is not an ancestor of destination
+                if (destinationTagPath.startsWith(tagPath + '/') || 
+                    destinationTagPath === tagPath) {
+                    invalidFolders.push(tagPath);
+                    continue;
+                }
+
+                // Verify that tagPath still exists
+                const tagNode = this.treeRoot.getNode(tagPath);
+                if (!tagNode) {
+                    invalidFolders.push(tagPath);
+                }
+            }
+
+            // Handle invalid items
+            if (invalidFiles.length > 0 || invalidFolders.length > 0) {
+                if (!blind) {
+                    // Return invalid items for frontend modal
+                    return { 
+                        success: false, 
+                        invalidFiles, 
+                        invalidFolders 
+                    };
+                } else {
+                    // Filter out invalid items
+                    files = files.filter((f: string) => !invalidFiles.includes(f));
+                    folders = folders.filter((f: string) => !invalidFolders.includes(f));
+                }
+            }
+
+            const sourceTagNode = this.treeRoot.getNode(parent)
+
+            // Execute operations based on mode
+            if (mode === "cut") {
+
+                
+                // Move files
+                for (const filePath of files) {
+                    const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
+                    if (!fileLeaf) continue;
+
+                    const fileName = fileLeaf.getName();
+
+
+                    await this.moveFileToFolder(
+                        parent,
+                        destinationTagPath,
+                        fileName,
+                        filePath,
+                        false
+                    );
+                }
+
+                // Move folders
+                for (const tagPath of folders) {
+                    // Verify again that parent is not an ancestor of destination
+                    if (destinationTagPath.startsWith(tagPath + '/') || 
+                        destinationTagPath === tagPath) {
+                        continue;
+                    }
+
+                    await this.moveFolderToFolder(
+                        parent,
+                        destinationTagPath,
+                        tagPath,
+                        false
+                    );
+                }
+
+            } else if (mode === "copy") {
+                // Copy files
+                for (const filePath of files) {
+                    const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
+                    if (!fileLeaf) continue;
+
+                    const fileName = fileLeaf.getName();
+                    
+                    await this.copyFileToFolder(
+                        parent,
+                        destinationTagPath,
+                        fileName,
+                        filePath,
+                        false
+                    );
+                }
+
+                // Copy folders (recreate)
+                for (const tagPath of folders) {
+                    // Verify again that parent is not an ancestor of destination
+                    if (destinationTagPath.startsWith(tagPath + '/') || 
+                        destinationTagPath === tagPath) {
+                        continue;
+                    }
+
+                    await this.recreateFolder(
+                        tagPath,
+                        destinationTagPath,
+                        false
+                    );
+                }
+            }
+
+            // Refresh UI
+            this.treeRoot.invalidateCache();
+            this.plugin.broadcastTreeUpdate();
+
+            return { success: true };
+        } catch (error) {
+            console.error("Error in pasteFilesAndFolders:", error);
             return { success: false, error };
         }
     }

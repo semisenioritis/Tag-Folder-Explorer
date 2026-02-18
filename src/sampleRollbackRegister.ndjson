@@ -1,14 +1,18 @@
 {
-    "type": "action_divider"
+    "type": "action_divider",
+    "actionowner": true
 }
 
 {
     "type": "action_end",
-    "timestamp": 1771327345,
+    "actionowner": true,
+    "timestamp": 1771327345
+    
 }
 
 {
     "type": "action_start",
+    "actionowner": true,
     "timestamp": 1771326932,
     "action":[
         "createfolder",
@@ -51,6 +55,7 @@
 
 {
     "type": "action_plan",
+    "actionowner": true,
     "timestamp": 1771327345,
 
     "content":{
@@ -232,6 +237,7 @@
 
 {
     "type": "action_step",
+    "actionowner": true,
     "timestamp": 1771327267,
     "content_category": ["files", "fileLeaves","tagNodes","folderMetadataFiles"],
     // only one of the above
@@ -249,6 +255,7 @@
 
 {
     "type": "action_name_checkpoint",
+    "actionowner": true,
     "timestamp": 1771327267,
     "content_category": ["files", "fileLeaves","tagNodes","folderMetadataFiles"],
     // only one of the above
@@ -262,6 +269,7 @@
 
 {
     "type": "action_category_checkpoint",
+    "actionowner": true,
     "timestamp": 1771327267,
     "content_category": ["files", "fileLeaves","tagNodes","folderMetadataFiles"],
     // only one of the above
@@ -286,6 +294,20 @@ action_name_checkpoint        ...(for above file)
 action_category_checkpoint    ...(for above category)
 }            x r times        ...(for all categories in action)
 action_end
+
+
+
+In normal cases, and in the default situation,
+the actions are independant of each other. 
+thus each action is its own actionowner
+hence the value in it is true
+
+But in the case of copy cut paste,
+multiple actions are triggered one after the other in order to complete the whole event
+thus the individual actions are not the action owners
+so the first paste action gets the actionowner true 
+and all the actions it calls get actionowner false
+then once the function finishes and paste ends, then again that end will get the tag as actionowner true
 
 
 
