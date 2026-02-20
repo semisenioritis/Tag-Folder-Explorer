@@ -317,5 +317,405 @@ export class ControllerInterface {
         return await this.orchestrator.pasteFilesAndFolders(destinationTagPath, blind);
     }
 
+    /**
+     * Add to legend for file and folder
+     * 
+     * @param legendColor - The legend color identifier
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async addToLegend(
+        legendColor: string,
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.addToLegend(legendColor, filePath, tagPath, owner);
+    }
+
+    /**
+     * Remove from legend for file in folder
+     * 
+     * @param legendColor - The legend color identifier
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async removeFromLegend(
+        legendColor: string,
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.removeFromLegend(legendColor, filePath, tagPath, owner);
+    }
+
+    /**
+     * Cycle legend for file in folder through color states
+     * 
+     * @param currLegendColor - The current legend color identifier
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async cycleLegend(
+        currLegendColor: string,
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.cycleLegend(currLegendColor, filePath, tagPath, owner);
+    }
+
+    /**
+     * Add to legend lock for file in folder
+     * 
+     * @param legendColor - The legend color identifier
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async addToLegendLock(
+        legendColor: string,
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.addToLegendLock(legendColor, filePath, tagPath, owner);
+    }
+
+    /**
+     * Remove from legend lock for file in folder (unlock)
+     * 
+     * @param legendColor - The legend color identifier
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async removeFromLegendLock(
+        legendColor: string,
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.removeFromLegendLock(legendColor, filePath, tagPath, owner);
+    }
+
+    /**
+     * Read legend status for file in folder
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @returns Object with color and lock status, or empty string if not found
+     */
+    readLegendStatus(
+        filePath: string,
+        tagPath: string
+    ): { color: string; status: string } | { color: "" } {
+        return this.orchestrator.readLegendStatus(filePath, tagPath);
+    }
+
+    /**
+     * Add to pinned for file in folder
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async addToPinned(
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.addToPinned(filePath, tagPath, owner);
+    }
+
+    /**
+     * Remove from pinned for file in folder
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async removeFromPinned(
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.removeFromPinned(filePath, tagPath, owner);
+    }
+
+    /**
+     * Cycle pinned for file in folder (toggle pin state)
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async cyclePinned(
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.cyclePinned(filePath, tagPath, owner);
+    }
+
+    /**
+     * Add to pinned lock for file in folder
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async addToPinnedLock(
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.addToPinnedLock(filePath, tagPath, owner);
+    }
+
+    /**
+     * Remove from pinned lock for file in folder (unlock)
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async removeFromPinnedLock(
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.removeFromPinnedLock(filePath, tagPath, owner);
+    }
+
+    /**
+     * Read pinned status for file in folder
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @returns Object with pinned status, or pinned: false if not found
+     */
+    readPinnedStatus(
+        filePath: string,
+        tagPath: string
+    ): { pinned: boolean; status?: string } {
+        return this.orchestrator.readPinnedStatus(filePath, tagPath);
+    }
+
+    /**
+     * Add to pinned for folder
+     * 
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async addToPinnedForFolder(
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.addToPinnedForFolder(tagPath, owner);
+    }
+
+    /**
+     * Remove from pinned for folder
+     * 
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async removeFromPinnedForFolder(
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.removeFromPinnedForFolder(tagPath, owner);
+    }
+
+    /**
+     * Cycle pinned for folder (toggle pin state)
+     * 
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async cyclePinnedForFolder(
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.cyclePinnedForFolder(tagPath, owner);
+    }
+
+    /**
+     * Add to pinned lock for folder
+     * 
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async addToPinnedLockForFolder(
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.addToPinnedLockForFolder(tagPath, owner);
+    }
+
+    /**
+     * Remove from pinned lock for folder (unlock)
+     * 
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async removeFromPinnedLockForFolder(
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.removeFromPinnedLockForFolder(tagPath, owner);
+    }
+
+    /**
+     * Read pinned status for folder
+     * 
+     * @param tagPath - The tag path
+     * @returns Object with pinned and locked status
+     */
+    readPinnedStatusForFolder(
+        tagPath: string
+    ): { pinned: boolean; locked: boolean } {
+        return this.orchestrator.readPinnedStatusForFolder(tagPath);
+    }
+
+    /**
+     * Add to bookmarked for file of a specific path
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async addToBookmarked(
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.addToBookmarked(filePath, tagPath, owner);
+    }
+
+    /**
+     * Remove from bookmarked for file
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async removeFromBookmarked(
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.removeFromBookmarked(filePath, tagPath, owner);
+    }
+
+    /**
+     * Cycle bookmarked for file (toggle bookmark state)
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async cycleBookmarked(
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.cycleBookmarked(filePath, tagPath, owner);
+    }
+
+    /**
+     * Read bookmarked status for file
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default false for read operations)
+     * @returns Object with bookmarked status (true if bookmarked, false otherwise)
+     */
+    async readBookmarkedStatus(
+        filePath: string,
+        tagPath: string,
+        owner: boolean = false
+    ): Promise<{ bookmarked: boolean }> {
+        return await this.orchestrator.readBookmarkedStatus(filePath, tagPath, owner);
+    }
+
+    /**
+     * Add to bookmarked for folder
+     * 
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async addToBookmarkedForFolder(
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.addToBookmarkedForFolder(tagPath, owner);
+    }
+
+    /**
+     * Remove from bookmarked for folder
+     * 
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async removeFromBookmarkedForFolder(
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.removeFromBookmarkedForFolder(tagPath, owner);
+    }
+
+    /**
+     * Cycle bookmarked for folder (toggle bookmark state)
+     * 
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async cycleBookmarkedForFolder(
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.cycleBookmarkedForFolder(tagPath, owner);
+    }
+
+    /**
+     * Read bookmarked status for folder
+     * 
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default false for read operations)
+     * @returns Object with bookmarked status (true if bookmarked, false otherwise)
+     */
+    async readBookmarkedStatusForFolder(
+        tagPath: string,
+        owner: boolean = false
+    ): Promise<{ bookmarked: boolean }> {
+        return await this.orchestrator.readBookmarkedStatusForFolder(tagPath, owner);
+    }
+
 
 }

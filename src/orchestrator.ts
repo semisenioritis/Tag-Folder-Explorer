@@ -1162,6 +1162,12 @@ export class Orchestrator {
                 return { success: false, error: `TFile not found at path: ${filePath}` };
             }
 
+            // write code to verify that jsonObject has only one key named "description"
+            const keys = Object.keys(jsonObject);
+            if (keys.length !== 1 || keys[0] !== 'description') {
+                return { success: false, error: "JSON object must contain only one key called 'description'" };
+            }
+
             // Call replaceMetadataSection function and pass jsonobject and file to it
             const updateSuccess = await fileEditor.replaceMetadataSection(
                 this.app,
@@ -1923,6 +1929,2065 @@ export class Orchestrator {
         } catch (error) {
             console.error("Error in pasteFilesAndFolders:", error);
             return { success: false, error };
+        }
+    }
+
+    /**
+     * Add to legend for file and folder
+     * 
+     * @param legendColor - The legend color identifier
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async addToLegend(
+        legendColor: string,
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract fileleaf using filepath from fileleaf map
+            const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
+            if (!fileLeaf) {
+                return { success: false, error: `FileLeaf not found for path: ${filePath}` };
+            }
+
+            // Extract file from fileleaf
+            const tFile = fileLeaf.getTFile();
+            if (!(tFile instanceof TFile)) {
+                return { success: false, error: `TFile not found at path: ${filePath}` };
+            }
+
+            // Construct key as "🏷-Legend-" + legendcolor
+            const key = `🏷-Legend-${legendColor}`;
+
+            // Read status of the key for file metadata
+            const fileMetadata = fileLeaf.fileMetadata();
+            let fileStatusList: string[] = [];
+            
+            if (fileMetadata && fileMetadata[key]) {
+                if (Array.isArray(fileMetadata[key])) {
+                    fileStatusList = fileMetadata[key];
+                } else if (typeof fileMetadata[key] === 'string') {
+                    fileStatusList = [fileMetadata[key]];
+                }
+            }
+
+            // Construct prefixed and locked tag paths
+            const prefixedTagPath = `🏠/${tagPath}`;
+            const lockedTagPath = `🔒/ ${tagPath}`;
+
+            // Check if status list has prefixedtagpath or lockedtagpath
+            if (fileStatusList.includes(prefixedTagPath) ) {
+                return { success: false, error: `File already has prefixed tag path: ${prefixedTagPath}` };
+            }
+            
+            if (fileStatusList.includes(lockedTagPath) ) {
+                return { success: false, error: `File already has locked tag path: ${lockedTagPath}` };
+            }
+
+            // Add prefixedtagpath to status lists
+            fileStatusList.push(prefixedTagPath);
+
+
+            // Write new status list to file
+            const fileUpdateContent: Record<string, any> = {};
+            fileUpdateContent[key] = fileStatusList;
+            
+            const fileWriteSuccess = await fileEditor.replaceMetadataSection(
+                this.app,
+                tFile,
+                fileUpdateContent
+            );
+
+            if (!fileWriteSuccess) {
+                return { success: false, error: "Failed to write to file metadata" };
+            }
+
+
+
+            return { success: true };
+        } catch (error) {
+            console.error("Error in addToLegend:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Remove from legend for file in folder
+     * 
+     * @param legendColor - The legend color identifier
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async removeFromLegend(
+        legendColor: string,
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract fileleaf using filepath from fileleaf map
+            const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
+            if (!fileLeaf) {
+                return { success: false, error: `FileLeaf not found for path: ${filePath}` };
+            }
+
+            // Extract file from fileleaf
+            const tFile = fileLeaf.getTFile();
+            if (!(tFile instanceof TFile)) {
+                return { success: false, error: `TFile not found at path: ${filePath}` };
+            }
+
+            // Construct key as "🏷-Legend-" + legendcolor
+            const key = `🏷-Legend-${legendColor}`;
+
+            // Read status of the key for file metadata
+            const fileMetadata = fileLeaf.fileMetadata();
+            let fileStatusList: string[] = [];
+            
+            if (fileMetadata && fileMetadata[key]) {
+                if (Array.isArray(fileMetadata[key])) {
+                    fileStatusList = fileMetadata[key];
+                } else if (typeof fileMetadata[key] === 'string') {
+                    fileStatusList = [fileMetadata[key]];
+                }
+            }
+
+
+
+            // Construct prefixed and locked tag paths
+            const prefixedTagPath = `🏠/${tagPath}`;
+            const lockedTagPath = `🔒/ ${tagPath}`;
+
+            // Check if status lists have lockedtagpath
+            if (fileStatusList.includes(lockedTagPath) ) {
+                return { success: false, error: `File has locked tag path: ${lockedTagPath}` };
+            }
+
+            // Check if status lists have prefixedtagpath
+            const fileHasPrefix = fileStatusList.includes(prefixedTagPath);
+
+            if (!fileHasPrefix) {
+                return { success: false, error: `File doesn't have prefixed tag path: ${prefixedTagPath}` };
+            }
+
+            // Remove prefixedtagpath from status lists
+            if (fileHasPrefix) {
+                fileStatusList = fileStatusList.filter(item => item !== prefixedTagPath);
+            }
+            
+
+            // Write new status list to file
+            const fileUpdateContent: Record<string, any> = {};
+            fileUpdateContent[key] = fileStatusList;
+            
+            const fileWriteSuccess = await fileEditor.replaceMetadataSection(
+                this.app,
+                tFile,
+                fileUpdateContent
+            );
+
+            if (!fileWriteSuccess) {
+                return { success: false, error: "Failed to write to file metadata" };
+            }
+
+
+            return { success: true };
+        } catch (error) {
+            console.error("Error in removeFromLegend:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Cycle legend for file in folder through color states
+     * 
+     * @param currLegendColor - The current legend color identifier
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async cycleLegend(
+        currLegendColor: string,
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract fileleaf using filepath from fileleaf map
+            const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
+            if (!fileLeaf) {
+                return { success: false, error: `FileLeaf not found for path: ${filePath}` };
+            }
+
+            // Extract file from fileleaf
+            const tFile = fileLeaf.getTFile();
+            if (!(tFile instanceof TFile)) {
+                return { success: false, error: `TFile not found at path: ${filePath}` };
+            }
+
+            // Maintain list of colors
+            const colorList = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple", ""];
+            
+            // Extract index of colorlist matching currlegendcolor
+            const currentIndex = colorList.indexOf(currLegendColor);
+            if (currentIndex === -1) {
+                return { success: false, error: `Invalid legend color: ${currLegendColor}` };
+            }
+
+            // Extract next index color from color list
+            const nextIndex = (currentIndex + 1) % colorList.length;
+            const nextColor = colorList[nextIndex];
+
+            // If legend color is ""
+            if (currLegendColor === "") {
+                // Call add to legend with next index color
+                return await this.addToLegend(nextColor, filePath, tagPath, false);
+            } else {
+                // Construct key as "🏷-Legend-" + currlegendcolor
+                const key = `🏷-Legend-${currLegendColor}`;
+
+                // Read status of the key for file metadata
+                const fileMetadata = fileLeaf.fileMetadata();
+                let fileStatusList: string[] = [];
+                
+                if (fileMetadata && fileMetadata[key]) {
+                    if (Array.isArray(fileMetadata[key])) {
+                        fileStatusList = fileMetadata[key];
+                    } else if (typeof fileMetadata[key] === 'string') {
+                        fileStatusList = [fileMetadata[key]];
+                    }
+                }
+
+
+                // Construct prefixed and locked tag paths
+                const prefixedTagPath = `🏠/${tagPath}`;
+                const lockedTagPath = `🔒/ ${tagPath}`;
+
+                // Check if status lists have lockedtagpath
+                if (fileStatusList.includes(lockedTagPath) ) {
+                    return { success: false, error: `File has locked tag path: ${lockedTagPath}` };
+                }
+
+                // Check if status lists have prefixedtagpath
+                const hasPrefix = fileStatusList.includes(prefixedTagPath);
+
+                if (hasPrefix) {
+                    // If next index color is ""
+                    if (nextColor === "") {
+                        // Call remove from legend
+                        return await this.removeFromLegend(currLegendColor, filePath, tagPath, false);
+                    } else {
+                        // Call remove from legend then add to legend
+                        const removeResult = await this.removeFromLegend(currLegendColor, filePath, tagPath, false);
+                        if (!removeResult.success) {
+                            return removeResult;
+                        }
+                        
+                        return await this.addToLegend(nextColor, filePath, tagPath, false);
+                    }
+                } else {
+                    // Doesn't have prefixedtagpath and lockedtagpath
+                    return { 
+                        success: false, 
+                        error: "Color was provided but no folder was found. If new append was expected, no color should be passed as a parameter" 
+                    };
+                }
+            }
+        } catch (error) {
+            console.error("Error in cycleLegend:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Add to legend lock for file in folder
+     * 
+     * @param legendColor - The legend color identifier
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async addToLegendLock(
+        legendColor: string,
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract fileleaf using filepath from fileleaf map
+            const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
+            if (!fileLeaf) {
+                return { success: false, error: `FileLeaf not found for path: ${filePath}` };
+            }
+
+            // Extract file from fileleaf
+            const tFile = fileLeaf.getTFile();
+            if (!(tFile instanceof TFile)) {
+                return { success: false, error: `TFile not found at path: ${filePath}` };
+            }
+
+            // Construct key as "🏷-Legend-" + legendcolor
+            const key = `🏷-Legend-${legendColor}`;
+
+            // Read status of the key for file metadata
+            const fileMetadata = fileLeaf.fileMetadata();
+            let fileStatusList: string[] = [];
+            
+            if (fileMetadata && fileMetadata[key]) {
+                if (Array.isArray(fileMetadata[key])) {
+                    fileStatusList = fileMetadata[key];
+                } else if (typeof fileMetadata[key] === 'string') {
+                    fileStatusList = [fileMetadata[key]];
+                }
+            }
+
+
+            // Construct prefixed and locked tag paths
+            const prefixedTagPath = `🏠/${tagPath}`;
+            const lockedTagPath = `🔒/ ${tagPath}`;
+
+            // Check if status lists have lockedtagpath
+            if (fileStatusList.includes(lockedTagPath) ) {
+                return { success: false, error: `File already has locked tag path: ${lockedTagPath}` };
+            }
+
+            // Check if status lists have prefixedtagpath
+            const fileHasPrefix = fileStatusList.includes(prefixedTagPath);
+
+            if (fileHasPrefix) {
+                // Remove prefixedtagpath and add lockedtagpath
+                if (fileHasPrefix) {
+                    fileStatusList = fileStatusList.filter(item => item !== prefixedTagPath);
+                }
+
+            }
+
+            // Add lockedtagpath to status lists
+            fileStatusList.push(lockedTagPath);
+
+
+            // Write new status list to file
+            const fileUpdateContent: Record<string, any> = {};
+            fileUpdateContent[key] = fileStatusList;
+            
+            const fileWriteSuccess = await fileEditor.replaceMetadataSection(
+                this.app,
+                tFile,
+                fileUpdateContent
+            );
+
+            if (!fileWriteSuccess) {
+                return { success: false, error: "Failed to write to file metadata" };
+            }
+
+
+
+            return { success: true };
+        } catch (error) {
+            console.error("Error in addToLegendLock:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Remove from legend lock for file in folder (unlock)
+     * 
+     * @param legendColor - The legend color identifier
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async removeFromLegendLock(
+        legendColor: string,
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract fileleaf using filepath from fileleaf map
+            const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
+            if (!fileLeaf) {
+                return { success: false, error: `FileLeaf not found for path: ${filePath}` };
+            }
+
+            // Extract file from fileleaf
+            const tFile = fileLeaf.getTFile();
+            if (!(tFile instanceof TFile)) {
+                return { success: false, error: `TFile not found at path: ${filePath}` };
+            }
+
+            // Construct key as "🏷-Legend-" + legendcolor
+            const key = `🏷-Legend-${legendColor}`;
+
+            // Read status of the key for file metadata
+            const fileMetadata = fileLeaf.fileMetadata();
+            let fileStatusList: string[] = [];
+            
+            if (fileMetadata && fileMetadata[key]) {
+                if (Array.isArray(fileMetadata[key])) {
+                    fileStatusList = fileMetadata[key];
+                } else if (typeof fileMetadata[key] === 'string') {
+                    fileStatusList = [fileMetadata[key]];
+                }
+            }
+
+
+
+            // Construct prefixed and locked tag paths
+            const prefixedTagPath = `🏠/${tagPath}`;
+            const lockedTagPath = `🔒/ ${tagPath}`;
+
+            // Check if status lists have lockedtagpath
+            const fileHasLocked = fileStatusList.includes(lockedTagPath);
+
+            if (fileHasLocked ) {
+                // Unlock it: remove locked, add prefixed
+                if (fileHasLocked) {
+                    fileStatusList = fileStatusList.filter(item => item !== lockedTagPath);
+                    fileStatusList.push(prefixedTagPath);
+                }
+
+
+                // Write new status list to file
+                const fileUpdateContent: Record<string, any> = {};
+                fileUpdateContent[key] = fileStatusList;
+                
+                const fileWriteSuccess = await fileEditor.replaceMetadataSection(
+                    this.app,
+                    tFile,
+                    fileUpdateContent
+                );
+
+                if (!fileWriteSuccess) {
+                    return { success: false, error: "Failed to write to file metadata" };
+                }
+
+
+
+                return { success: true };
+            }
+
+            // Check if has prefixed tag path
+            if (fileStatusList.includes(prefixedTagPath)) {
+                return { success: false, error: "Legend is already unlocked" };
+            }
+
+            // Doesn't have prefixed or locked
+            return { success: false, error: "Legend doesn't exist" };
+        } catch (error) {
+            console.error("Error in removeFromLegendLock:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Read legend status for file in folder
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @returns Object with color and lock status, or empty string if not found
+     */
+    readLegendStatus(
+        filePath: string,
+        tagPath: string
+    ): { color: string; status: string } | { color: "" } {
+        try {
+            // Extract fileleaf using filepath from fileleaf map
+            const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
+            if (!fileLeaf) {
+                return { color: "" };
+            }
+
+            // Extract file from fileleaf
+            const tFile = fileLeaf.getTFile();
+            if (!(tFile instanceof TFile)) {
+                return { color: "" };
+            }
+
+            // Construct prefixed and locked tag paths
+            const prefixedTagPath = `🏠/${tagPath}`;
+            const lockedTagPath = `🔒/ ${tagPath}`;
+
+            // Read file metadata
+            const fileMetadata = fileLeaf.fileMetadata();
+            if (!fileMetadata) {
+                return { color: "" };
+            }
+
+            // Key list for all legend colors
+            const legendKeys = [
+                { key: "🏷-Legend-Red", color: "Red" },
+                { key: "🏷-Legend-Orange", color: "Orange" },
+                { key: "🏷-Legend-Yellow", color: "Yellow" },
+                { key: "🏷-Legend-Green", color: "Green" },
+                { key: "🏷-Legend-Blue", color: "Blue" },
+                { key: "🏷-Legend-Purple", color: "Purple" }
+            ];
+
+            // Extract all 6 fields and check for matches
+            for (const { key, color } of legendKeys) {
+                const value = fileMetadata[key];
+                if (!value) continue;
+
+                // Convert to array if needed
+                let statusArray: string[] = [];
+                if (Array.isArray(value)) {
+                    statusArray = value;
+                } else if (typeof value === 'string') {
+                    statusArray = [value];
+                }
+
+                // Check each element in array
+                for (const element of statusArray) {
+                    if (element === prefixedTagPath) {
+                        return { color, status: "notlocked" };
+                    }
+                    if (element === lockedTagPath) {
+                        return { color, status: "locked" };
+                    }
+                }
+            }
+
+            // No folder found
+            return { color: "" };
+        } catch (error) {
+            console.error("Error in readLegendStatus:", error);
+            return { color: "" };
+        }
+    }
+
+    /**
+     * Add to pinned for file in folder
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async addToPinned(
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract fileleaf using filepath from fileleaf map
+            const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
+            if (!fileLeaf) {
+                return { success: false, error: `FileLeaf not found for path: ${filePath}` };
+            }
+
+            // Extract file from fileleaf
+            const tFile = fileLeaf.getTFile();
+            if (!(tFile instanceof TFile)) {
+                return { success: false, error: `TFile not found at path: ${filePath}` };
+            }
+
+            // Key is "🏷-Pinned"
+            const key = "🏷-Pinned";
+
+            // Read status of the key for file metadata
+            const fileMetadata = fileLeaf.fileMetadata();
+            let fileStatusList: string[] = [];
+            
+            if (fileMetadata && fileMetadata[key]) {
+                if (Array.isArray(fileMetadata[key])) {
+                    fileStatusList = fileMetadata[key];
+                } else if (typeof fileMetadata[key] === 'string') {
+                    fileStatusList = [fileMetadata[key]];
+                }
+            }
+
+
+            // Construct prefixed and locked tag paths
+            const prefixedTagPath = `🏠/${tagPath}`;
+            const lockedTagPath = `🔒/ ${tagPath}`;
+
+            // Check if status lists have prefixedtagpath
+            if (fileStatusList.includes(prefixedTagPath) ) {
+                return { success: false, error: `File already has prefixed tag path: ${prefixedTagPath}` };
+            }
+            
+            // Check if status lists have lockedtagpath
+            if (fileStatusList.includes(lockedTagPath) ) {
+                return { success: false, error: `File has locked tag path: ${lockedTagPath}` };
+            }
+
+            // Add prefixedtagpath to status lists
+            fileStatusList.push(prefixedTagPath);
+
+
+            // Write new status list to file
+            const fileUpdateContent: Record<string, any> = {};
+            fileUpdateContent[key] = fileStatusList;
+            
+            const fileWriteSuccess = await fileEditor.replaceMetadataSection(
+                this.app,
+                tFile,
+                fileUpdateContent
+            );
+
+            if (!fileWriteSuccess) {
+                return { success: false, error: "Failed to write to file metadata" };
+            }
+
+
+            return { success: true };
+        } catch (error) {
+            console.error("Error in addToPinned:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Remove from pinned for file in folder
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async removeFromPinned(
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract fileleaf using filepath from fileleaf map
+            const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
+            if (!fileLeaf) {
+                return { success: false, error: `FileLeaf not found for path: ${filePath}` };
+            }
+
+            // Extract file from fileleaf
+            const tFile = fileLeaf.getTFile();
+            if (!(tFile instanceof TFile)) {
+                return { success: false, error: `TFile not found at path: ${filePath}` };
+            }
+
+            // Key is "🏷-Pinned"
+            const key = "🏷-Pinned";
+
+            // Read status of the key for file metadata
+            const fileMetadata = fileLeaf.fileMetadata();
+            let fileStatusList: string[] = [];
+            
+            if (fileMetadata && fileMetadata[key]) {
+                if (Array.isArray(fileMetadata[key])) {
+                    fileStatusList = fileMetadata[key];
+                } else if (typeof fileMetadata[key] === 'string') {
+                    fileStatusList = [fileMetadata[key]];
+                }
+            }
+
+
+            // Construct prefixed and locked tag paths
+            const prefixedTagPath = `🏠/${tagPath}`;
+            const lockedTagPath = `🔒/ ${tagPath}`;
+
+            // Check if status lists have lockedtagpath
+            if (fileStatusList.includes(lockedTagPath) ) {
+                return { success: false, error: `File has locked tag path: ${lockedTagPath}` };
+            }
+
+            // Check if status lists have prefixedtagpath
+            const fileHasPrefix = fileStatusList.includes(prefixedTagPath);
+
+            if (!fileHasPrefix ) {
+                return { success: false, error: `File doesn't have prefixed tag path: ${prefixedTagPath}` };
+            }
+
+            // Remove prefixedtagpath from status lists
+            if (fileHasPrefix) {
+                fileStatusList = fileStatusList.filter(item => item !== prefixedTagPath);
+            }
+            
+
+            // Write new status list to file
+            const fileUpdateContent: Record<string, any> = {};
+            fileUpdateContent[key] = fileStatusList;
+            
+            const fileWriteSuccess = await fileEditor.replaceMetadataSection(
+                this.app,
+                tFile,
+                fileUpdateContent
+            );
+
+            if (!fileWriteSuccess) {
+                return { success: false, error: "Failed to write to file metadata" };
+            }
+
+
+
+            return { success: true };
+        } catch (error) {
+            console.error("Error in removeFromPinned:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Cycle pinned for file in folder (toggle pin state)
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async cyclePinned(
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract fileleaf using filepath from fileleaf map
+            const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
+            if (!fileLeaf) {
+                return { success: false, error: `FileLeaf not found for path: ${filePath}` };
+            }
+
+            // Extract file from fileleaf
+            const tFile = fileLeaf.getTFile();
+            if (!(tFile instanceof TFile)) {
+                return { success: false, error: `TFile not found at path: ${filePath}` };
+            }
+
+            // Key is "🏷-Pinned"
+            const key = "🏷-Pinned";
+
+            // Read status of the key for file metadata
+            const fileMetadata = fileLeaf.fileMetadata();
+            let fileStatusList: string[] = [];
+            
+            if (fileMetadata && fileMetadata[key]) {
+                if (Array.isArray(fileMetadata[key])) {
+                    fileStatusList = fileMetadata[key];
+                } else if (typeof fileMetadata[key] === 'string') {
+                    fileStatusList = [fileMetadata[key]];
+                }
+            }
+
+
+
+            // Construct prefixed and locked tag paths
+            const prefixedTagPath = `🏠/${tagPath}`;
+            const lockedTagPath = `🔒/ ${tagPath}`;
+
+            // Check if status lists have lockedtagpath
+            if (fileStatusList.includes(lockedTagPath)) {
+                return { success: false, error: `File is locked, cannot toggle: ${lockedTagPath}` };
+            }
+
+            // Check if status lists have prefixedtagpath
+            const fileHasPrefix = fileStatusList.includes(prefixedTagPath);
+
+            if (fileHasPrefix) {
+                // Remove prefixedtagpath from status lists
+                fileStatusList = fileStatusList.filter(item => item !== prefixedTagPath);
+                
+
+            } else {
+                // Add prefixedtagpath to status lists
+                fileStatusList.push(prefixedTagPath);
+
+            }
+
+            // Write new status list to file
+            const fileUpdateContent: Record<string, any> = {};
+            fileUpdateContent[key] = fileStatusList;
+            
+            const fileWriteSuccess = await fileEditor.replaceMetadataSection(
+                this.app,
+                tFile,
+                fileUpdateContent
+            );
+
+            if (!fileWriteSuccess) {
+                return { success: false, error: "Failed to write to file metadata" };
+            }
+
+
+
+            return { success: true };
+        } catch (error) {
+            console.error("Error in cyclePinned:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Add to pinned lock for file in folder
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async addToPinnedLock(
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract fileleaf using filepath from fileleaf map
+            const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
+            if (!fileLeaf) {
+                return { success: false, error: `FileLeaf not found for path: ${filePath}` };
+            }
+
+            // Extract file from fileleaf
+            const tFile = fileLeaf.getTFile();
+            if (!(tFile instanceof TFile)) {
+                return { success: false, error: `TFile not found at path: ${filePath}` };
+            }
+
+            // Key is "🏷-Pinned"
+            const key = "🏷-Pinned";
+
+            // Read status of the key for file metadata
+            const fileMetadata = fileLeaf.fileMetadata();
+            let fileStatusList: string[] = [];
+            
+            if (fileMetadata && fileMetadata[key]) {
+                if (Array.isArray(fileMetadata[key])) {
+                    fileStatusList = fileMetadata[key];
+                } else if (typeof fileMetadata[key] === 'string') {
+                    fileStatusList = [fileMetadata[key]];
+                }
+            }
+
+
+            // Construct prefixed and locked tag paths
+            const prefixedTagPath = `🏠/${tagPath}`;
+            const lockedTagPath = `🔒/ ${tagPath}`;
+
+            // Check if status lists have lockedtagpath
+            if (fileStatusList.includes(lockedTagPath) ) {
+                return { success: false, error: `File already has locked tag path: ${lockedTagPath}` };
+            }
+
+            // Check if status lists have prefixedtagpath
+            const fileHasPrefix = fileStatusList.includes(prefixedTagPath);
+
+            if (fileHasPrefix ) {
+                // Remove prefixedtagpath and add lockedtagpath
+                fileStatusList = fileStatusList.filter(item => item !== prefixedTagPath);
+
+            }
+
+            // Add lockedtagpath to status lists
+            fileStatusList.push(lockedTagPath);
+
+            // Write new status list to file
+            const fileUpdateContent: Record<string, any> = {};
+            fileUpdateContent[key] = fileStatusList;
+            
+            const fileWriteSuccess = await fileEditor.replaceMetadataSection(
+                this.app,
+                tFile,
+                fileUpdateContent
+            );
+
+            if (!fileWriteSuccess) {
+                return { success: false, error: "Failed to write to file metadata" };
+            }
+
+
+            return { success: true };
+        } catch (error) {
+            console.error("Error in addToPinnedLock:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Remove from pinned lock for file in folder (unlock)
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async removeFromPinnedLock(
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract fileleaf using filepath from fileleaf map
+            const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
+            if (!fileLeaf) {
+                return { success: false, error: `FileLeaf not found for path: ${filePath}` };
+            }
+
+            // Extract file from fileleaf
+            const tFile = fileLeaf.getTFile();
+            if (!(tFile instanceof TFile)) {
+                return { success: false, error: `TFile not found at path: ${filePath}` };
+            }
+
+            // Key is "🏷-Pinned"
+            const key = "🏷-Pinned";
+
+            // Read status of the key for file metadata
+            const fileMetadata = fileLeaf.fileMetadata();
+            let fileStatusList: string[] = [];
+            
+            if (fileMetadata && fileMetadata[key]) {
+                if (Array.isArray(fileMetadata[key])) {
+                    fileStatusList = fileMetadata[key];
+                } else if (typeof fileMetadata[key] === 'string') {
+                    fileStatusList = [fileMetadata[key]];
+                }
+            }
+
+
+
+            // Construct prefixed and locked tag paths
+            const prefixedTagPath = `🏠/${tagPath}`;
+            const lockedTagPath = `🔒/ ${tagPath}`;
+
+            // Check if status lists have lockedtagpath
+            const fileHasLocked = fileStatusList.includes(lockedTagPath);
+
+            if (fileHasLocked ) {
+                // Unlock it: remove locked, add prefixed
+                fileStatusList = fileStatusList.filter(item => item !== lockedTagPath);
+                fileStatusList.push(prefixedTagPath);
+
+
+                // Write new status list to file
+                const fileUpdateContent: Record<string, any> = {};
+                fileUpdateContent[key] = fileStatusList;
+                
+                const fileWriteSuccess = await fileEditor.replaceMetadataSection(
+                    this.app,
+                    tFile,
+                    fileUpdateContent
+                );
+
+                if (!fileWriteSuccess) {
+                    return { success: false, error: "Failed to write to file metadata" };
+                }
+
+                return { success: true };
+            }
+
+            // Check if has prefixed tag path
+            if (fileStatusList.includes(prefixedTagPath)) {
+                return { success: false, error: "Pinned is already unlocked" };
+            }
+
+            // Doesn't have prefixed or locked
+            return { success: false, error: "Pinned doesn't exist" };
+        } catch (error) {
+            console.error("Error in removeFromPinnedLock:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Read pinned status for file in folder
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @returns Object with pinned status, or pinned: false if not found
+     */
+    readPinnedStatus(
+        filePath: string,
+        tagPath: string
+    ): { pinned: boolean; status?: string } {
+        try {
+            // Extract fileleaf using filepath from fileleaf map
+            const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
+            if (!fileLeaf) {
+                return { pinned: false };
+            }
+
+            // Extract file from fileleaf
+            const tFile = fileLeaf.getTFile();
+            if (!(tFile instanceof TFile)) {
+                return { pinned: false };
+            }
+
+            // Construct prefixed and locked tag paths
+            const prefixedTagPath = `🏠/${tagPath}`;
+            const lockedTagPath = `🔒/ ${tagPath}`;
+
+            // Read file metadata
+            const fileMetadata = fileLeaf.fileMetadata();
+            if (!fileMetadata) {
+                return { pinned: false };
+            }
+
+            // Key is "🏷-Pinned"
+            const key = "🏷-Pinned";
+            const value = fileMetadata[key];
+            
+            if (!value) {
+                return { pinned: false };
+            }
+
+            // Convert to array if needed
+            let statusArray: string[] = [];
+            if (Array.isArray(value)) {
+                statusArray = value;
+            } else if (typeof value === 'string') {
+                statusArray = [value];
+            }
+
+            // Check each element in array
+            for (const element of statusArray) {
+                if (element === prefixedTagPath) {
+                    return { pinned: true, status: "notlocked" };
+                }
+                if (element === lockedTagPath) {
+                    return { pinned: true, status: "locked" };
+                }
+            }
+
+            // No folder found
+            return { pinned: false };
+        } catch (error) {
+            console.error("Error in readPinnedStatus:", error);
+            return { pinned: false };
+        }
+    }
+
+    /**
+     * Add to pinned for folder
+     * 
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async addToPinnedForFolder(
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract tagnode using tagpath from tree
+            const tagNode = this.treeRoot.getNode(tagPath);
+            if (!tagNode) {
+                return { success: false, error: `TagNode not found for path: ${tagPath}` };
+            }
+
+            // Read metadata of tagnode
+            const metadata = fileEditor.metadataReadAllFrontmatter(this.app, tagPath);
+            
+            // Key is "Pinned"
+            const key = "Pinned";
+            const pinnedValue = metadata?.[key];
+
+            // If Pinned is not present
+            if (!pinnedValue) {
+                const updateContent: Record<string, any> = {};
+                updateContent[key] = {
+                    pinned: true,
+                    locked: false
+                };
+                
+                fileEditor.metadataAddNewProperty(
+                    this.app,
+                    tagPath,
+                    updateContent
+                );
+
+                return { success: true };
+            }
+
+            // Else if Pinned.pinned is true
+            if (pinnedValue.pinned === true) {
+                // If Pinned.locked is not present, add it
+                if (pinnedValue.locked === undefined) {
+                    const updateContent: Record<string, any> = {};
+                    updateContent[key] = {
+                        ...pinnedValue,
+                        locked: false
+                    };
+                    
+                    fileEditor.metadataReplaceExistingProperty(
+                        this.app,
+                        tagPath,
+                        updateContent
+                    );
+
+                }
+
+                return { success: false, error: "Folder is already pinned" };
+            }
+
+            // Else if Pinned.pinned not present or if false
+            if (pinnedValue.pinned === undefined || pinnedValue.pinned === false) {
+                // If Pinned.locked is true
+                if (pinnedValue.locked === true) {
+                    return { success: false, error: "Pinned is locked" };
+                } else {
+                    // Add Pinned.pinned and Pinned.locked
+                    const updateContent: Record<string, any> = {};
+                    updateContent[key] = {
+                        ...pinnedValue,
+                        pinned: true,
+                        locked: false
+                    };
+                    
+                    fileEditor.metadataReplaceExistingProperty(
+                        this.app,
+                        tagPath,
+                        updateContent
+                    );
+
+                    return { success: true };
+                }
+            }
+
+            return { success: false, error: "Unexpected state" };
+        } catch (error) {
+            console.error("Error in addToPinnedForFolder:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Remove from pinned for folder
+     * 
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async removeFromPinnedForFolder(
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract tagnode using tagpath from tree
+            const tagNode = this.treeRoot.getNode(tagPath);
+            if (!tagNode) {
+                return { success: false, error: `TagNode not found for path: ${tagPath}` };
+            }
+
+            // Read metadata of tagnode
+            const metadata = fileEditor.metadataReadAllFrontmatter(this.app, tagPath);
+            
+            // Key is "Pinned"
+            const key = "Pinned";
+            const pinnedValue = metadata?.[key];
+
+            // If Pinned is not present
+            if (!pinnedValue) {
+                const updateContent: Record<string, any> = {};
+                updateContent[key] = {
+                    pinned: false,
+                    locked: false
+                };
+                
+                fileEditor.metadataAddNewProperty(
+                    this.app,
+                    tagPath,
+                    updateContent
+                );
+
+
+                return { success: true };
+            }
+
+            // Else if Pinned.pinned is true
+            if (pinnedValue.pinned === true) {
+                // If Pinned.locked is true
+                if (pinnedValue.locked === true) {
+                    return { success: false, error: "Folder pin is locked" };
+                } else {
+                    // Make Pinned.pinned false
+                    const updateContent: Record<string, any> = {};
+                    updateContent[key] = {
+                        ...pinnedValue,
+                        pinned: false
+                    };
+                    
+                    fileEditor.metadataReplaceExistingProperty(
+                        this.app,
+                        tagPath,
+                        updateContent
+                    );
+
+
+                    return { success: true };
+                }
+            }
+
+            // Else if Pinned.pinned not present or if false
+            if (pinnedValue.pinned === undefined || pinnedValue.pinned === false) {
+                // If Pinned.locked is true
+                if (pinnedValue.locked === true) {
+                    return { success: false, error: "Pinned is locked" };
+                } else {
+                    // Add Pinned.pinned and Pinned.locked
+                    const updateContent: Record<string, any> = {};
+                    updateContent[key] = {
+                        ...pinnedValue,
+                        pinned: false,
+                        locked: false
+                    };
+                    
+                    fileEditor.metadataReplaceExistingProperty(
+                        this.app,
+                        tagPath,
+                        updateContent
+                    );
+
+
+                    return { success: true };
+                }
+            }
+
+            return { success: false, error: "Unexpected state" };
+        } catch (error) {
+            console.error("Error in removeFromPinnedForFolder:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Cycle pinned for folder (toggle pin state)
+     * 
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async cyclePinnedForFolder(
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract tagnode using tagpath from tree
+            const tagNode = this.treeRoot.getNode(tagPath);
+            if (!tagNode) {
+                return { success: false, error: `TagNode not found for path: ${tagPath}` };
+            }
+
+            // Read metadata of tagnode
+            const metadata = fileEditor.metadataReadAllFrontmatter(this.app, tagPath);
+            
+            // Key is "Pinned"
+            const key = "Pinned";
+            const pinnedValue = metadata?.[key];
+
+            // If Pinned is not present
+            if (!pinnedValue) {
+                const updateContent: Record<string, any> = {};
+                updateContent[key] = {
+                    pinned: true,
+                    locked: false
+                };
+                
+                fileEditor.metadataAddNewProperty(
+                    this.app,
+                    tagPath,
+                    updateContent
+                );
+
+
+                return { success: true };
+            }
+
+            // Else if Pinned.locked is true
+            if (pinnedValue.locked === true) {
+                return { success: false, error: "Cannot toggle, folder is locked" };
+            }
+
+            // Else if Pinned.locked is false or is not present
+            if (pinnedValue.locked === false || pinnedValue.locked === undefined) {
+                // If Pinned.pinned is true
+                if (pinnedValue.pinned === true) {
+                    const updateContent: Record<string, any> = {};
+                    updateContent[key] = {
+                        ...pinnedValue,
+                        pinned: false,
+                        locked: false
+                    };
+                    
+                    fileEditor.metadataReplaceExistingProperty(
+                        this.app,
+                        tagPath,
+                        updateContent
+                    );
+
+                    return { success: true };
+                }
+                // Else if Pinned.pinned not present or if false
+                else if (pinnedValue.pinned === undefined || pinnedValue.pinned === false) {
+                    const updateContent: Record<string, any> = {};
+                    updateContent[key] = {
+                        ...pinnedValue,
+                        pinned: true,
+                        locked: false
+                    };
+                    
+                    fileEditor.metadataReplaceExistingProperty(
+                        this.app,
+                        tagPath,
+                        updateContent
+                    );
+
+
+                    return { success: true };
+                }
+            }
+
+            return { success: false, error: "Unexpected state" };
+        } catch (error) {
+            console.error("Error in cyclePinnedForFolder:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Add to pinned lock for folder
+     * 
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async addToPinnedLockForFolder(
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract tagnode using tagpath from tree
+            const tagNode = this.treeRoot.getNode(tagPath);
+            if (!tagNode) {
+                return { success: false, error: `TagNode not found for path: ${tagPath}` };
+            }
+
+            // Read metadata of tagnode
+            const metadata = fileEditor.metadataReadAllFrontmatter(this.app, tagPath);
+            
+            // Key is "Pinned"
+            const key = "Pinned";
+            const pinnedValue = metadata?.[key];
+
+
+            // If Pinned is not present 
+            if (!pinnedValue) {
+                const updateContent: Record<string, any> = {};
+                updateContent[key] = {
+                    ...pinnedValue,
+                    pinned: true,
+                    locked: true
+                };
+                
+                fileEditor.metadataAddNewProperty(
+                    this.app,
+                    tagPath,
+                    updateContent
+                );
+
+
+                return { success: true };
+            }
+
+
+            // If Pinned.locked is true
+            if (pinnedValue?.locked === true) {
+                // Make Pinned.pinned true, keep locked true
+                const updateContent: Record<string, any> = {};
+                updateContent[key] = {
+                    ...pinnedValue,
+                    pinned: true,
+                    locked: true
+                };
+                
+                fileEditor.metadataReplaceExistingProperty(
+                    this.app,
+                    tagPath,
+                    updateContent
+                );
+
+
+                return { success: false, error: "Folder is already locked" };
+            }
+
+            // If Pinned.locked is false or is not present
+            if (!pinnedValue || pinnedValue.locked === false || pinnedValue.locked === undefined) {
+                const updateContent: Record<string, any> = {};
+                updateContent[key] = {
+                    ...pinnedValue,
+                    pinned: true,
+                    locked: true
+                };
+                
+                fileEditor.metadataReplaceExistingProperty(
+                    this.app,
+                    tagPath,
+                    updateContent
+                );
+
+
+                return { success: true };
+            }
+
+
+
+            return { success: false, error: "Unexpected state" };
+        } catch (error) {
+            console.error("Error in addToPinnedLockForFolder:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Remove from pinned lock for folder (unlock)
+     * 
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async removeFromPinnedLockForFolder(
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract tagnode using tagpath from tree
+            const tagNode = this.treeRoot.getNode(tagPath);
+            if (!tagNode) {
+                return { success: false, error: `TagNode not found for path: ${tagPath}` };
+            }
+
+            // Read metadata of tagnode
+            const metadata = fileEditor.metadataReadAllFrontmatter(this.app, tagPath);
+            
+            // Key is "Pinned"
+            const key = "Pinned";
+            const pinnedValue = metadata?.[key];
+
+            // If Pinned is not present
+            if (!pinnedValue) {
+                const updateContent: Record<string, any> = {};
+                updateContent[key] = {
+                    pinned: true,
+                    locked: false
+                };
+                
+                fileEditor.metadataAddNewProperty(
+                    this.app,
+                    tagPath,
+                    updateContent
+                );
+
+
+                return { success: true };
+            }
+
+            // If Pinned.locked is true
+            if (pinnedValue?.locked === true) {
+                const updateContent: Record<string, any> = {};
+                updateContent[key] = {
+                    ...pinnedValue,
+                    pinned: true,
+                    locked: false
+                };
+                
+                fileEditor.metadataReplaceExistingProperty(
+                    this.app,
+                    tagPath,
+                    updateContent
+                );
+
+
+
+                return { success: true };
+            }
+
+            // If Pinned.locked is false
+            if (pinnedValue?.locked === false) {
+                return { success: false, error: "Folder is already unlocked" };
+            }
+
+
+
+            return { success: false, error: "Unexpected state" };
+        } catch (error) {
+            console.error("Error in removeFromPinnedLockForFolder:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Read pinned status for folder
+     * 
+     * @param tagPath - The tag path
+     * @returns Object with pinned and locked status
+     */
+    readPinnedStatusForFolder(
+        tagPath: string
+    ): { pinned: boolean; locked: boolean } {
+        try {
+            // Extract tagnode using tagpath from tree
+            const tagNode = this.treeRoot.getNode(tagPath);
+            if (!tagNode) {
+                return { pinned: false, locked: false };
+            }
+
+            // Read tagnode metadata
+            const metadata = fileEditor.metadataReadAllFrontmatter(this.app, tagPath);
+            
+            // Extract Pinned property
+            const pinnedProperty = metadata?.["Pinned"];
+            
+            if (!pinnedProperty) {
+                return { pinned: false, locked: false };
+            }
+
+            // Extract pinned and locked values
+            const pinned = pinnedProperty.pinned === true;
+            const locked = pinnedProperty.locked === true;
+
+            return { pinned, locked };
+        } catch (error) {
+            console.error("Error in readPinnedStatusForFolder:", error);
+            return { pinned: false, locked: false };
+        }
+    }
+
+    /**
+     * Add to bookmarked for file of a specific path
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async addToBookmarked(
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract fileleaf using filepath from fileleaf map
+            const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
+            if (!fileLeaf) {
+                return { success: false, error: `FileLeaf not found for path: ${filePath}` };
+            }
+
+            // Extract file from fileleaf
+            const tFile = fileLeaf.getTFile();
+            if (!(tFile instanceof TFile)) {
+                return { success: false, error: `TFile not found at path: ${filePath}` };
+            }
+
+            // Key is "🏷-Bookmarked"
+            const key = "🏷-Bookmarked";
+
+            // Read status of the key for file metadata
+            const fileMetadata = fileLeaf.fileMetadata();
+            let fileStatusList: string[] = [];
+            
+            if (fileMetadata && fileMetadata[key]) {
+                if (Array.isArray(fileMetadata[key])) {
+                    fileStatusList = fileMetadata[key];
+                } else if (typeof fileMetadata[key] === 'string') {
+                    fileStatusList = [fileMetadata[key]];
+                }
+            }
+
+
+            // Construct prefixed tag path
+            const prefixedTagPath = `🏠/${tagPath}`;
+
+            // Check if status lists have prefixedtagpath
+            if (fileStatusList.includes(prefixedTagPath) ) {
+                return { success: false, error: `File already has prefixed tag path: ${prefixedTagPath}` };
+            }
+
+            // Add prefixedtagpath to status lists
+            fileStatusList.push(prefixedTagPath);
+
+            // Write new status list to file
+            const fileUpdateContent: Record<string, any> = {};
+            fileUpdateContent[key] = fileStatusList;
+            
+            const fileWriteSuccess = await fileEditor.replaceMetadataSection(
+                this.app,
+                tFile,
+                fileUpdateContent
+            );
+
+            if (!fileWriteSuccess) {
+                return { success: false, error: "Failed to write to file metadata" };
+            }
+
+
+            return { success: true };
+        } catch (error) {
+            console.error("Error in addToBookmarked:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Remove from bookmarked for file
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async removeFromBookmarked(
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract fileleaf using filepath from fileleaf map
+            const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
+            if (!fileLeaf) {
+                return { success: false, error: `FileLeaf not found for path: ${filePath}` };
+            }
+
+            // Extract file from fileleaf
+            const tFile = fileLeaf.getTFile();
+            if (!(tFile instanceof TFile)) {
+                return { success: false, error: `TFile not found at path: ${filePath}` };
+            }
+
+            // Key is "🏷-Bookmarked"
+            const key = "🏷-Bookmarked";
+
+            // Read status of the key for file metadata
+            const fileMetadata = fileLeaf.fileMetadata();
+            let fileStatusList: string[] = [];
+            
+            if (fileMetadata && fileMetadata[key]) {
+                if (Array.isArray(fileMetadata[key])) {
+                    fileStatusList = fileMetadata[key];
+                } else if (typeof fileMetadata[key] === 'string') {
+                    fileStatusList = [fileMetadata[key]];
+                }
+            }
+
+
+
+            // Construct prefixed tag path
+            const prefixedTagPath = `🏠/${tagPath}`;
+
+            // Check if status lists have prefixedtagpath
+            const fileHasPrefix = fileStatusList.includes(prefixedTagPath);
+
+            if (!fileHasPrefix ) {
+                return { success: false, error: `File doesn't have prefixed tag path: ${prefixedTagPath}` };
+            }
+
+            // Remove prefixedtagpath from status lists
+            if (fileHasPrefix) {
+                fileStatusList = fileStatusList.filter(item => item !== prefixedTagPath);
+            }
+
+
+            // Write new status list to file
+            const fileUpdateContent: Record<string, any> = {};
+            fileUpdateContent[key] = fileStatusList;
+            
+            const fileWriteSuccess = await fileEditor.replaceMetadataSection(
+                this.app,
+                tFile,
+                fileUpdateContent
+            );
+
+            if (!fileWriteSuccess) {
+                return { success: false, error: "Failed to write to file metadata" };
+            }
+
+
+
+            return { success: true };
+        } catch (error) {
+            console.error("Error in removeFromBookmarked:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Cycle bookmarked for file (toggle bookmark state)
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async cycleBookmarked(
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract fileleaf using filepath from fileleaf map
+            const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
+            if (!fileLeaf) {
+                return { success: false, error: `FileLeaf not found for path: ${filePath}` };
+            }
+
+            // Extract file from fileleaf
+            const tFile = fileLeaf.getTFile();
+            if (!(tFile instanceof TFile)) {
+                return { success: false, error: `TFile not found at path: ${filePath}` };
+            }
+
+            // Key is "🏷-Bookmarked"
+            const key = "🏷-Bookmarked";
+
+            // Read status of the key for file metadata
+            const fileMetadata = fileLeaf.fileMetadata();
+            let fileStatusList: string[] = [];
+            
+            if (fileMetadata && fileMetadata[key]) {
+                if (Array.isArray(fileMetadata[key])) {
+                    fileStatusList = fileMetadata[key];
+                } else if (typeof fileMetadata[key] === 'string') {
+                    fileStatusList = [fileMetadata[key]];
+                }
+            }
+
+
+            // Construct prefixed tag path
+            const prefixedTagPath = `🏠/${tagPath}`;
+
+            // Check if status lists have prefixedtagpath
+            const fileHasPrefix = fileStatusList.includes(prefixedTagPath);
+
+            if (fileHasPrefix ) {
+                // Remove prefixedtagpath from status lists
+                fileStatusList = fileStatusList.filter(item => item !== prefixedTagPath);
+
+
+            } else {
+                // Add prefixedtagpath to status lists
+                fileStatusList.push(prefixedTagPath);
+            }
+
+            // Write new status list to file
+            const fileUpdateContent: Record<string, any> = {};
+            fileUpdateContent[key] = fileStatusList;
+            
+            const fileWriteSuccess = await fileEditor.replaceMetadataSection(
+                this.app,
+                tFile,
+                fileUpdateContent
+            );
+
+            if (!fileWriteSuccess) {
+                return { success: false, error: "Failed to write to file metadata" };
+            }
+
+
+            return { success: true };
+        } catch (error) {
+            console.error("Error in cycleBookmarked:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Read bookmarked status for file
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default false for read operations)
+     * @returns Object with bookmarked status (true if bookmarked, false otherwise)
+     */
+    async readBookmarkedStatus(
+        filePath: string,
+        tagPath: string,
+        owner: boolean = false
+    ): Promise<{ bookmarked: boolean }> {
+        try {
+            // Extract fileleaf using filepath from fileleaf map
+            const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
+            if (!fileLeaf) {
+                return { bookmarked: false };
+            }
+
+            // Extract file from fileleaf
+            const tFile = fileLeaf.getTFile();
+            if (!(tFile instanceof TFile)) {
+                return { bookmarked: false };
+            }
+
+            // Construct prefixed tag path
+            const prefixedTagPath = `🏠/${tagPath}`;
+
+            // Read file metadata
+            const fileMetadata = fileLeaf.fileMetadata();
+            const key = "🏷-Bookmarked";
+            
+            if (fileMetadata && fileMetadata[key]) {
+                let statusList: string[] = [];
+                
+                if (Array.isArray(fileMetadata[key])) {
+                    statusList = fileMetadata[key];
+                } else if (typeof fileMetadata[key] === 'string') {
+                    statusList = [fileMetadata[key]];
+                }
+
+                // Check if prefixed tag path exists in the array
+                for (const element of statusList) {
+                    if (element === prefixedTagPath) {
+                        return { bookmarked: true };
+                    }
+                }
+            }
+
+            // If no match found, return false
+            return { bookmarked: false };
+        } catch (error) {
+            console.error("Error in readBookmarkedStatus:", error);
+            return { bookmarked: false };
+        }
+    }
+
+    /**
+     * Add to bookmarked for folder
+     * 
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async addToBookmarkedForFolder(
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract tagnode using tagpath from tree
+            const tagNode = this.treeRoot.getNode(tagPath);
+            if (!tagNode) {
+                return { success: false, error: `TagNode not found for path: ${tagPath}` };
+            }
+
+            // Read metadata of tagnode
+            const metadata = fileEditor.metadataReadAllFrontmatter(this.app, tagPath);
+            
+            // Key is "Bookmarked"
+            const key = "Bookmarked";
+            const currentValue = metadata ? metadata[key] : undefined;
+
+            // If Bookmarked is not present or if Bookmarked is false
+            if (currentValue == false) {
+                // Add Bookmarked as true
+                const updateContent: Record<string, any> = {};
+                updateContent[key] = true;
+                
+                // Update file of metadata for tagnode
+                fileEditor.metadataReplaceExistingProperty(
+                    this.app,
+                    tagPath,
+                    updateContent
+                );
+
+                return { success: true };
+            } else if (currentValue == undefined) {
+                // Add Bookmarked as true
+                const updateContent: Record<string, any> = {};
+                updateContent[key] = true;
+                
+                // Update file of metadata for tagnode
+                fileEditor.metadataAddNewProperty(
+                    this.app,
+                    tagPath,
+                    updateContent
+                );
+
+                return { success: true };
+            } else {
+                // Bookmarked is already true
+                return { success: false, error: "Bookmarked is already true" };
+            }
+        } catch (error) {
+            console.error("Error in addToBookmarkedForFolder:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Remove from bookmarked for folder
+     * 
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async removeFromBookmarkedForFolder(
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract tagnode using tagpath from tree
+            const tagNode = this.treeRoot.getNode(tagPath);
+            if (!tagNode) {
+                return { success: false, error: `TagNode not found for path: ${tagPath}` };
+            }
+
+            // Read metadata of tagnode
+            const metadata = fileEditor.metadataReadAllFrontmatter(this.app, tagPath);
+            
+            // Key is "Bookmarked"
+            const key = "Bookmarked";
+            const currentValue = metadata ? metadata[key] : undefined;
+
+            // Prepare update content
+            const updateContent: Record<string, any> = {};
+            updateContent[key] = false;
+
+            // If Bookmarked is not present or if Bookmarked is false
+            if (currentValue == false) {
+                // Add Bookmarked as false
+                fileEditor.metadataReplaceExistingProperty(
+                    this.app,
+                    tagPath,
+                    updateContent
+                );
+
+                // Return false as Bookmarked is already false
+                return { success: false, error: "Bookmarked is already false" };
+            } else if (currentValue == undefined) {
+                // Add Bookmarked as false
+                fileEditor.metadataAddNewProperty(
+                    this.app,
+                    tagPath,
+                    updateContent
+                );
+
+                // Return false as Bookmarked is already false
+                return { success: false, error: "Bookmarked is already false" };
+            } else {
+                // Bookmarked is true, set it to false
+                fileEditor.metadataReplaceExistingProperty(
+                    this.app,
+                    tagPath,
+                    updateContent
+                );
+
+                return { success: true };
+            }
+        } catch (error) {
+            console.error("Error in removeFromBookmarkedForFolder:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Cycle bookmarked for folder (toggle bookmark state)
+     * 
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async cycleBookmarkedForFolder(
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract tagnode using tagpath from tree
+            const tagNode = this.treeRoot.getNode(tagPath);
+            if (!tagNode) {
+                return { success: false, error: `TagNode not found for path: ${tagPath}` };
+            }
+
+            // Read metadata of tagnode
+            const metadata = fileEditor.metadataReadAllFrontmatter(this.app, tagPath);
+            
+            // Key is "Bookmarked"
+            const key = "Bookmarked";
+            const currentValue = metadata ? metadata[key] : undefined;
+
+            // Prepare update content
+            const updateContent: Record<string, any> = {};
+
+            // If Bookmarked is not present or if Bookmarked is false
+            if (currentValue == false) {
+                // Add Bookmarked as true
+                updateContent[key] = true;
+
+                // Update file of metadata for tagnode
+                fileEditor.metadataReplaceExistingProperty(
+                    this.app,
+                    tagPath,
+                    updateContent
+                );
+
+
+            } else if (currentValue == undefined) {
+                // Add Bookmarked as true
+                updateContent[key] = true;
+
+                // Update file of metadata for tagnode
+                fileEditor.metadataAddNewProperty(
+                    this.app,
+                    tagPath,
+                    updateContent
+                );
+
+            }      
+            else {
+                // Bookmarked is true, set it to false
+                updateContent[key] = false;
+
+                // Update file of metadata for tagnode
+                fileEditor.metadataReplaceExistingProperty(
+                    this.app,
+                    tagPath,
+                    updateContent
+                );
+
+            }
+
+
+            return { success: true };
+        } catch (error) {
+            console.error("Error in cycleBookmarkedForFolder:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Read bookmarked status for folder
+     * 
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default false for read operations)
+     * @returns Object with bookmarked status (true if bookmarked, false otherwise)
+     */
+    async readBookmarkedStatusForFolder(
+        tagPath: string,
+        owner: boolean = false
+    ): Promise<{ bookmarked: boolean }> {
+        try {
+            // Extract tagnode using tagpath from tree
+            const tagNode = this.treeRoot.getNode(tagPath);
+            if (!tagNode) {
+                return { bookmarked: false };
+            }
+
+            // Read tagnode metadata
+            const metadata = fileEditor.metadataReadAllFrontmatter(this.app, tagPath);
+            
+            // Extract Bookmarked property
+            const bookmarkedValue = metadata ? metadata["Bookmarked"] : undefined;
+
+            // If Bookmarked property value is true, return true
+            if (bookmarkedValue === true) {
+                return { bookmarked: true };
+            } else {
+                // Else if Bookmarked property is false or not present return false
+                return { bookmarked: false };
+            }
+        } catch (error) {
+            console.error("Error in readBookmarkedStatusForFolder:", error);
+            return { bookmarked: false };
         }
     }
 
