@@ -421,8 +421,8 @@ export class Orchestrator {
      * @param fileName - The file name (not used currently but kept for reference)
      * @param filePath - The file path used to retrieve the FileLeaf
      * @returns Object with success status and error if failed
-     */
-    async removeFileFromFolder(
+     */ 
+       async removeFileFromFolder(
         folderTagPath: string,
         fileName: string,
         filePath: string,
@@ -456,6 +456,38 @@ export class Orchestrator {
                 );
                 if (!removeSuccess) {
                     return { success: false, error: `Failed to remove tag from file: ${filePath}` };
+                }
+
+                // Construct home and locked paths
+                const prefixedTagPath = `🏠/${folderTagPath}`;
+                const lockedTagPath = `🔒/ ${folderTagPath}`;
+
+                // Read legend status of file
+                const legendStatus = this.readLegendStatusOfFile(filePath, folderTagPath);
+                if (legendStatus.color) {
+                    if (legendStatus.status === "locked") {
+                        // Unlock it using removeLegendLockFromFile
+                        await this.removeLegendLockFromFile(legendStatus.color, filePath, folderTagPath, false);
+                        // Remove legend using removeLegendFromFile
+                        await this.removeLegendFromFile(legendStatus.color, filePath, folderTagPath, false);
+                    } else if (legendStatus.status === "notlocked") {
+                        // Remove legend using removeLegendFromFile
+                        await this.removeLegendFromFile(legendStatus.color, filePath, folderTagPath, false);
+                    }
+                }
+
+                // Read pinned status of file
+                const pinnedStatus = this.readPinnedStatusOfFile(filePath, folderTagPath);
+                if (pinnedStatus.pinned) {
+                    if (pinnedStatus.status === "locked") {
+                        // Unlock it using removePinnedLockFromFile
+                        await this.removePinnedLockFromFile(filePath, folderTagPath, false);
+                        // Remove pinned using removePinnedFromFile
+                        await this.removePinnedFromFile(filePath, folderTagPath, false);
+                    } else if (pinnedStatus.status === "notlocked") {
+                        // Remove pinned using removePinnedFromFile
+                        await this.removePinnedFromFile(filePath, folderTagPath, false);
+                    }
                 }
             // ---(Physical File Edits End)---
 
@@ -530,6 +562,7 @@ export class Orchestrator {
                         // Remove tag from each file at this level
                         for (const fileLeaf of files) {
                             const tFile = fileLeaf.getTFile();
+                            const filePath = fileLeaf.getPath();
                             
                             const removeSuccess = await fileEditor.removeTagFromFileYaml(
                                 this.app,
@@ -539,6 +572,38 @@ export class Orchestrator {
                             // Continue even if removal fails (tag might not exist)
                             if (!removeSuccess) {
                                 console.warn(`Failed to remove tag ${tagPath} from file: ${fileLeaf.getPath()}`);
+                            }
+
+                            // Construct home and locked paths
+                            const prefixedTagPath = `🏠/${tagPath}`;
+                            const lockedTagPath = `🔒/ ${tagPath}`;
+
+                            // Read legend status of file
+                            const legendStatus = this.readLegendStatusOfFile(filePath, tagPath);
+                            if (legendStatus.color) {
+                                if (legendStatus.status === "locked") {
+                                    // Unlock it using removeLegendLockFromFile
+                                    await this.removeLegendLockFromFile(legendStatus.color, filePath, tagPath, false);
+                                    // Remove legend using removeLegendFromFile
+                                    await this.removeLegendFromFile(legendStatus.color, filePath, tagPath, false);
+                                } else if (legendStatus.status === "notlocked") {
+                                    // Remove legend using removeLegendFromFile
+                                    await this.removeLegendFromFile(legendStatus.color, filePath, tagPath, false);
+                                }
+                            }
+
+                            // Read pinned status of file
+                            const pinnedStatus = this.readPinnedStatusOfFile(filePath, tagPath);
+                            if (pinnedStatus.pinned) {
+                                if (pinnedStatus.status === "locked") {
+                                    // Unlock it using removePinnedLockFromFile
+                                    await this.removePinnedLockFromFile(filePath, tagPath, false);
+                                    // Remove pinned using removePinnedFromFile
+                                    await this.removePinnedFromFile(filePath, tagPath, false);
+                                } else if (pinnedStatus.status === "notlocked") {
+                                    // Remove pinned using removePinnedFromFile
+                                    await this.removePinnedFromFile(filePath, tagPath, false);
+                                }
                             }
                         }
                         
@@ -740,6 +805,30 @@ export class Orchestrator {
                 ? `${destinationFolderTagPath}/${finalMainName}` 
                 : finalMainName;
 
+            // Before physical file edit BFS traversal - Clean up folder metadata
+            // Read legend status of folder
+            const folderLegendStatus = await this.readLegendStatusOfFolder(mainFolderTagPath);
+            if (folderLegendStatus.legend) {
+                if (folderLegendStatus.locked) {
+                    // Unlock it using removeLockedLegendFromFolder
+                    await this.removeLockedLegendFromFolder(folderLegendStatus.legend, mainFolderTagPath, false);
+                    // Remove legend using removeLegendFromFolder
+                    await this.removeLegendFromFolder(mainFolderTagPath, false);
+                } else {
+                    // Remove legend using removeLegendFromFolder
+                    await this.removeLegendFromFolder(mainFolderTagPath, false);
+                }
+            }
+
+            // Read pinned status of folder
+            const folderPinnedStatus = await this.readPinnedStatusOfFolder(mainFolderTagPath);
+            if (folderPinnedStatus.pinned) {
+                // Unlock it using removePinnedLockFromFolder
+                await this.removePinnedLockFromFolder(mainFolderTagPath, false);
+                // Remove pinned using removePinnedFromFolder
+                await this.removePinnedFromFolder(mainFolderTagPath, false);
+            }
+
             // ---(Physical File Edits)---
                 // BFS traversal - Update all files
                 let currentLevelNodes: ITagNode[] = [mainTagNode];
@@ -758,6 +847,7 @@ export class Orchestrator {
                         // Update each file at this level
                         for (const fileLeaf of files) {
                             const tFile = fileLeaf.getTFile();
+                            const filePath = fileLeaf.getPath();
                             
                             // Remove old tag
                             const removeSuccess = await fileEditor.removeTagFromFileYaml(
@@ -777,6 +867,46 @@ export class Orchestrator {
                             );
                             if (!addSuccess) {
                                 return { success: false, error: `Failed to add new tag to file: ${fileLeaf.getPath()}` };
+                            }
+
+                            // Construct home and locked paths
+                            const prefixedOldTagPath = `🏠/${oldTagPath}`;
+                            const lockedOldTagPath = `🔒/ ${oldTagPath}`;
+
+                            // Read legend status of file with respect to old tag
+                            const legendStatus = this.readLegendStatusOfFile(filePath, oldTagPath);
+                            if (legendStatus.color) {
+                                if (legendStatus.status === "locked") {
+                                    // Unlock it using removeLegendLockFromFile
+                                    await this.removeLegendLockFromFile(legendStatus.color, filePath, oldTagPath, false);
+                                    // Remove legend using removeLegendFromFile
+                                    await this.removeLegendFromFile(legendStatus.color, filePath, oldTagPath, false);
+                                    // Add same legend with lock on new tagpath using addLockLegendToFile
+                                    await this.addLockLegendToFile(legendStatus.color, filePath, newTagPath, false);
+                                } else if (legendStatus.status === "notlocked") {
+                                    // Remove legend using removeLegendFromFile
+                                    await this.removeLegendFromFile(legendStatus.color, filePath, oldTagPath, false);
+                                    // Add same legend on new tagpath using addLegendToFile
+                                    await this.addLegendToFile(legendStatus.color, filePath, newTagPath, false);
+                                }
+                            }
+
+                            // Read pinned status of file with respect to old tag
+                            const pinnedStatus = this.readPinnedStatusOfFile(filePath, oldTagPath);
+                            if (pinnedStatus.pinned) {
+                                if (pinnedStatus.status === "locked") {
+                                    // Unlock it using removePinnedLockFromFile
+                                    await this.removePinnedLockFromFile(filePath, oldTagPath, false);
+                                    // Remove pinned using removePinnedFromFile
+                                    await this.removePinnedFromFile(filePath, oldTagPath, false);
+                                    // Add pinned with lock on new tagpath using addPinnedLockToFile
+                                    await this.addPinnedLockToFile(filePath, newTagPath, false);
+                                } else if (pinnedStatus.status === "notlocked") {
+                                    // Remove pinned using removePinnedFromFile
+                                    await this.removePinnedFromFile(filePath, oldTagPath, false);
+                                    // Add pinned on new tagpath using addPinnedToFile
+                                    await this.addPinnedToFile(filePath, newTagPath, false);
+                                }
                             }
                         }
                         
@@ -931,6 +1061,38 @@ export class Orchestrator {
                 );
                 if (!removeSuccess) {
                     console.warn(`Failed to remove source tag from file: ${filePath}`);
+                }
+
+                // Construct home and locked paths
+                const prefixedSourcePath = `🏠/${sourceFolderTagPath}`;
+                const lockedSourcePath = `🔒/ ${sourceFolderTagPath}`;
+
+                // Read legend status of file with respect to source tag
+                const legendStatus = this.readLegendStatusOfFile(filePath, sourceFolderTagPath);
+                if (legendStatus.color) {
+                    if (legendStatus.status === "locked") {
+                        // Unlock it using removeLegendLockFromFile
+                        await this.removeLegendLockFromFile(legendStatus.color, filePath, sourceFolderTagPath, false);
+                        // Remove legend using removeLegendFromFile
+                        await this.removeLegendFromFile(legendStatus.color, filePath, sourceFolderTagPath, false);
+                    } else if (legendStatus.status === "notlocked") {
+                        // Remove legend using removeLegendFromFile
+                        await this.removeLegendFromFile(legendStatus.color, filePath, sourceFolderTagPath, false);
+                    }
+                }
+
+                // Read pinned status of file with respect to source tag
+                const pinnedStatus = this.readPinnedStatusOfFile(filePath, sourceFolderTagPath);
+                if (pinnedStatus.pinned) {
+                    if (pinnedStatus.status === "locked") {
+                        // Unlock it using removePinnedLockFromFile
+                        await this.removePinnedLockFromFile(filePath, sourceFolderTagPath, false);
+                        // Remove pinned using removePinnedFromFile
+                        await this.removePinnedFromFile(filePath, sourceFolderTagPath, false);
+                    } else if (pinnedStatus.status === "notlocked") {
+                        // Remove pinned using removePinnedFromFile
+                        await this.removePinnedFromFile(filePath, sourceFolderTagPath, false);
+                    }
                 }
 
                 // Add destination tag to physical file
@@ -1255,6 +1417,7 @@ export class Orchestrator {
                     // Add new tag to each file at this level
                     for (const fileLeaf of files) {
                         const tFile = fileLeaf.getTFile();
+                        const filePath = fileLeaf.getPath();
                         
                         const addSuccess = await fileEditor.addTagToFileYaml(
                             this.app,
@@ -1263,6 +1426,34 @@ export class Orchestrator {
                         );
                         if (!addSuccess) {
                             console.warn(`Failed to add new tag to file: ${fileLeaf.getPath()}`);
+                        }
+
+                        // Construct home and locked paths
+                        const prefixedOldTagPath = `🏠/${oldTagPath}`;
+                        const lockedOldTagPath = `🔒/ ${oldTagPath}`;
+
+                        // Read legend status of file with respect to old tag
+                        const legendStatus = this.readLegendStatusOfFile(filePath, oldTagPath);
+                        if (legendStatus.color) {
+                            if (legendStatus.status === "locked") {
+                                // Add same legend with lock on new tagpath using addLockLegendToFile
+                                await this.addLockLegendToFile(legendStatus.color, filePath, newTagPath, false);
+                            } else if (legendStatus.status === "notlocked") {
+                                // Add same legend on new tagpath using addLegendToFile
+                                await this.addLegendToFile(legendStatus.color, filePath, newTagPath, false);
+                            }
+                        }
+
+                        // Read pinned status of file with respect to old tag
+                        const pinnedStatus = this.readPinnedStatusOfFile(filePath, oldTagPath);
+                        if (pinnedStatus.pinned) {
+                            if (pinnedStatus.status === "locked") {
+                                // Add pinned with lock on new tagpath using addPinnedLockToFile
+                                await this.addPinnedLockToFile(filePath, newTagPath, false);
+                            } else if (pinnedStatus.status === "notlocked") {
+                                // Add pinned on new tagpath using addPinnedToFile
+                                await this.addPinnedToFile(filePath, newTagPath, false);
+                            }
                         }
                     }
                     
@@ -1403,6 +1594,40 @@ export class Orchestrator {
             }
             // ---(Physical File Edits End - Second Phase)---
 
+            // Clean up metadata for the new folder (only for the root)
+            // Remove folder from legend
+            const folderLegendStatus = await this.readLegendStatusOfFolder(newFolderTagPath);
+            if (folderLegendStatus.legend) {
+                if (folderLegendStatus.locked) {
+                    // Unlock it and remove legend
+                    await this.removeLockedLegendFromFolder(folderLegendStatus.legend, newFolderTagPath, false);
+                    await this.removeLegendFromFolder(newFolderTagPath, false);
+                } else {
+                    // Remove legend
+                    await this.removeLegendFromFolder(newFolderTagPath, false);
+                }
+            }
+
+            // Remove folder from pinned
+            const folderPinnedStatus = await this.readPinnedStatusOfFolder(newFolderTagPath);
+            if (folderPinnedStatus.pinned) {
+                if (folderPinnedStatus.locked) {
+                    // Unlock it and remove pinned
+                    await this.removePinnedLockFromFolder(newFolderTagPath, false);
+                    await this.removePinnedFromFolder(newFolderTagPath, false);
+                } else {
+                    // Remove pinned
+                    await this.removePinnedFromFolder(newFolderTagPath, false);
+                }
+            }
+
+            // Remove folder from bookmark
+            const folderBookmarkedStatus = await this.readBookmarkStatusOfFolder(newFolderTagPath, false);
+            if (folderBookmarkedStatus.bookmarked) {
+                // Make it false
+                await this.removeBookmarkFromFolder(newFolderTagPath, false);
+            }
+
             // Invalidate cache
             this.treeRoot.invalidateCache();
 
@@ -1498,6 +1723,7 @@ export class Orchestrator {
                     // Add new tag to each file at this level
                     for (const fileLeaf of files) {
                         const tFile = fileLeaf.getTFile();
+                        const filePath = fileLeaf.getPath();
                         
                         const addSuccess = await fileEditor.addTagToFileYaml(
                             this.app,
@@ -1506,6 +1732,34 @@ export class Orchestrator {
                         );
                         if (!addSuccess) {
                             console.warn(`Failed to add new tag to file: ${fileLeaf.getPath()}`);
+                        }
+
+                        // Construct home and locked paths
+                        const prefixedOldTagPath = `🏠/${oldTagPath}`;
+                        const lockedOldTagPath = `🔒/ ${oldTagPath}`;
+
+                        // Read legend status of file with respect to old tag
+                        const legendStatus = this.readLegendStatusOfFile(filePath, oldTagPath);
+                        if (legendStatus.color) {
+                            if (legendStatus.status === "locked") {
+                                // Add same legend with lock on new tagpath using addLockLegendToFile
+                                await this.addLockLegendToFile(legendStatus.color, filePath, newTagPath, false);
+                            } else if (legendStatus.status === "notlocked") {
+                                // Add same legend on new tagpath using addLegendToFile
+                                await this.addLegendToFile(legendStatus.color, filePath, newTagPath, false);
+                            }
+                        }
+
+                        // Read pinned status of file with respect to old tag
+                        const pinnedStatus = this.readPinnedStatusOfFile(filePath, oldTagPath);
+                        if (pinnedStatus.pinned) {
+                            if (pinnedStatus.status === "locked") {
+                                // Add pinned with lock on new tagpath using addPinnedLockToFile
+                                await this.addPinnedLockToFile(filePath, newTagPath, false);
+                            } else if (pinnedStatus.status === "notlocked") {
+                                // Add pinned on new tagpath using addPinnedToFile
+                                await this.addPinnedToFile(filePath, newTagPath, false);
+                            }
                         }
                     }
                     
@@ -1645,6 +1899,40 @@ export class Orchestrator {
                 currentLevelNodes = nextLevelNodes;
             }
             // ---(Physical File Edits End - Second Phase)---
+
+            // Clean up metadata for the new folder (only for the root)
+            // Remove folder from legend
+            const folderLegendStatus = await this.readLegendStatusOfFolder(newFolderTagPath);
+            if (folderLegendStatus.legend) {
+                if (folderLegendStatus.locked) {
+                    // Unlock it and remove legend
+                    await this.removeLockedLegendFromFolder(folderLegendStatus.legend, newFolderTagPath, false);
+                    await this.removeLegendFromFolder(newFolderTagPath, false);
+                } else {
+                    // Remove legend
+                    await this.removeLegendFromFolder(newFolderTagPath, false);
+                }
+            }
+
+            // Remove folder from pinned
+            const folderPinnedStatus = await this.readPinnedStatusOfFolder(newFolderTagPath);
+            if (folderPinnedStatus.pinned) {
+                if (folderPinnedStatus.locked) {
+                    // Unlock it and remove pinned
+                    await this.removePinnedLockFromFolder(newFolderTagPath, false);
+                    await this.removePinnedFromFolder(newFolderTagPath, false);
+                } else {
+                    // Remove pinned
+                    await this.removePinnedFromFolder(newFolderTagPath, false);
+                }
+            }
+
+            // Remove folder from bookmark
+            const folderBookmarkedStatus = await this.readBookmarkStatusOfFolder(newFolderTagPath, false);
+            if (folderBookmarkedStatus.bookmarked) {
+                // Make it false
+                await this.removeBookmarkFromFolder(newFolderTagPath, false);
+            }
 
             // Invalidate cache
             this.treeRoot.invalidateCache();
@@ -1941,7 +2229,7 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async addToLegend(
+    async addLegendToFile(
         legendColor: string,
         filePath: string,
         tagPath: string,
@@ -2024,7 +2312,7 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async removeFromLegend(
+    async removeLegendFromFile(
         legendColor: string,
         filePath: string,
         tagPath: string,
@@ -2113,7 +2401,7 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async cycleLegend(
+    async cycleLegendOfFile(
         currLegendColor: string,
         filePath: string,
         tagPath: string,
@@ -2148,7 +2436,7 @@ export class Orchestrator {
             // If legend color is ""
             if (currLegendColor === "") {
                 // Call add to legend with next index color
-                return await this.addToLegend(nextColor, filePath, tagPath, false);
+                return await this.addLegendToFile(nextColor, filePath, tagPath, false);
             } else {
                 // Construct key as "🏷-Legend-" + currlegendcolor
                 const key = `🏷-Legend-${currLegendColor}`;
@@ -2182,15 +2470,15 @@ export class Orchestrator {
                     // If next index color is ""
                     if (nextColor === "") {
                         // Call remove from legend
-                        return await this.removeFromLegend(currLegendColor, filePath, tagPath, false);
+                        return await this.removeLegendFromFile(currLegendColor, filePath, tagPath, false);
                     } else {
                         // Call remove from legend then add to legend
-                        const removeResult = await this.removeFromLegend(currLegendColor, filePath, tagPath, false);
+                        const removeResult = await this.removeLegendFromFile(currLegendColor, filePath, tagPath, false);
                         if (!removeResult.success) {
                             return removeResult;
                         }
                         
-                        return await this.addToLegend(nextColor, filePath, tagPath, false);
+                        return await this.addLegendToFile(nextColor, filePath, tagPath, false);
                     }
                 } else {
                     // Doesn't have prefixedtagpath and lockedtagpath
@@ -2215,7 +2503,7 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async addToLegendLock(
+    async addLockLegendToFile(
         legendColor: string,
         filePath: string,
         tagPath: string,
@@ -2306,7 +2594,7 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async removeFromLegendLock(
+    async removeLegendLockFromFile(
         legendColor: string,
         filePath: string,
         tagPath: string,
@@ -2396,21 +2684,21 @@ export class Orchestrator {
      * @param tagPath - The tag path
      * @returns Object with color and lock status, or empty string if not found
      */
-    readLegendStatus(
+    readLegendStatusOfFile(
         filePath: string,
         tagPath: string
-    ): { color: string; status: string } | { color: "" } {
+    ): { color: string; status: string }  {
         try {
             // Extract fileleaf using filepath from fileleaf map
             const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
             if (!fileLeaf) {
-                return { color: "" };
+                return { color: "" , status: "notlocked" };
             }
 
             // Extract file from fileleaf
             const tFile = fileLeaf.getTFile();
             if (!(tFile instanceof TFile)) {
-                return { color: "" };
+                return { color: "", status: "notlocked"  };
             }
 
             // Construct prefixed and locked tag paths
@@ -2420,7 +2708,7 @@ export class Orchestrator {
             // Read file metadata
             const fileMetadata = fileLeaf.fileMetadata();
             if (!fileMetadata) {
-                return { color: "" };
+                return { color: "", status: "notlocked"  };
             }
 
             // Key list for all legend colors
@@ -2458,10 +2746,10 @@ export class Orchestrator {
             }
 
             // No folder found
-            return { color: "" };
+            return { color: "" , status: "notlocked" };
         } catch (error) {
             console.error("Error in readLegendStatus:", error);
-            return { color: "" };
+            return { color: "" , status: "notlocked" };
         }
     }
 
@@ -2473,7 +2761,7 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async addToPinned(
+    async addPinnedToFile(
         filePath: string,
         tagPath: string,
         owner: boolean = true
@@ -2555,7 +2843,7 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async removeFromPinned(
+    async removePinnedFromFile(
         filePath: string,
         tagPath: string,
         owner: boolean = true
@@ -2642,7 +2930,7 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async cyclePinned(
+    async cyclePinnedOfFile(
         filePath: string,
         tagPath: string,
         owner: boolean = true
@@ -2731,7 +3019,7 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async addToPinnedLock(
+    async addPinnedLockToFile(
         filePath: string,
         tagPath: string,
         owner: boolean = true
@@ -2816,7 +3104,7 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async removeFromPinnedLock(
+    async removePinnedLockFromFile(
         filePath: string,
         tagPath: string,
         owner: boolean = true
@@ -2901,7 +3189,7 @@ export class Orchestrator {
      * @param tagPath - The tag path
      * @returns Object with pinned status, or pinned: false if not found
      */
-    readPinnedStatus(
+    readPinnedStatusOfFile(
         filePath: string,
         tagPath: string
     ): { pinned: boolean; status?: string } {
@@ -2969,7 +3257,7 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async addToPinnedForFolder(
+    async addPinnedToFolder(
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
@@ -3063,7 +3351,7 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async removeFromPinnedForFolder(
+    async removePinnedFromFolder(
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
@@ -3162,7 +3450,7 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async cyclePinnedForFolder(
+    async cyclePinnedOfFolder(
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
@@ -3256,7 +3544,7 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async addToPinnedLockForFolder(
+    async addPinnedLockToFolder(
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
@@ -3350,7 +3638,7 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async removeFromPinnedLockForFolder(
+    async removePinnedLockFromFolder(
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
@@ -3426,7 +3714,7 @@ export class Orchestrator {
      * @param tagPath - The tag path
      * @returns Object with pinned and locked status
      */
-    readPinnedStatusForFolder(
+    readPinnedStatusOfFolder(
         tagPath: string
     ): { pinned: boolean; locked: boolean } {
         try {
@@ -3465,7 +3753,7 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async addToBookmarked(
+    async addBookmarkToFile(
         filePath: string,
         tagPath: string,
         owner: boolean = true
@@ -3540,7 +3828,7 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async removeFromBookmarked(
+    async removeBookmarkFromFile(
         filePath: string,
         tagPath: string,
         owner: boolean = true
@@ -3622,7 +3910,7 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async cycleBookmarked(
+    async cycleBookmarkOfFile(
         filePath: string,
         tagPath: string,
         owner: boolean = true
@@ -3702,7 +3990,7 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default false for read operations)
      * @returns Object with bookmarked status (true if bookmarked, false otherwise)
      */
-    async readBookmarkedStatus(
+    async readBookmarkStatusOfFile(
         filePath: string,
         tagPath: string,
         owner: boolean = false
@@ -3759,7 +4047,7 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async addToBookmarkedForFolder(
+    async addBookmarkToFolder(
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
@@ -3821,7 +4109,7 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async removeFromBookmarkedForFolder(
+    async removeBookmarkFromFolder(
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
@@ -3887,7 +4175,7 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async cycleBookmarkedForFolder(
+    async cycleBookmarkOfFolder(
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
@@ -3961,7 +4249,7 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default false for read operations)
      * @returns Object with bookmarked status (true if bookmarked, false otherwise)
      */
-    async readBookmarkedStatusForFolder(
+    async readBookmarkStatusOfFolder(
         tagPath: string,
         owner: boolean = false
     ): Promise<{ bookmarked: boolean }> {
@@ -3988,6 +4276,321 @@ export class Orchestrator {
         } catch (error) {
             console.error("Error in readBookmarkedStatusForFolder:", error);
             return { bookmarked: false };
+        }
+    }
+
+    /**
+     * Add legend to folder
+     * 
+     * @param legendColor - The legend color to add
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async addLegendToFolder(
+        legendColor: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract tagnode using tagpath from tree
+            const tagNode = this.treeRoot.getNode(tagPath);
+            if (!tagNode) {
+                return { success: false, error: `TagNode not found for path: ${tagPath}` };
+            }
+
+            // Read metadata of tagnode
+            const metadata = fileEditor.metadataReadAllFrontmatter(this.app, tagPath);
+            
+            // Key is "SelfLegend"
+            const key = "SelfLegend";
+            const selfLegendValue = metadata ? metadata[key] : undefined;
+
+            // Check if SelfLegend is not present or if SelfLegend.locked is false or not present
+            if (!selfLegendValue || selfLegendValue.locked !== true) {
+                // Add SelfLegend.legend value as legendColor
+                // Add SelfLegend.locked value as false
+                const updateContent: Record<string, any> = {};
+                updateContent[key] = {
+                    legend: legendColor,
+                    locked: false
+                };
+                
+                // Update file of metadata for tagnode
+                fileEditor.metadataAddNewProperty(
+                    this.app,
+                    tagPath,
+                    updateContent
+                );
+
+                return { success: true };
+            } else {
+                // SelfLegend is locked
+                return { success: false, error: "SelfLegend is locked" };
+            }
+        } catch (error) {
+            console.error("Error in addLegendToFolder:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Remove legend from folder
+     * 
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async removeLegendFromFolder(
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract tagnode using tagpath from tree
+            const tagNode = this.treeRoot.getNode(tagPath);
+            if (!tagNode) {
+                return { success: false, error: `TagNode not found for path: ${tagPath}` };
+            }
+
+            // Read metadata of tagnode
+            const metadata = fileEditor.metadataReadAllFrontmatter(this.app, tagPath);
+            
+            // Key is "SelfLegend"
+            const key = "SelfLegend";
+            const selfLegendValue = metadata ? metadata[key] : undefined;
+
+            // Check if SelfLegend is not present or if SelfLegend.locked is false or not present
+            if (!selfLegendValue || selfLegendValue.locked !== true) {
+                // Add SelfLegend.legend value as ""
+                // Add SelfLegend.locked value as false
+                const updateContent: Record<string, any> = {};
+                updateContent[key] = {
+                    legend: "",
+                    locked: false
+                };
+                
+                // Update file of metadata for tagnode
+                fileEditor.metadataAddNewProperty(
+                    this.app,
+                    tagPath,
+                    updateContent
+                );
+
+                return { success: true };
+            } else {
+                // SelfLegend is locked
+                return { success: false, error: "SelfLegend is locked" };
+            }
+        } catch (error) {
+            console.error("Error in removeLegendFromFolder:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Cycle legend for folder
+     * 
+     * @param currLegendColor - The current legend color
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async cycleLegendForFolder(
+        currLegendColor: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract tagnode using tagpath from tree
+            const tagNode = this.treeRoot.getNode(tagPath);
+            if (!tagNode) {
+                return { success: false, error: `TagNode not found for path: ${tagPath}` };
+            }
+
+            // Maintain list of colors
+            const colorList = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple", ""];
+            
+            // Extract index of colorlist matching to currlegendcolor
+            const currentIndex = colorList.indexOf(currLegendColor);
+            
+            // Extract next index color from color list
+            const nextIndex = (currentIndex + 1) % colorList.length;
+            const nextColor = colorList[nextIndex];
+
+            // Read metadata of tagnode
+            const metadata = fileEditor.metadataReadAllFrontmatter(this.app, tagPath);
+            
+            // Key is "SelfLegend"
+            const key = "SelfLegend";
+            const selfLegendValue = metadata ? metadata[key] : undefined;
+
+            // Check if SelfLegend is not present or if SelfLegend.locked is false or not present
+            if (!selfLegendValue || selfLegendValue.locked !== true) {
+                // Add SelfLegend.legend value as next index color
+                // Add SelfLegend.locked value as false
+                const updateContent: Record<string, any> = {};
+                updateContent[key] = {
+                    legend: nextColor,
+                    locked: false
+                };
+                
+                // Update file of metadata for tagnode
+                fileEditor.metadataAddNewProperty(
+                    this.app,
+                    tagPath,
+                    updateContent
+                );
+
+                return { success: true };
+            } else {
+                // SelfLegend is locked
+                return { success: false, error: "SelfLegend is locked" };
+            }
+        } catch (error) {
+            console.error("Error in cycleLegendForFolder:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Add locked legend to folder
+     * 
+     * @param legendColor - The legend color to add
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async addLockedLegendToFolder(
+        legendColor: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract tagnode using tagpath from tree
+            const tagNode = this.treeRoot.getNode(tagPath);
+            if (!tagNode) {
+                return { success: false, error: `TagNode not found for path: ${tagPath}` };
+            }
+
+            // Read metadata of tagnode
+            const metadata = fileEditor.metadataReadAllFrontmatter(this.app, tagPath);
+            
+            // Key is "SelfLegend"
+            const key = "SelfLegend";
+            const selfLegendValue = metadata ? metadata[key] : undefined;
+
+            // Check if SelfLegend is not present or if SelfLegend.locked is false or not present
+            if (!selfLegendValue || selfLegendValue.locked !== true) {
+                // Add SelfLegend.legend value as legendColor
+                // Add SelfLegend.locked value as true
+                const updateContent: Record<string, any> = {};
+                updateContent[key] = {
+                    legend: legendColor,
+                    locked: true
+                };
+                
+                // Update file of metadata for tagnode
+                fileEditor.metadataAddNewProperty(
+                    this.app,
+                    tagPath,
+                    updateContent
+                );
+
+                return { success: true };
+            } else {
+                // SelfLegend is already locked
+                return { success: false, error: "SelfLegend is already locked" };
+            }
+        } catch (error) {
+            console.error("Error in addLockedLegendToFolder:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Remove locked legend from folder
+     * 
+     * @param legendColor - The legend color to set
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async removeLockedLegendFromFolder(
+        legendColor: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            // Extract tagnode using tagpath from tree
+            const tagNode = this.treeRoot.getNode(tagPath);
+            if (!tagNode) {
+                return { success: false, error: `TagNode not found for path: ${tagPath}` };
+            }
+
+            // Read metadata of tagnode
+            const metadata = fileEditor.metadataReadAllFrontmatter(this.app, tagPath);
+            
+            // Key is "SelfLegend"
+            const key = "SelfLegend";
+            
+            // Always set SelfLegend.legend value as legendColor and SelfLegend.locked value as false
+            const updateContent: Record<string, any> = {};
+            updateContent[key] = {
+                legend: legendColor,
+                locked: false
+            };
+            
+            // Update file of metadata for tagnode
+            fileEditor.metadataAddNewProperty(
+                this.app,
+                tagPath,
+                updateContent
+            );
+
+
+            return { success: true };
+        } catch (error) {
+            console.error("Error in removeLockedLegendFromFolder:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Read legend status for folder
+     * 
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default false for read operations)
+     * @returns Object with legend color and locked status
+     */
+    async readLegendStatusOfFolder(
+        tagPath: string
+    ): Promise<{ legend: string; locked: boolean }> {
+        try {
+            // Extract tagnode using tagpath from tree
+            const tagNode = this.treeRoot.getNode(tagPath);
+            if (!tagNode) {
+                return { legend: "", locked: false };
+            }
+
+            // Read tagnode metadata
+            const metadata = fileEditor.metadataReadAllFrontmatter(this.app, tagPath);
+            
+            // Extract SelfLegend property
+            const selfLegendValue = metadata ? metadata["SelfLegend"] : undefined;
+
+            if (selfLegendValue) {
+                // legend = SelfLegend.legend
+                const legend = selfLegendValue.legend || "";
+                // locked = SelfLegend.locked
+                const locked = selfLegendValue.locked || false;
+
+                return { legend, locked };
+            } else {
+                return { legend: "", locked: false };
+            }
+        } catch (error) {
+            console.error("Error in readLegendStatusForFolder:", error);
+            return { legend: "", locked: false };
         }
     }
 

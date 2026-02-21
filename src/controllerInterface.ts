@@ -326,13 +326,13 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async addToLegend(
+    async addLegendToFile(
         legendColor: string,
         filePath: string,
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.addToLegend(legendColor, filePath, tagPath, owner);
+        return await this.orchestrator.addLegendToFile(legendColor, filePath, tagPath, owner);
     }
 
     /**
@@ -344,13 +344,13 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async removeFromLegend(
+    async removeLegendFromFile(
         legendColor: string,
         filePath: string,
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.removeFromLegend(legendColor, filePath, tagPath, owner);
+        return await this.orchestrator.removeLegendFromFile(legendColor, filePath, tagPath, owner);
     }
 
     /**
@@ -362,13 +362,13 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async cycleLegend(
+    async cycleLegendOfFile(
         currLegendColor: string,
         filePath: string,
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.cycleLegend(currLegendColor, filePath, tagPath, owner);
+        return await this.orchestrator.cycleLegendOfFile(currLegendColor, filePath, tagPath, owner);
     }
 
     /**
@@ -380,13 +380,13 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async addToLegendLock(
+    async addLockLegendToFile(
         legendColor: string,
         filePath: string,
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.addToLegendLock(legendColor, filePath, tagPath, owner);
+        return await this.orchestrator.addLockLegendToFile(legendColor, filePath, tagPath, owner);
     }
 
     /**
@@ -398,13 +398,13 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async removeFromLegendLock(
+    async removeLegendLockFromFile(
         legendColor: string,
         filePath: string,
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.removeFromLegendLock(legendColor, filePath, tagPath, owner);
+        return await this.orchestrator.removeLegendLockFromFile(legendColor, filePath, tagPath, owner);
     }
 
     /**
@@ -414,11 +414,11 @@ export class ControllerInterface {
      * @param tagPath - The tag path
      * @returns Object with color and lock status, or empty string if not found
      */
-    readLegendStatus(
+    readLegendStatusOfFile(
         filePath: string,
         tagPath: string
     ): { color: string; status: string } | { color: "" } {
-        return this.orchestrator.readLegendStatus(filePath, tagPath);
+        return this.orchestrator.readLegendStatusOfFile(filePath, tagPath);
     }
 
     /**
@@ -429,12 +429,12 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async addToPinned(
+    async addPinnedToFile(
         filePath: string,
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.addToPinned(filePath, tagPath, owner);
+        return await this.orchestrator.addPinnedToFile(filePath, tagPath, owner);
     }
 
     /**
@@ -445,12 +445,12 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async removeFromPinned(
+    async removePinnedFromFile(
         filePath: string,
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.removeFromPinned(filePath, tagPath, owner);
+        return await this.orchestrator.removePinnedFromFile(filePath, tagPath, owner);
     }
 
     /**
@@ -461,12 +461,12 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async cyclePinned(
+    async cyclePinnedOfFile(
         filePath: string,
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.cyclePinned(filePath, tagPath, owner);
+        return await this.orchestrator.cyclePinnedOfFile(filePath, tagPath, owner);
     }
 
     /**
@@ -477,12 +477,12 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async addToPinnedLock(
+    async addPinnedLockToFile(
         filePath: string,
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.addToPinnedLock(filePath, tagPath, owner);
+        return await this.orchestrator.addPinnedLockToFile(filePath, tagPath, owner);
     }
 
     /**
@@ -493,12 +493,12 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async removeFromPinnedLock(
+    async removePinnedLockFromFile(
         filePath: string,
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.removeFromPinnedLock(filePath, tagPath, owner);
+        return await this.orchestrator.removePinnedLockFromFile(filePath, tagPath, owner);
     }
 
     /**
@@ -508,11 +508,11 @@ export class ControllerInterface {
      * @param tagPath - The tag path
      * @returns Object with pinned status, or pinned: false if not found
      */
-    readPinnedStatus(
+    readPinnedStatusOfFile(
         filePath: string,
         tagPath: string
     ): { pinned: boolean; status?: string } {
-        return this.orchestrator.readPinnedStatus(filePath, tagPath);
+        return this.orchestrator.readPinnedStatusOfFile(filePath, tagPath);
     }
 
     /**
@@ -522,11 +522,11 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async addToPinnedForFolder(
+    async addPinnedToFolder(
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.addToPinnedForFolder(tagPath, owner);
+        return await this.orchestrator.addPinnedToFolder(tagPath, owner);
     }
 
     /**
@@ -536,11 +536,11 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async removeFromPinnedForFolder(
+    async removePinnedFromFolder(
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.removeFromPinnedForFolder(tagPath, owner);
+        return await this.orchestrator.removePinnedFromFolder(tagPath, owner);
     }
 
     /**
@@ -550,11 +550,11 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async cyclePinnedForFolder(
+    async cyclePinnedOfFolder(
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.cyclePinnedForFolder(tagPath, owner);
+        return await this.orchestrator.cyclePinnedOfFolder(tagPath, owner);
     }
 
     /**
@@ -564,11 +564,11 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async addToPinnedLockForFolder(
+    async addPinnedLockToFolder(
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.addToPinnedLockForFolder(tagPath, owner);
+        return await this.orchestrator.addPinnedLockToFolder(tagPath, owner);
     }
 
     /**
@@ -578,11 +578,11 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async removeFromPinnedLockForFolder(
+    async removePinnedLockFromFolder(
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.removeFromPinnedLockForFolder(tagPath, owner);
+        return await this.orchestrator.removePinnedLockFromFolder(tagPath, owner);
     }
 
     /**
@@ -591,10 +591,10 @@ export class ControllerInterface {
      * @param tagPath - The tag path
      * @returns Object with pinned and locked status
      */
-    readPinnedStatusForFolder(
+    readPinnedStatusOfFolder(
         tagPath: string
     ): { pinned: boolean; locked: boolean } {
-        return this.orchestrator.readPinnedStatusForFolder(tagPath);
+        return this.orchestrator.readPinnedStatusOfFolder(tagPath);
     }
 
     /**
@@ -605,12 +605,12 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async addToBookmarked(
+    async addBookmarkToFile(
         filePath: string,
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.addToBookmarked(filePath, tagPath, owner);
+        return await this.orchestrator.addBookmarkToFile(filePath, tagPath, owner);
     }
 
     /**
@@ -621,12 +621,12 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async removeFromBookmarked(
+    async removeBookmarkFromFile(
         filePath: string,
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.removeFromBookmarked(filePath, tagPath, owner);
+        return await this.orchestrator.removeBookmarkFromFile(filePath, tagPath, owner);
     }
 
     /**
@@ -637,12 +637,12 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async cycleBookmarked(
+    async cycleBookmarkOfFile(
         filePath: string,
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.cycleBookmarked(filePath, tagPath, owner);
+        return await this.orchestrator.cycleBookmarkOfFile(filePath, tagPath, owner);
     }
 
     /**
@@ -653,12 +653,12 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default false for read operations)
      * @returns Object with bookmarked status (true if bookmarked, false otherwise)
      */
-    async readBookmarkedStatus(
+    async readBookmarkStatusOfFile(
         filePath: string,
         tagPath: string,
         owner: boolean = false
     ): Promise<{ bookmarked: boolean }> {
-        return await this.orchestrator.readBookmarkedStatus(filePath, tagPath, owner);
+        return await this.orchestrator.readBookmarkStatusOfFile(filePath, tagPath, owner);
     }
 
     /**
@@ -668,11 +668,11 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async addToBookmarkedForFolder(
+    async addBookmarkToFolder(
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.addToBookmarkedForFolder(tagPath, owner);
+        return await this.orchestrator.addBookmarkToFolder(tagPath, owner);
     }
 
     /**
@@ -682,11 +682,11 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async removeFromBookmarkedForFolder(
+    async removeBookmarkFromFolder(
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.removeFromBookmarkedForFolder(tagPath, owner);
+        return await this.orchestrator.removeBookmarkFromFolder(tagPath, owner);
     }
 
     /**
@@ -696,11 +696,11 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async cycleBookmarkedForFolder(
+    async cycleBookmarkOfFolder(
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.cycleBookmarkedForFolder(tagPath, owner);
+        return await this.orchestrator.cycleBookmarkOfFolder(tagPath, owner);
     }
 
     /**
@@ -710,12 +710,101 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default false for read operations)
      * @returns Object with bookmarked status (true if bookmarked, false otherwise)
      */
-    async readBookmarkedStatusForFolder(
+    async readBookmarkStatusOfFolder(
         tagPath: string,
         owner: boolean = false
     ): Promise<{ bookmarked: boolean }> {
-        return await this.orchestrator.readBookmarkedStatusForFolder(tagPath, owner);
+        return await this.orchestrator.readBookmarkStatusOfFolder(tagPath, owner);
+    }
+    /**
+     * Add legend to folder
+     * 
+     * @param legendColor - The legend color to add
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async addLegendToFolder(
+        legendColor: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.addLegendToFolder(legendColor, tagPath, owner);
     }
 
+    /**
+     * Remove legend from folder
+     * 
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async removeLegendFromFolder(
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.removeLegendFromFolder(tagPath, owner);
+    }
+
+    /**
+     * Cycle legend for folder
+     * 
+     * @param currLegendColor - The current legend color
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async cycleLegendForFolder(
+        currLegendColor: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.cycleLegendForFolder(currLegendColor, tagPath, owner);
+    }
+
+    /**
+     * Add locked legend to folder
+     * 
+     * @param legendColor - The legend color to add
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async addLockedLegendToFolder(
+        legendColor: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.addLockedLegendToFolder(legendColor, tagPath, owner);
+    }
+
+    /**
+     * Remove locked legend from folder
+     * 
+     * @param legendColor - The legend color to set
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async removeLockedLegendFromFolder(
+        legendColor: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.removeLockedLegendFromFolder(legendColor, tagPath, owner);
+    }
+
+    /**
+     * Read legend status for folder
+     * 
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default false for read operations)
+     * @returns Object with legend color and locked status
+     */
+    async readLegendStatusOfFolder(
+        tagPath: string
+    ): Promise<{ legend: string; locked: boolean }> {
+        return await this.orchestrator.readLegendStatusOfFolder(tagPath);
+    }
 
 }
