@@ -422,7 +422,7 @@ export class Orchestrator {
      * @param filePath - The file path used to retrieve the FileLeaf
      * @returns Object with success status and error if failed
      */ 
-       async removeFileFromFolder(
+    async removeFileFromFolder(
         folderTagPath: string,
         fileName: string,
         filePath: string,
@@ -4562,9 +4562,9 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default false for read operations)
      * @returns Object with legend color and locked status
      */
-    async readLegendStatusOfFolder(
+    readLegendStatusOfFolder(
         tagPath: string
-    ): Promise<{ legend: string; locked: boolean }> {
+    ): { legend: string; locked: boolean } {
         try {
             // Extract tagnode using tagpath from tree
             const tagNode = this.treeRoot.getNode(tagPath);

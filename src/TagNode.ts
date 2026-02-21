@@ -585,6 +585,11 @@ export class TagNode implements ITagNode {
      * 
      * Used when: Tag cleanup, removing tag metadata, tree maintenance
      */
+
+    /**
+    Moves the metadata file to .trash/TagNodeMetadata instead of deleting it.
+    Creates the necessary folders if they don't exist.
+     */
     deleteMeta(): boolean {
         try {
             const metadataPath = this.getMetadataFilePath();
@@ -594,12 +599,33 @@ export class TagNode implements ITagNode {
                 return false; // File doesn't exist
             }
             
-            // Delete the metadata file
-            fs.unlinkSync(metadataPath);
+            // Get vault path
+            const vaultPath = (this.app.vault.adapter as any).basePath || '';
+            
+            // Create .trash folder if it doesn't exist
+            const trashPath = path.join(vaultPath, '.trash');
+            if (!fs.existsSync(trashPath)) {
+                fs.mkdirSync(trashPath, { recursive: true });
+            }
+            
+            // Create TagNodeMetadata folder inside .trash if it doesn't exist
+            const tagNodeMetadataPath = path.join(trashPath, 'TagNodeMetadata');
+            if (!fs.existsSync(tagNodeMetadataPath)) {
+                fs.mkdirSync(tagNodeMetadataPath, { recursive: true });
+            }
+            
+            // Get the filename from the metadata path
+            const filename = path.basename(metadataPath);
+            
+            // Construct destination path
+            const destinationPath = path.join(tagNodeMetadataPath, filename);
+            
+            // Move the file to the trash folder
+            fs.renameSync(metadataPath, destinationPath);
             
             return true;
         } catch (error) {
-            console.error('Error deleting metadata file:', error);
+            console.error('Error moving metadata file to trash:', error);
             return false;
         }
     }
