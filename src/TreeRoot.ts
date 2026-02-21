@@ -6,8 +6,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import  type { TagFolderPluginSettings } from './settings';
-import { ControllerInterface } from './controllerInterface';
-import { Orchestrator } from './orchestrator';
 /**
  * TreeRoot class - represents the root of the tag tree
  * 
@@ -191,20 +189,6 @@ export class TreeRoot implements ITreeRoot {
     public getTreeVersion(): number {
         return this.treeVersion;
     }
-    
-    /**
-     * Gets a ControllerInterface instance for testing orchestrator functions
-     * 
-     * @param plugin - The TagFolderPlugin instance
-     * @returns ControllerInterface - The controller interface wrapping the orchestrator
-     * 
-     * Used when: Registering test commands or accessing orchestrator functions from frontend
-     */
-    public getControllerInterface(plugin: any): ControllerInterface {
-        const orchestrator = new Orchestrator(this.app, this, plugin);
-        return new ControllerInterface(orchestrator);
-    }
-    
     /**
      * Gets the file path to FileLeaf dictionary
      * 
