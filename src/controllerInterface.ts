@@ -380,13 +380,13 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async addLockLegendToFile(
+    async addLegendLockToFile(
         legendColor: string,
         filePath: string,
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.addLockLegendToFile(legendColor, filePath, tagPath, owner);
+        return await this.orchestrator.addLegendLockToFile(legendColor, filePath, tagPath, owner);
     }
 
     /**
@@ -775,7 +775,7 @@ export class ControllerInterface {
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.addLockedLegendToFolder(legendColor, tagPath, owner);
+        return await this.orchestrator.addLegendLockToFolder(legendColor, tagPath, owner);
     }
 
     /**
@@ -791,7 +791,7 @@ export class ControllerInterface {
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.removeLockedLegendFromFolder(legendColor, tagPath, owner);
+        return await this.orchestrator.removeLegendLockFromFolder(legendColor, tagPath, owner);
     }
 
     /**

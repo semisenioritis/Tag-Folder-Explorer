@@ -31,7 +31,47 @@ export class Orchestrator {
     }
 
     /**
+     * Write JSON object to rollback register ndjson file
+     * 
+     * @param jsonObject - The JSON object to write to the ndjson file
+     * @returns Promise with success status and error if failed
+     */
+    async writeToRollbackRegister(
+        jsonObject: Record<string, any>
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            const filePath = ".obsidian/plugins/Tag-Folder-Explorer/rollback-register.ndjson";
+            
+            // Convert JSON object to string and add newline
+            const jsonLine = JSON.stringify(jsonObject) + "\n";
+            
+            // Check if file exists
+            const fileExists = await this.app.vault.adapter.exists(filePath);
+            
+            if (!fileExists) {
+                // Create file with the JSON line
+                await this.app.vault.adapter.write(filePath, jsonLine);
+            } else {
+                // Append JSON line to existing file
+                await this.app.vault.adapter.append(filePath, jsonLine);
+            }
+            
+            return { success: true };
+        } catch (error) {
+            console.error("Error in writeToRollbackRegister:", error);
+            return { success: false, error };
+        }
+    }
+
+
+    /**
      * Create a new file inside a tag folder
+     * 
+     * Steps:
+     * 1. Create new file in physical root folder
+     * 2. Add tag to file metadata 
+     * 3. Create corresponding FileLeaf object and Add FileLeaf to the fileLeafMap
+     * 4. Get the target TagNode by tag path and Add file to the TagNode's files list
      * 
      * @param folderTagPath - The tag path where the file should be created (e.g., "subject/math")
      * @param fileName - Optional file name (defaults to "Untitled")
@@ -45,7 +85,12 @@ export class Orchestrator {
     ): Promise<{ success: boolean; file?: TFile; error?: any }> {
         try {
             let createdFile: TFile | null = null;
+    // 🔴 write action divider
+    // 🔴 write action start
+    // 🔴 write action plan
 
+
+    // 🔴 write action step pre
             // ---(Physical File Edits)---
                 // Create new file in physical root folder
                 const createResult = await fileEditor.createNewFile(this.app, "", fileName);
@@ -53,6 +98,8 @@ export class Orchestrator {
                     return { success: false, error: "Failed to create file" };
                 }
                 createdFile = createResult.file;
+    // 🔴 write action step post 
+
 
                 // Ensure frontmatter exists
                 const frontmatterResult = await fileEditor.createTagsFrontMatter(this.app, createdFile);
@@ -60,12 +107,15 @@ export class Orchestrator {
                     return { success: false, error: "Failed to create frontmatter" };
                 }
 
+    // 🔴 write action step pre                
                 // Add tag to file metadata
                 const tagToAdd = folderTagPath;
                 const addTagSuccess = await fileEditor.addTagToFileYaml(this.app, createdFile, tagToAdd);
                 if (!addTagSuccess) {
                     return { success: false, error: "Failed to add tag to file" };
                 }
+    // 🔴 write action step post
+
             // ---(Physical File Edits End)---
 
             // ---(Virtual Edits)---
@@ -110,6 +160,10 @@ export class Orchestrator {
 
     /**
      * Create a new folder (tag node) inside a parent folder
+     * 
+     * Steps:
+     * 1. Create new TagNode object using addChildNode method in parent 
+
      * 
      * @param folderTagPath - The parent tag path where the folder should be created (e.g., "subject/math")
      * @param folderName - The name of the new folder to create
@@ -175,6 +229,11 @@ export class Orchestrator {
 
     /**
      * Rename a specific file
+     * 
+     * Steps:
+     * 1. Rename the physical file
+     * 2. Update FileLeaf object name and path
+     * 3. Update fileLeafMap - remove old key and add new key
      * 
      * @param folderTagPath - The tag path where the file exists (not used currently but kept for future use)
      * @param oldFileName - The old file name (not used currently but kept for reference)
@@ -243,6 +302,12 @@ export class Orchestrator {
 
     /**
      * Rename a specific folder (tag node)
+     * 
+     * Steps:
+     * 5. BFS traversal - For each file at each level update tags in physical files
+     * 6. BFS traversal - For each tag folder, update metadata files
+     * 7. BFS traversal - For each tagnode, update tagnode objects in memory
+     * 8. Update parent's children dictionary - remove old key and add new key
      * 
      * @param folderTagPath - The tag path of the folder to rename (e.g., "subject/math")
      * @param newTagName - The new name for the tag/folder
@@ -417,6 +482,12 @@ export class Orchestrator {
     /**
      * Remove a file from a folder (remove a tag from a file)
      * 
+     * Steps:
+     * 1. Remove tag from that file (physical)
+     * 2. If file has legend, unlock and remove legend appropriately
+     * 3. If file is pinned, unlock and remove pinned appropriately
+     * 4. Delete fileleaf object from tagnode
+     * 
      * @param folderTagPath - The tag path of the folder (e.g., "subject/math")
      * @param fileName - The file name (not used currently but kept for reference)
      * @param filePath - The file path used to retrieve the FileLeaf
@@ -516,6 +587,13 @@ export class Orchestrator {
 
     /**
      * Remove a folder from its parent folder (delete a tag branch)
+     * 
+     * Steps:
+     * 1. BFS traversal - Remove physical tags from all files at each level
+     * 2. For each file, read legend status and remove legend if present
+     * 3. For each file, read pinned status and remove pinned if present
+     * 4. BFS traversal - Delete metadata files for all tagnodes
+     * 5. Delete single childtagnode reference from parenttagnode's children property
      * 
      * @param childFolderPath - The tag path of the child folder to remove (e.g., "subject/math")
      * @returns Object with success status and error if failed
@@ -665,7 +743,13 @@ export class Orchestrator {
     }
 
     /**
+     * 🔴🔴 DEPRECATED (we should not allow the user to delete from inside. i just think its propper dangerous)
      * Hard delete a file from existence (move to trash)
+     * 
+     * Steps:
+     * 1. Move physical file to trash
+     * 2. Remove the fileleaf object key value pair from the file leaf map
+     * 3. For each tagnode path where fileleaf exists, extract tagnode object and remove fileleaf
      * 
      * @param folderTagPath - The tag path where the file exists (not used but kept for reference)
      * @param fileName - The file name (not used but kept for reference)
@@ -734,6 +818,19 @@ export class Orchestrator {
 
     /**
      * Move folder from one folder to another folder
+     * 
+     * Steps:
+     * 1. If name conflict, rename main node first
+     * 2. Read and clean up folder metadata (legend status)
+     * 3. Read and clean up folder metadata (pinned status)
+     * 4. BFS traversal - Update all files' tags: remove old tag, add new tag
+     * 5. For each file, update legend status from old tag to new tag
+     * 6. For each file, update pinned status from old tag to new tag
+     * 7. BFS traversal - Update metadata file physical name, path property
+     * 8. BFS traversal - Update tagnode path property
+     * 9. update maintagnode parent as destination tagnode
+     * 10. remove maintagnode from children of source tagnode
+     * 11. add maintgnode to children of destination tagnode
      * 
      * @param sourceFolderTagPath - The tag path of the source (current parent)
      * @param destinationFolderTagPath - The tag path of the destination (new parent)
@@ -810,8 +907,8 @@ export class Orchestrator {
             const folderLegendStatus = await this.readLegendStatusOfFolder(mainFolderTagPath);
             if (folderLegendStatus.legend) {
                 if (folderLegendStatus.locked) {
-                    // Unlock it using removeLockedLegendFromFolder
-                    await this.removeLockedLegendFromFolder(folderLegendStatus.legend, mainFolderTagPath, false);
+                    // Unlock it using removeLegendLockFromFolder
+                    await this.removeLegendLockFromFolder(folderLegendStatus.legend, mainFolderTagPath, false);
                     // Remove legend using removeLegendFromFolder
                     await this.removeLegendFromFolder(mainFolderTagPath, false);
                 } else {
@@ -881,8 +978,8 @@ export class Orchestrator {
                                     await this.removeLegendLockFromFile(legendStatus.color, filePath, oldTagPath, false);
                                     // Remove legend using removeLegendFromFile
                                     await this.removeLegendFromFile(legendStatus.color, filePath, oldTagPath, false);
-                                    // Add same legend with lock on new tagpath using addLockLegendToFile
-                                    await this.addLockLegendToFile(legendStatus.color, filePath, newTagPath, false);
+                                    // Add same legend with lock on new tagpath using addLegendLockToFile
+                                    await this.addLegendLockToFile(legendStatus.color, filePath, newTagPath, false);
                                 } else if (legendStatus.status === "notlocked") {
                                     // Remove legend using removeLegendFromFile
                                     await this.removeLegendFromFile(legendStatus.color, filePath, oldTagPath, false);
@@ -1013,6 +1110,14 @@ export class Orchestrator {
     /**
      * Move file from one folder to another folder
      * 
+     * Steps:
+     * 1. Remove source tag from physical file (only exact match, not nested paths)
+     * 2. Remove legend status of file with respect to source tag if present
+     * 3. Remove pinned status of file with respect to source tag if present
+     * 4. Add destination tag to physical file
+     * 5. Delete fileleaf reference from sourcetagnode
+     * 6. Append fileleaf reference to destinationtagnode
+     * 
      * @param sourceFolderTagPath - The tag path of the source folder
      * @param destinationFolderTagPath - The tag path of the destination folder
      * @param fileName - The file name (used for reference)
@@ -1138,6 +1243,10 @@ export class Orchestrator {
     /**
      * Copy file from one folder to another folder
      * 
+     * Steps:
+     * 1. Add destination tag to physical file
+     * 2. Append fileleaf reference to destinationtagnode
+     * 
      * @param sourceFolderTagPath - The tag path of the source folder
      * @param destinationFolderTagPath - The tag path of the destination folder
      * @param fileName - The file name (used for reference)
@@ -1214,6 +1323,9 @@ export class Orchestrator {
     /**
      * Edit/update folder description
      * 
+     * Steps:
+     * 1. Call updateMeta function with jsonobject and replace description
+     * 
      * @param folderTagPath - The tag path of the folder (e.g., "subject/math")
      * @param jsonObject - JSON object containing the description property
      * @returns Object with success status and error if failed
@@ -1257,6 +1369,9 @@ export class Orchestrator {
     /**
      * Edit/update folder legend
      * 
+     * Steps:
+     * 1. Call updateMeta function with jsonobject and replace
+     * 
      * @param folderTagPath - The tag path of the folder (e.g., "subject/math")
      * @param jsonObject - JSON object containing the legend property
      * @returns Object with success status and error if failed
@@ -1299,6 +1414,9 @@ export class Orchestrator {
 
     /**
      * Edit/update file description (metadata)
+     * 
+     * Steps:
+     * 1. Call replaceMetadataSection function and pass jsonobject and file to it to updates file description
      * 
      * @param folderTagPath - The tag path of the folder (not used but kept for reference)
      * @param filePath - The file path used to retrieve the FileLeaf
@@ -1352,6 +1470,17 @@ export class Orchestrator {
 
     /**
      * Duplicate a folder (tag node) in the same parent folder
+     * 
+     * Steps:
+     * 1. BFS traversal - Add new tags to all files
+     * 2. For each file, apply legend status to new tagpath
+     * 3. For each file, apply pinned status to new tagpath
+     * 4. Construct the duplicate-tagnode using newtagnodename
+     * 5. BFS traversal - Create all child tag nodes in the hierarchy
+     * 6. BFS traversal - Copy file references to new tag nodes
+     * 7. BFS traversal - Copy metadata files
+     * 8. Clean up metadata for the new folder (remove legend, pinned, bookmark)
+     * 
      * 
      * @param folderTagPath - The tag path of the folder to duplicate
      * @returns Promise with success status, new path, and error if failed
@@ -1436,8 +1565,8 @@ export class Orchestrator {
                         const legendStatus = this.readLegendStatusOfFile(filePath, oldTagPath);
                         if (legendStatus.color) {
                             if (legendStatus.status === "locked") {
-                                // Add same legend with lock on new tagpath using addLockLegendToFile
-                                await this.addLockLegendToFile(legendStatus.color, filePath, newTagPath, false);
+                                // Add same legend with lock on new tagpath using addLegendLockToFile
+                                await this.addLegendLockToFile(legendStatus.color, filePath, newTagPath, false);
                             } else if (legendStatus.status === "notlocked") {
                                 // Add same legend on new tagpath using addLegendToFile
                                 await this.addLegendToFile(legendStatus.color, filePath, newTagPath, false);
@@ -1600,7 +1729,7 @@ export class Orchestrator {
             if (folderLegendStatus.legend) {
                 if (folderLegendStatus.locked) {
                     // Unlock it and remove legend
-                    await this.removeLockedLegendFromFolder(folderLegendStatus.legend, newFolderTagPath, false);
+                    await this.removeLegendLockFromFolder(folderLegendStatus.legend, newFolderTagPath, false);
                     await this.removeLegendFromFolder(newFolderTagPath, false);
                 } else {
                     // Remove legend
@@ -1644,6 +1773,16 @@ export class Orchestrator {
 
     /**
      * Recreate a folder from one location to another folder
+     * 
+     * Steps:
+     * 1. BFS traversal - Add new tags to all files
+     * 2. For each file, update legend status to new tagpath
+     * 3. For each file, update pinned status to new tagpath
+     * 4. Construct the recreated-tagnode using newtagnodename
+     * 5. BFS traversal - Create all child tag nodes in the hierarchy
+     * 6. BFS traversal - Copy file references to new tag nodes
+     * 7. BFS traversal - Copy metadata files
+     * 8. Clean up metadata for the new folder (remove legend, pinned, bookmark)
      * 
      * @param mainFolderTagPath - The tag path of the folder to recreate
      * @param destinationFolderTagPath - The tag path of the destination folder
@@ -1742,8 +1881,8 @@ export class Orchestrator {
                         const legendStatus = this.readLegendStatusOfFile(filePath, oldTagPath);
                         if (legendStatus.color) {
                             if (legendStatus.status === "locked") {
-                                // Add same legend with lock on new tagpath using addLockLegendToFile
-                                await this.addLockLegendToFile(legendStatus.color, filePath, newTagPath, false);
+                                // Add same legend with lock on new tagpath using addLegendLockToFile
+                                await this.addLegendLockToFile(legendStatus.color, filePath, newTagPath, false);
                             } else if (legendStatus.status === "notlocked") {
                                 // Add same legend on new tagpath using addLegendToFile
                                 await this.addLegendToFile(legendStatus.color, filePath, newTagPath, false);
@@ -1906,7 +2045,7 @@ export class Orchestrator {
             if (folderLegendStatus.legend) {
                 if (folderLegendStatus.locked) {
                     // Unlock it and remove legend
-                    await this.removeLockedLegendFromFolder(folderLegendStatus.legend, newFolderTagPath, false);
+                    await this.removeLegendLockFromFolder(folderLegendStatus.legend, newFolderTagPath, false);
                     await this.removeLegendFromFolder(newFolderTagPath, false);
                 } else {
                     // Remove legend
@@ -1950,6 +2089,10 @@ export class Orchestrator {
 
     /**
      * Copy files and folders to clipboard with multiple MIME types
+     * 
+     * Steps:
+     * 1. Construct payload object with files, folders, parent, and mode
+     * 2. Write to clipboard with multiple MIME types
      * 
      * @param listOfFilePaths - Array of file paths to copy
      * @param listOfTagPaths - Array of folder tag paths to copy
@@ -2004,6 +2147,10 @@ export class Orchestrator {
     /**
      * Cut files and folders to clipboard with multiple MIME types
      * 
+     * Steps:
+     * 1. Construct payload object with files, folders, parent, and mode (set to "cut")
+     * 2. Write to clipboard with multiple MIME types
+     * 
      * @param listOfFilePaths - Array of file paths to cut
      * @param listOfTagPaths - Array of folder tag paths to cut
      * @param parentTagPath - The parent tag path context for the cut operation
@@ -2056,6 +2203,11 @@ export class Orchestrator {
 
     /**
      * Paste files and folders from clipboard to destination
+     * 
+     * Steps:
+     * 1. Extract valid files, valid folders, parent, and mode from clipboard data
+     * 2. For cut mode, move files and folders
+     * 3. For copy mode, copy files and recreate folders
      * 
      * @param destinationTagPath - The tag path where items should be pasted
      * @param blind - If false, return validation errors; if true, skip invalid items and proceed
@@ -2223,6 +2375,9 @@ export class Orchestrator {
     /**
      * Add to legend for file and folder
      * 
+     * Steps:
+     * 1. Add prefixedtagpath to status lists
+     * 
      * @param legendColor - The legend color identifier
      * @param filePath - The file path
      * @param tagPath - The tag path
@@ -2305,6 +2460,9 @@ export class Orchestrator {
 
     /**
      * Remove from legend for file in folder
+     * 
+     * Steps:
+     * 1. Remove prefixedtagpath from status lists
      * 
      * @param legendColor - The legend color identifier
      * @param filePath - The file path
@@ -2394,6 +2552,10 @@ export class Orchestrator {
 
     /**
      * Cycle legend for file in folder through color states
+     * 
+     * Steps:
+     * 1. If legend color is "", call add to legend with next index color
+     * 2. If has prefix, remove from legend and add next color (or just remove if next is "")
      * 
      * @param currLegendColor - The current legend color identifier
      * @param filePath - The file path
@@ -2497,13 +2659,16 @@ export class Orchestrator {
     /**
      * Add to legend lock for file in folder
      * 
+     * Steps:
+     * 1. Remove prefixedtagpath if present and add lockedtagpath
+     * 
      * @param legendColor - The legend color identifier
      * @param filePath - The file path
      * @param tagPath - The tag path
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async addLockLegendToFile(
+    async addLegendLockToFile(
         legendColor: string,
         filePath: string,
         tagPath: string,
@@ -2587,6 +2752,9 @@ export class Orchestrator {
 
     /**
      * Remove from legend lock for file in folder (unlock)
+     * 
+     * Steps:
+     * 1. If has locked, unlock it: remove locked and add prefixed
      * 
      * @param legendColor - The legend color identifier
      * @param filePath - The file path
@@ -2756,6 +2924,9 @@ export class Orchestrator {
     /**
      * Add to pinned for file in folder
      * 
+     * Steps:
+     * 1. Add prefixedtagpath to status lists
+     * 
      * @param filePath - The file path
      * @param tagPath - The tag path
      * @param owner - Whether this is an owner operation (default true)
@@ -2837,6 +3008,9 @@ export class Orchestrator {
 
     /**
      * Remove from pinned for file in folder
+     * 
+     * Steps:
+     * 1. Remove prefixedtagpath from status lists
      * 
      * @param filePath - The file path
      * @param tagPath - The tag path
@@ -2924,6 +3098,9 @@ export class Orchestrator {
 
     /**
      * Cycle pinned for file in folder (toggle pin state)
+     * 
+     * Steps:
+     * 1. If has prefix, remove it; otherwise add it
      * 
      * @param filePath - The file path
      * @param tagPath - The tag path
@@ -3014,6 +3191,9 @@ export class Orchestrator {
     /**
      * Add to pinned lock for file in folder
      * 
+     * Steps:
+     * 1. Remove prefixedtagpath if present and add lockedtagpath
+     * 
      * @param filePath - The file path
      * @param tagPath - The tag path
      * @param owner - Whether this is an owner operation (default true)
@@ -3098,6 +3278,9 @@ export class Orchestrator {
 
     /**
      * Remove from pinned lock for file in folder (unlock)
+     * 
+     * Steps:
+     * 1. If has locked, unlock it: remove locked and add prefixed
      * 
      * @param filePath - The file path
      * @param tagPath - The tag path
@@ -3253,6 +3436,11 @@ export class Orchestrator {
     /**
      * Add to pinned for folder
      * 
+     * Steps:
+     * 1. If Pinned is not present, add Pinned.pinned as true and Pinned.locked as false
+     * 2. Else if Pinned.pinned is true, check and add Pinned.locked if missing
+     * 3. Else if Pinned.pinned not present or false, check Pinned.locked and update accordingly
+     * 
      * @param tagPath - The tag path
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
@@ -3346,6 +3534,11 @@ export class Orchestrator {
 
     /**
      * Remove from pinned for folder
+     * 
+     * Steps:
+     * 1. If Pinned is not present, add Pinned.pinned as false and Pinned.locked as false
+     * 2. Else if Pinned.pinned is true, check Pinned.locked and make Pinned.pinned false if not locked
+     * 3. Else if Pinned.pinned not present or false, check Pinned.locked and update accordingly
      * 
      * @param tagPath - The tag path
      * @param owner - Whether this is an owner operation (default true)
@@ -3446,6 +3639,11 @@ export class Orchestrator {
     /**
      * Cycle pinned for folder (toggle pin state)
      * 
+     * Steps:
+     * 1. If Pinned is not present, add Pinned.pinned as true and Pinned.locked as false
+     * 2. Else if Pinned.locked is true, return error (cannot toggle)
+     * 3. Else if Pinned.locked is false or not present, toggle Pinned.pinned value
+     * 
      * @param tagPath - The tag path
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
@@ -3540,6 +3738,11 @@ export class Orchestrator {
     /**
      * Add to pinned lock for folder
      * 
+     * Steps:
+     * 1. If Pinned is not present, add Pinned.pinned as true and Pinned.locked as true
+     * 2. If Pinned.locked is true, make Pinned.pinned true and keep locked true
+     * 3. If Pinned.locked is false or not present, make Pinned.pinned true and Pinned.locked true
+     * 
      * @param tagPath - The tag path
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
@@ -3633,6 +3836,11 @@ export class Orchestrator {
 
     /**
      * Remove from pinned lock for folder (unlock)
+     * 
+     * Steps:
+     * 1. If Pinned is not present, add Pinned.pinned as true and Pinned.locked as false
+     * 2. If Pinned.locked is true, make Pinned.locked false and keep Pinned.pinned true
+     * 3. If Pinned.locked is false, return error (already unlocked)
      * 
      * @param tagPath - The tag path
      * @param owner - Whether this is an owner operation (default true)
@@ -3748,6 +3956,9 @@ export class Orchestrator {
     /**
      * Add to bookmarked for file of a specific path
      * 
+     * Steps:
+     * 1. Add prefixedtagpath to status lists
+     * 
      * @param filePath - The file path
      * @param tagPath - The tag path
      * @param owner - Whether this is an owner operation (default true)
@@ -3822,6 +4033,9 @@ export class Orchestrator {
 
     /**
      * Remove from bookmarked for file
+     * 
+     * Steps:
+     * 1. Remove prefixedtagpath from status lists
      * 
      * @param filePath - The file path
      * @param tagPath - The tag path
@@ -3904,6 +4118,9 @@ export class Orchestrator {
 
     /**
      * Cycle bookmarked for file (toggle bookmark state)
+     * 
+     * Steps:
+     * 1. If has prefix, remove it; otherwise add it
      * 
      * @param filePath - The file path
      * @param tagPath - The tag path
@@ -3990,11 +4207,11 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default false for read operations)
      * @returns Object with bookmarked status (true if bookmarked, false otherwise)
      */
-    async readBookmarkStatusOfFile(
+    readBookmarkStatusOfFile(
         filePath: string,
         tagPath: string,
         owner: boolean = false
-    ): Promise<{ bookmarked: boolean }> {
+    ): { bookmarked: boolean } {
         try {
             // Extract fileleaf using filepath from fileleaf map
             const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
@@ -4042,6 +4259,9 @@ export class Orchestrator {
 
     /**
      * Add to bookmarked for folder
+     * 
+     * Steps:
+     * 1. If Bookmarked is not present or if Bookmarked is false, add Bookmarked as true
      * 
      * @param tagPath - The tag path
      * @param owner - Whether this is an owner operation (default true)
@@ -4104,6 +4324,9 @@ export class Orchestrator {
 
     /**
      * Remove from bookmarked for folder
+     * 
+     * Steps:
+     * 1. If Bookmarked is not present or false, add Bookmarked as false and return error
      * 
      * @param tagPath - The tag path
      * @param owner - Whether this is an owner operation (default true)
@@ -4170,6 +4393,9 @@ export class Orchestrator {
 
     /**
      * Cycle bookmarked for folder (toggle bookmark state)
+     * 
+     * Steps:
+     * 1. If Bookmarked is not present or false, add Bookmarked as true
      * 
      * @param tagPath - The tag path
      * @param owner - Whether this is an owner operation (default true)
@@ -4249,10 +4475,10 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default false for read operations)
      * @returns Object with bookmarked status (true if bookmarked, false otherwise)
      */
-    async readBookmarkStatusOfFolder(
+    readBookmarkStatusOfFolder(
         tagPath: string,
         owner: boolean = false
-    ): Promise<{ bookmarked: boolean }> {
+    ): { bookmarked: boolean } {
         try {
             // Extract tagnode using tagpath from tree
             const tagNode = this.treeRoot.getNode(tagPath);
@@ -4281,6 +4507,9 @@ export class Orchestrator {
 
     /**
      * Add legend to folder
+     * 
+     * Steps:
+     * 1. Add SelfLegend.legend value as legendColor and SelfLegend.locked value as false
      * 
      * @param legendColor - The legend color to add
      * @param tagPath - The tag path
@@ -4337,6 +4566,9 @@ export class Orchestrator {
     /**
      * Remove legend from folder
      * 
+     * Steps:
+     * 1. Add SelfLegend.legend value as "" and SelfLegend.locked value as false
+     * 
      * @param tagPath - The tag path
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
@@ -4389,6 +4621,9 @@ export class Orchestrator {
 
     /**
      * Cycle legend for folder
+     * 
+     * Steps:
+     * 1. Add SelfLegend.legend value as next index color and SelfLegend.locked value as false
      * 
      * @param currLegendColor - The current legend color
      * @param tagPath - The tag path
@@ -4455,12 +4690,15 @@ export class Orchestrator {
     /**
      * Add locked legend to folder
      * 
+     * Steps:
+     * 1. Add SelfLegend.legend value as legendColor and SelfLegend.locked value as true
+     * 
      * @param legendColor - The legend color to add
      * @param tagPath - The tag path
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async addLockedLegendToFolder(
+    async addLegendLockToFolder(
         legendColor: string,
         tagPath: string,
         owner: boolean = true
@@ -4510,12 +4748,15 @@ export class Orchestrator {
     /**
      * Remove locked legend from folder
      * 
+     * Steps:
+     * 1. Always set SelfLegend.legend value as legendColor and SelfLegend.locked value as false
+     * 
      * @param legendColor - The legend color to set
      * @param tagPath - The tag path
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
-    async removeLockedLegendFromFolder(
+    async removeLegendLockFromFolder(
         legendColor: string,
         tagPath: string,
         owner: boolean = true
@@ -4550,7 +4791,7 @@ export class Orchestrator {
 
             return { success: true };
         } catch (error) {
-            console.error("Error in removeLockedLegendFromFolder:", error);
+            console.error("Error in removeLegendLockFromFolder:", error);
             return { success: false, error };
         }
     }

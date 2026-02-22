@@ -15,35 +15,50 @@
     "actionowner": true,
     "timestamp": 1771326932,
     "action":[
+        "createfile"
         "createfolder",
         "renamefile",
-        "renametag",
+        "renametagfolder",
         "removefile",
         "removefolder",
         "deletefile",
         "movefolder",
         "movefile",
+        "duplicatefile",
+        "updatefolderdesc",
+        "updatefiledesc",
+        "duplicatefoldersameloc",
+        "duplicatefolderdiffloc",
+        "copyfilesandfolder",
+        "cutfilesandfolder",
+        "pastefilesandfolder",
+        "addlegendtofile",
+        "removelegendfromfile",
+        "cyclelegendoffile",
+        "addlegendlocktofile",
+        "removelegendlockfromfile",
+        "addpinnedtofile",
+        "removepinnedfromfile",
+        "cyclepinnedoffile",
+        "addpinnedlocktofile",
+        "removepinnedlockfromfile",
+        "addpinnedtofolder",
+        "removepinnedfromfolder",
+        "cyclepinnedoffolder",
+        "addpinnedlocktofolder",
+        "removepinnedlockfromfolder",
+        "addookmarktofile",
+        "removeookmarkfromfile",
+        "cyclebookmarkoffile",
+        "addbookmarktofolder",
+        "removebookmarkfromfolder",
+        "cyclebookmarkoffolder",
+        "addlegendtofolder",
+        "removelegendfromfolder",
+        "cyclelegendforfolder",
+        "addlegendlocktofolder",
+        "removelegendlockfromfolder"
 
-
-
-        "copyfile",
-        "copyfiles",
-        "copyfolder",
-        "copyfolders",
-        "copymix",
-
-        "cutfile",
-        "cutfiles",
-        "cutfolder",
-        "cutfolders",
-        "cutmix",
-
-        "pastefile",
-        "pastefiles",
-        "pastefolder",
-        "pastefolders",
-        "pastemix",
-        
     ],
     // only one of the above
     "listOfFiles":["fileNameWithPhysicalPath","fileNameWithPhysicalPath2"],
@@ -236,7 +251,7 @@
 }
 
 {
-    "type": "action_step",
+    "type": "action_step_pre",
     "actionowner": true,
     "timestamp": 1771327267,
     "content_category": ["files", "fileLeaves","tagNodes","folderMetadataFiles"],
@@ -252,6 +267,25 @@
     // above key value pair is not compulsory
 
 }
+
+{
+    "type": "action_step_post",
+    "actionowner": true,
+    "timestamp": 1771327267,
+    "content_category": ["files", "fileLeaves","tagNodes","folderMetadataFiles"],
+    // only one of the above
+    "name":"this is fileNameWithPhysicalPath or tagpath or tagpath or tagpath",
+    "edit_type": ["physicalName", "physicalTags","name","path","tagpath","parent","children","files"],
+    // only one of the above
+    // files: has options ["physicalName", "physicalTags"]
+    // fileLeaves: has options ["name","path","tagpath"]
+    // tagNodes: has options ["name","tagpath","parent","children","files"]
+    // folderMetadataFiles: has options ["physicalName","name","tagpath"]
+    "edit_type_sub":["tagname", ]
+    // above key value pair is not compulsory
+
+}
+
 
 {
     "type": "action_name_checkpoint",
