@@ -272,7 +272,7 @@ export default class TagFolderPlugin extends Plugin {
 		
 		console.log('Tag tree constructed successfully (metadata cache resolved)');
     console.log(this.treeRoot)
-		initModelInterface(this.treeRoot);
+		initModelInterface(this.treeRoot, this.app);
 
 		const temp = this.treeRoot.getSortedTree();
 		console.log(temp);
