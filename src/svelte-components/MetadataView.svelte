@@ -29,6 +29,28 @@
         );
     });
 
+    // Color dictionary mapping color names to CSS color values
+    const colorDictionary: Record<string, string> = {
+        'red': '#ff0000',
+        'green': '#00ff00',
+        'blue': '#0000ff',
+        'yellow': '#ffff00',
+        'orange': '#ff8800',
+        'purple': '#800080'
+    };
+
+
+    function getColorForName(colorName: string): string {
+        const normalizedName = colorName.toLowerCase().trim();
+        // Check if it's a known color name
+        if (colorDictionary[normalizedName]) {
+            return colorDictionary[normalizedName];
+        }
+        // Default fallback color
+        return '#cccccc';
+    }
+
+    
     // Helper function to check if a field should be displayed
     function shouldDisplayField(fieldName: string): boolean {
         return !fieldsToSkipSet.has(fieldName.toLowerCase());
@@ -47,35 +69,6 @@
         });
     }
 
-    function parseLegend(legendData: string | string[]): Array<{emoji: string, label: string}> {
-        if (!legendData) return [];
-        
-        // If it's already an array (JSON format), parse each item directly
-        if (Array.isArray(legendData)) {
-            return legendData
-                .map(item => {
-                    const match = String(item).match(/([^,]+),\s*(.+)/);
-                    if (match) {
-                        return { emoji: match[1].trim(), label: match[2].trim() };
-                    }
-                    return null;
-                })
-                .filter(item => item !== null) as Array<{emoji: string, label: string}>;
-        }
-        
-        // Fallback: parse as string with newline-separated lines (legacy YAML format)
-        const lines = legendData.trim().split('\n');
-        return lines
-            .filter(line => line.trim().startsWith('-'))
-            .map(line => {
-                const match = line.match(/- ([^,]+),\s*(.+)/);
-                if (match) {
-                    return { emoji: match[1].trim(), label: match[2].trim() };
-                }
-                return null;
-            })
-            .filter(item => item !== null) as Array<{emoji: string, label: string}>;
-    }
 
     function formatTimestamp(timestamp: number): string {
         if (!timestamp) return 'N/A';
@@ -194,10 +187,12 @@
             <div class="metadata-section">
                 <h5 class="metadata-title">Legend</h5>
                 <div class="legend-list">
-                    {#each parseLegend(metadataViewData.legend) as item}
+                    {#each Object.entries(metadataViewData.legend) as [color, label]}
                         <div class="legend-item">
-                            <span class="legend-emoji">{item.emoji}</span>
-                            <span class="legend-label">{item.label}</span>
+                            <span class="legend-icon" data-legend-color="{color}">
+                                <span class="circle" style="background-color: {getColorForName(color)};" ></span>
+                            </span>
+                            <span class="legend-label">{label}</span>
                         </div>
                     {/each}
                 </div>
@@ -399,13 +394,22 @@
     background-color: var(--background-secondary);
     border-radius: 4px;
     font-size: 13px;
+    
   }
 
-  .legend-emoji {
+  .legend-icon {
+    height: 100%;
     font-size: 18px;
     flex-shrink: 0;
   }
 
+.circle {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid #333;
+}
   .legend-label {
     color: var(--text-normal);
   }

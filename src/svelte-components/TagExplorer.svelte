@@ -18,17 +18,33 @@
     settings?: TagFolderPluginSettings;
     initialTreeData?: unknown;
     initialVersion?: number;
+    initialCurrentPath?: string;
+    initialBackPaths?: string[];
+    initialForwardPaths?: string[];
+    onNavigationChange?: () => void;
   }
 
-  let { settings, initialTreeData, initialVersion = 0 }: Props = $props();
+  let { 
+    settings, 
+    initialTreeData, 
+    initialVersion = 0,
+    initialCurrentPath = "",
+    initialBackPaths = [],
+    initialForwardPaths = [],
+    onNavigationChange
+  }: Props = $props();
 
   // State for sidebar collapse
   let leftCollapsed = $state(false);
   let rightCollapsed = $state(false);
 
   // actual variables to maintain state
-  let currentPath = $state("")
+  let currentPath = $state(initialCurrentPath)
   // let currentPath = writable("")
+
+  // Navigation history arrays for back/forward functionality
+  let backPaths = $state<string[]>([...initialBackPaths])
+  let forwardPaths = $state<string[]>([...initialForwardPaths])
 
   // State for currently focused object
   let focusedObjectType = $state<'folder' | 'file' >('folder');
@@ -65,6 +81,17 @@
     // Increment key to force MainView to re-derive its data
     mainViewRefreshKey++;
   }
+  
+  /**
+   * Get the current navigation state for persistence
+   */
+  export function getNavigationState() {
+    return {
+      currentPath,
+      backPaths: [...backPaths],
+      forwardPaths: [...forwardPaths]
+    };
+  }
 
   function toggleLeft() {
     leftCollapsed = !leftCollapsed;
@@ -86,27 +113,81 @@
   }
 
   function handleUpdate(newData: string) {
+    // When visiting a new location via tree navigation
+    // Add current path to back history
+    if (currentPath !== newData) {
+      backPaths = [...backPaths, currentPath];
+      // Clear forward history when visiting a new location
+      forwardPaths = [];
+    }
     currentPath = newData;
+    onNavigationChange?.();
   }
 
+
+  function goBack() {
+    if (backPaths.length === 0) return;
+    
+    // Add current path to forward history
+    forwardPaths = [...forwardPaths, currentPath];
+    
+    // Pop from back history and navigate to it
+    const newPath = backPaths[backPaths.length - 1];
+    backPaths = backPaths.slice(0, -1);
+    
+    currentPath = newPath;
+    handleFocusChange('folder', currentPath, "");
+    onNavigationChange?.();
+  }
+
+  function goForward() {
+    if (forwardPaths.length === 0) return;
+    
+    // Add current path to back history
+    backPaths = [...backPaths, currentPath];
+    
+    // Pop from forward history and navigate to it
+    const newPath = forwardPaths[forwardPaths.length - 1];
+    forwardPaths = forwardPaths.slice(0, -1);
+    
+    currentPath = newPath;
+    handleFocusChange('folder', currentPath, "");
+    onNavigationChange?.();
+  }
 
   function goToParentFolder(){
 
     let tempCurrPath = currentPath
     let lastSlash = tempCurrPath.lastIndexOf("/");
     let newpath = lastSlash === -1 ? "" : tempCurrPath.slice(0, lastSlash);
+    
+    // Add current path to back history when navigating to parent
+    backPaths = [...backPaths, currentPath];
+    // Clear forward history when using parent navigation
+    forwardPaths = [];
+    
     currentPath = newpath
 
     handleFocusChange('folder', currentPath, tempCurrPath)
+    onNavigationChange?.();
 
   }
 
   function goToHomeFolder(){
 
     let tempCurrPath = currentPath
+    
+    // Add current path to back history when navigating to home
+    if (currentPath !== "") {
+      backPaths = [...backPaths, currentPath];
+      // Clear forward history when using home navigation
+      forwardPaths = [];
+    }
+    
     currentPath = ""
 
     handleFocusChange('folder', currentPath, tempCurrPath)
+    onNavigationChange?.();
 
   }
 
@@ -172,10 +253,26 @@
 
 
       <div class="button-holder">
-        <div class="header-button">
+        <div 
+          class="header-button"
+          class:disabled={backPaths.length === 0}
+          role="button"
+          tabindex="0"
+          onclick={() => goBack()}
+          onkeydown={(e) => e.key === 'Enter' && goBack()}
+          aria-label="Go back"
+        >
           <svg style="padding:2px" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-big-left-icon lucide-arrow-big-left"><path d="M13 9a1 1 0 0 1-1-1V5.061a1 1 0 0 0-1.811-.75l-6.835 6.836a1.207 1.207 0 0 0 0 1.707l6.835 6.835a1 1 0 0 0 1.811-.75V16a1 1 0 0 1 1-1h6a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1z"/></svg>
         </div>
-        <div class="header-button">
+        <div 
+          class="header-button"
+          class:disabled={forwardPaths.length === 0}
+          role="button"
+          tabindex="0"
+          onclick={() => goForward()}
+          onkeydown={(e) => e.key === 'Enter' && goForward()}
+          aria-label="Go forward"
+        >
           <svg style="padding:2px" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-big-right-icon lucide-arrow-big-right"><path d="M11 9a1 1 0 0 0 1-1V5.061a1 1 0 0 1 1.811-.75l6.836 6.836a1.207 1.207 0 0 1 0 1.707l-6.836 6.835a1 1 0 0 1-1.811-.75V16a1 1 0 0 0-1-1H5a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1z"/></svg>
         </div>
       </div>
@@ -485,6 +582,13 @@
 .header-button:active {
   transform: scale(0.96);
 }
+
+.header-button.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .path-holder{
   flex:1;
   background-color: var(--background-primary-alt);; /* your hex color */

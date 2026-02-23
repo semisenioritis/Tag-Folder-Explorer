@@ -99,9 +99,12 @@ class TagExplorerView extends ItemView {
   component: ReturnType<typeof TagExplorer> | undefined;
   plugin: TagFolderPlugin;
   private currentTreeVersion: number = 0;
-  // in the future we can maintain a currentPath variable inside the tagexplorerview itself instead of storing it inside the state. 
-  // that way when we want to upgrade the lazy update to happen only on those who need it, this can come handy
-  // private currentPath: string = "";
+  // Stored state for persistence
+  private savedState: {
+    currentPath?: string;
+    backPaths?: string[];
+    forwardPaths?: string[];
+  } = {};
 
   constructor(leaf: WorkspaceLeaf, plugin: TagFolderPlugin) { 
     super(leaf)
@@ -114,6 +117,38 @@ class TagExplorerView extends ItemView {
 
   getDisplayText() { 
     return 'Tag Explorer' 
+  }
+  
+  /**
+   * Save the current view state for persistence
+   */
+  getState() {
+    const navigationState = this.component?.getNavigationState?.() || {
+      currentPath: "",
+      backPaths: [],
+      forwardPaths: []
+    };
+
+    return {
+      ...super.getState(),
+      currentPath: navigationState.currentPath || "",
+      backPaths: navigationState.backPaths || [],
+      forwardPaths: navigationState.forwardPaths || []
+    };
+  }
+  
+  /**
+   * Restore the view state from saved data
+   */
+  async setState(state: any, result: any): Promise<void> {
+    // Store the state to use when rendering
+    this.savedState = {
+      currentPath: state.currentPath || "",
+      backPaths: state.backPaths || [],
+      forwardPaths: state.forwardPaths || []
+    };
+    
+    await super.setState(state, result);
   }
 
   async onOpen() {
@@ -192,7 +227,14 @@ class TagExplorerView extends ItemView {
       props: {
         settings: this.plugin.settings,
         initialTreeData: treeData,
-        initialVersion: version
+        initialVersion: version,
+        initialCurrentPath: this.savedState.currentPath,
+        initialBackPaths: this.savedState.backPaths,
+        initialForwardPaths: this.savedState.forwardPaths,
+        onNavigationChange: () => {
+          // Request workspace to save layout when navigation changes
+          this.app.workspace.requestSaveLayout();
+        }
       }
     });
     
