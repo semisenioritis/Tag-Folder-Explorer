@@ -267,6 +267,21 @@ export default class TagFolderPlugin extends Plugin {
 
  
 
+	async openInRightSidebar(url: string) {
+		// Create a new right sidebar leaf
+		const leaf: WorkspaceLeaf | null = this.app.workspace.getRightLeaf(false);
+
+    if (leaf){
+      await leaf.setViewState({
+        type: "webviewer",
+        state: { url }
+      });
+
+		  this.app.workspace.setActiveLeaf(leaf, { focus: true });
+    }
+
+
+	}
 
   async onload() {
 
@@ -341,6 +356,8 @@ export default class TagFolderPlugin extends Plugin {
     let leaf = w.getLeaf(true)
     await leaf.setViewState({ type: VIEW_TYPE_TAG_EXPLORER, active: true })
     w.revealLeaf(leaf)
+
+    await this.openInRightSidebar("https://app.raindrop.io/my/0");
   }
   
   /**
