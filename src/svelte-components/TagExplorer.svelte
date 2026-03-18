@@ -6,7 +6,7 @@
 
   import type {TagFolderPluginSettings} from '../settings';
 
-  import {getVaultName} from '../modelInterface'
+  import {getVaultName, doesTagPathExist} from '../modelInterface'
 	import BottomStatusBar from './BottomStatusBar.svelte';
 
 
@@ -34,12 +34,31 @@
     onNavigationChange
   }: Props = $props();
 
+  function pathExists(path: string): boolean {
+    return doesTagPathExist(path);
+  }
+
+  function getNearestExistingPath(path: string): string {
+    let candidate = (path ?? '').trim().replace(/^\/+|\/+$/g, '');
+
+    while (candidate.length > 0) {
+      if (pathExists(candidate)) {
+        return candidate;
+      }
+
+      const lastSlash = candidate.lastIndexOf('/');
+      candidate = lastSlash === -1 ? '' : candidate.slice(0, lastSlash);
+    }
+
+    return '';
+  }
+
   // State for sidebar collapse
   let leftCollapsed = $state(false);
   let rightCollapsed = $state(false);
 
   // actual variables to maintain state
-  let currentPath = $state(initialCurrentPath)
+  let currentPath = $state(getNearestExistingPath(initialCurrentPath))
   // let currentPath = writable("")
 
   // Navigation history arrays for back/forward functionality
@@ -127,7 +146,7 @@
 
   function goBack() {
     if (backPaths.length === 0) return;
-    
+
     // Add current path to forward history
     forwardPaths = [...forwardPaths, currentPath];
     
@@ -135,7 +154,7 @@
     const newPath = backPaths[backPaths.length - 1];
     backPaths = backPaths.slice(0, -1);
     
-    currentPath = newPath;
+    currentPath = getNearestExistingPath(newPath);
     handleFocusChange('folder', currentPath, "");
     onNavigationChange?.();
   }
@@ -150,7 +169,7 @@
     const newPath = forwardPaths[forwardPaths.length - 1];
     forwardPaths = forwardPaths.slice(0, -1);
     
-    currentPath = newPath;
+    currentPath = getNearestExistingPath(newPath);
     handleFocusChange('folder', currentPath, "");
     onNavigationChange?.();
   }
@@ -166,7 +185,7 @@
     // Clear forward history when using parent navigation
     forwardPaths = [];
     
-    currentPath = newpath
+    currentPath = getNearestExistingPath(newpath)
 
     handleFocusChange('folder', currentPath, tempCurrPath)
     onNavigationChange?.();
@@ -195,7 +214,7 @@
 
     let tempCurrPath = currentPath
     currentPath = ""
-    currentPath = tempCurrPath
+    currentPath = getNearestExistingPath(tempCurrPath)
 
     handleFocusChange('folder', currentPath, tempCurrPath)
 

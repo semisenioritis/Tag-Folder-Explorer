@@ -111,6 +111,23 @@ export function getVaultName():string{
     return treeObj.getApp().vault.getName();
 }
 
+/**
+ * Check whether a tag path exists in the current tree.
+ * Uses TreeRoot.getNode() directly for a lightweight existence lookup.
+ *
+ * @param tagPath - The tag path to check (e.g., "subject/math")
+ * @returns boolean - true if node exists, false otherwise
+ */
+export function doesTagPathExist(tagPath: string): boolean {
+    if (!treeObj) {
+        return false;
+    }
+
+    const normalizedPath = (tagPath ?? '').trim().replace(/^\/+|\/+$/g, '');
+    const node = treeObj.getNode(normalizedPath);
+    return node !== null;
+}
+
 
     /**
      * Read legend status for file in folder

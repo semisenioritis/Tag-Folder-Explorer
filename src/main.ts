@@ -16,7 +16,6 @@ import { TreeRoot } from './TreeRoot';
 
 // step 1
 
-import testsidebar from './svelte-components/dummy/test_sidebar.svelte';
 import TagExplorer from './svelte-components/TagExplorer.svelte';
 
 import { mount, unmount } from 'svelte';
@@ -31,66 +30,66 @@ import type {TagFolderPluginSettings} from "./settings";
 
 
 
-const VIEW_TYPE_EXPLORER = 'explorer-view'
+// const VIEW_TYPE_EXPLORER = 'explorer-view'
 const VIEW_TYPE_TAG_EXPLORER = 'tag-explorer-view'
 
 
 
 
-class ExplorerView extends ItemView {
+// class ExplorerView extends ItemView {
 
-  // step 2
+//   // step 2
 
-  sidebar: ReturnType<typeof testsidebar> | undefined;
+//   sidebar: ReturnType<typeof testsidebar> | undefined;
 
 
-  constructor(leaf: WorkspaceLeaf) { super(leaf) }
+//   constructor(leaf: WorkspaceLeaf) { super(leaf) }
 
-  getViewType() { return VIEW_TYPE_EXPLORER }
+//   getViewType() { return VIEW_TYPE_EXPLORER }
 
-  getDisplayText() { return 'Explorer view' }
+//   getDisplayText() { return 'Explorer view' }
 
  
-  async onOpen() {
-    this.renderView()
-  }
+//   async onOpen() {
+//     this.renderView()
+//   }
   
   
   
-  private renderView(){
-    const c = this.contentEl
-    c.empty()
-    // c.createEl('h4', { text: 'Explorer view' })
-	  // Attach the Svelte component to the ItemViews content element and provide the needed props.
+//   private renderView(){
+//     const c = this.contentEl
+//     c.empty()
+//     // c.createEl('h4', { text: 'Explorer view' })
+// 	  // Attach the Svelte component to the ItemViews content element and provide the needed props.
     
-    // step 3
-    // this.counter = mount(Counter, {
-    //   target: this.contentEl,
-    //   props: {
-    //     startCount: 5,
-    //   }
-    // });
+//     // step 3
+//     // this.counter = mount(Counter, {
+//     //   target: this.contentEl,
+//     //   props: {
+//     //     startCount: 5,
+//     //   }
+//     // });
 
 
 
 
-    this.sidebar = mount(testsidebar, {
-      target: this.contentEl
-    });    
-    console.log("sidebar mounted")
-  }
+//     this.sidebar = mount(testsidebar, {
+//       target: this.contentEl
+//     });    
+//     console.log("sidebar mounted")
+//   }
 
 
   
-  async onClose() {
-    if (this.sidebar) {
-      // Remove the Counter from the ItemView.
-      unmount(this.sidebar);
-    }
+//   async onClose() {
+//     if (this.sidebar) {
+//       // Remove the Counter from the ItemView.
+//       unmount(this.sidebar);
+//     }
 
 
-  }
-}
+//   }
+// }
 
 
 
@@ -289,7 +288,7 @@ export default class TagFolderPlugin extends Plugin {
 
 		console.log('Tag Folder Plugin loaded');
 
-    this.registerView(VIEW_TYPE_EXPLORER, leaf => new ExplorerView(leaf))
+    // this.registerView(VIEW_TYPE_EXPLORER, leaf => new ExplorerView(leaf))
     this.registerView(VIEW_TYPE_TAG_EXPLORER, leaf => new TagExplorerView(leaf, this))
 
 		// Wait for the metadata cache to be fully resolved before computing the tree
@@ -310,7 +309,7 @@ export default class TagFolderPlugin extends Plugin {
 		});
 
 
-    this.addRibbonIcon('dice', 'Open Explorer', () => this.activateView())
+    // this.addRibbonIcon('dice', 'Open Explorer', () => this.activateView())
     this.addRibbonIcon('folder-tree', 'Open Tag Explorer', () => this.activateTagExplorerView())
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
@@ -340,14 +339,14 @@ export default class TagFolderPlugin extends Plugin {
 		// When tree is modified later (e.g., by orchestrator), call this.broadcastTreeUpdate()
 	}
 
-  async activateView() {
-    const w = this.app.workspace
+  // async activateView() {
+  //   const w = this.app.workspace
     
-    let leaf = w.getLeaf(true)
-    await leaf.setViewState({ type: VIEW_TYPE_EXPLORER, active: true })
+  //   let leaf = w.getLeaf(true)
+  //   await leaf.setViewState({ type: VIEW_TYPE_EXPLORER, active: true })
     
-    w.revealLeaf(leaf)
-  }
+  //   w.revealLeaf(leaf)
+  // }
 
 
 
@@ -357,7 +356,7 @@ export default class TagFolderPlugin extends Plugin {
     await leaf.setViewState({ type: VIEW_TYPE_TAG_EXPLORER, active: true })
     w.revealLeaf(leaf)
 
-    await this.openInRightSidebar("https://app.raindrop.io/my/0");
+    await this.openInRightSidebar("https://app.raindrop.io/my/68548149");
   }
   
   /**
