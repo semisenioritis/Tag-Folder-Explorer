@@ -1,6 +1,7 @@
 <script lang="ts">
 
   import { getrightSidebarData } from '../modelInterface'
+  import type { ControllerInterface } from '../controllerInterface';
 
     // Props
     interface Props {
@@ -10,13 +11,47 @@
         focusedObjectParent: string ;
         showObsMetaData?: boolean;
         fieldsToSkip?: string;
+        controller: ControllerInterface | null | undefined;
     }
 
 
-    let { currentPath, focusedObjectType, focusedObjectPath, focusedObjectParent, showObsMetaData = true, fieldsToSkip = ''}:Props = $props();
+    let { currentPath, focusedObjectType, focusedObjectPath, focusedObjectParent, showObsMetaData = true, fieldsToSkip = '', controller}:Props = $props();
     
 
     let metadataViewData: any | null = $derived(getrightSidebarData(focusedObjectParent, focusedObjectType, focusedObjectPath));
+
+
+	let descriptionValue = $derived.by(() => {
+        console.log("derivation was triggered")
+        let tempdescriptionValue
+        if (focusedObjectType== "folder"){
+            if (metadataViewData?.description) {
+                tempdescriptionValue = metadataViewData.description;
+            }else{
+                tempdescriptionValue = ""
+            }
+        }
+        else if (focusedObjectType== "file"){
+            if (metadataViewData?.filemetadata && "description" in metadataViewData.filemetadata) {
+                tempdescriptionValue = metadataViewData.filemetadata["description"];
+            }else{
+                tempdescriptionValue = ""
+            }
+        }
+        return tempdescriptionValue
+	});
+
+	let legendValue = $derived.by(() => {
+        console.log("derivation was triggered")
+        let templegendValue
+        if (focusedObjectType== "folder"){
+            if (metadataViewData?.legend){
+                templegendValue = metadataViewData.legend
+            }
+        }
+        return templegendValue
+	});
+
 
     // Parse fieldsToSkip into a Set for efficient lookup
     let fieldsToSkipSet = $derived.by(() => {
@@ -88,6 +123,41 @@
         return fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
     }
 
+    async function handleDescriptionUpdate() {
+        if (!controller) return;
+
+        try {
+            if (focusedObjectType === 'folder') {
+                await controller.updateFolderDescription(focusedObjectPath, {
+                    description: descriptionValue
+                });
+            } else if (focusedObjectType === 'file') {
+                await controller.updateFileDescription(focusedObjectParent, focusedObjectPath, {
+                    description: descriptionValue
+                });
+            }
+        } catch (error) {
+            console.error('Failed to update description:', error);
+        }
+    }
+
+    async function handleLegendUpdate() {
+        console.log("updating legend")
+        if (!controller) return;
+
+        try {
+            if (focusedObjectType === 'folder') {
+                let result = await controller.updateFolderLegend(focusedObjectPath, {
+                    legend: legendValue
+                });
+                
+                console.log('Legend update successful');
+                console.log("Result",result)
+            }
+        } catch (error) {
+            console.error('Failed to update legend:', error);
+        }
+    }
 
 </script>
 
@@ -174,14 +244,17 @@
 
 
 
-            {#if metadataViewData.description}
+
             <div class="metadata-section">
                 <h5 class="metadata-title">Description</h5>
-                <div class="description-text">
-                    {metadataViewData.description}
-                </div>
+                <textarea 
+                    placeholder="Folder Desc..."
+                    class="description-text" 
+                    bind:value={descriptionValue}
+                    onchange={handleDescriptionUpdate}
+                ></textarea>
             </div>
-            {/if}
+
 
             {#if metadataViewData.legend}
             <div class="metadata-section">
@@ -192,7 +265,14 @@
                             <span class="legend-icon" data-legend-color="{color}">
                                 <span class="circle" style="background-color: {getColorForName(color)};" ></span>
                             </span>
-                            <span class="legend-label">{label}</span>
+                            <!-- <span class="legend-label">{label}</span> -->
+                            <textarea
+                                placeholder="Legend Label"
+                                class="legend-label"
+                                bind:value={metadataViewData.legend[color]}
+                                onchange={handleLegendUpdate}
+
+                            ></textarea>
                         </div>
                     {/each}
                 </div>
@@ -247,6 +327,17 @@
 
         </div>
 
+      <div class="metadata-section">
+          <h5 class="metadata-title">File Description</h5>
+          <textarea 
+            placeholder="File Desc..."
+            class="description-text" 
+            bind:value={descriptionValue}
+            onchange={handleDescriptionUpdate}
+          ></textarea>
+      </div>
+
+
       {#if metadataViewData.filemetadata && Object.keys(metadataViewData.filemetadata).length > 0}
       {@const filteredMetadata = Object.entries(metadataViewData.filemetadata).filter(([key]) => shouldDisplayField(key))}
       {#if filteredMetadata.length > 0}
@@ -265,9 +356,7 @@
       {#if metadataViewData.fileinitial}
       <div class="metadata-section">
           <h5 class="metadata-title">File Content</h5>
-          <div class="description-text">
-              {metadataViewData.fileinitial}  
-          </div>
+          <textarea readonly class="description-text" >{metadataViewData.fileinitial}</textarea>
       </div>
       {/if}
 
@@ -303,7 +392,7 @@
   }
 
   .folder-image-container {
-    width: 80%;
+    width: 65%;
     aspect-ratio: 1 / 1;
     margin-bottom: 20px;
     margin-left: auto;
@@ -379,6 +468,9 @@
     white-space: pre-wrap;
     word-wrap: break-word;
     color: var(--text-normal);
+    width: 100%;
+    resize: none;
+    field-sizing: content;
   }
 
   .legend-list {
@@ -412,6 +504,10 @@
 }
   .legend-label {
     color: var(--text-normal);
+    width: 100%;
+    resize: none;
+    field-sizing: content;
+
   }
 
   .empty-state {

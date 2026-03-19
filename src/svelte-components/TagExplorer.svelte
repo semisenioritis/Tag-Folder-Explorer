@@ -7,6 +7,8 @@
   import type {TagFolderPluginSettings} from '../settings';
 
   import {getVaultName, doesTagPathExist} from '../modelInterface'
+  import type { ControllerInterface } from '../controllerInterface';
+
 	import BottomStatusBar from './BottomStatusBar.svelte';
 
 
@@ -16,6 +18,7 @@
   // Props
   interface Props {
     settings?: TagFolderPluginSettings;
+    controller?: ControllerInterface | null;
     initialTreeData?: unknown;
     initialVersion?: number;
     initialCurrentPath?: string;
@@ -26,6 +29,7 @@
 
   let { 
     settings, 
+    controller,
     initialTreeData, 
     initialVersion = 0,
     initialCurrentPath = "",
@@ -379,7 +383,15 @@
     {#if !rightCollapsed}
       <div class="sidebar-content">
         <!-- Left sidebar content will go here -->  
-        <MetadataView  currentPath={currentPath} focusedObjectType={focusedObjectType} focusedObjectPath={focusedObjectPath} focusedObjectParent={focusedObjectParent} showObsMetaData={settings?.showObsMetaData} fieldsToSkip={settings?.fieldsToSkip}/>
+        <MetadataView  
+          currentPath={currentPath} 
+          focusedObjectType={focusedObjectType} 
+          focusedObjectPath={focusedObjectPath} 
+          focusedObjectParent={focusedObjectParent} 
+          showObsMetaData={settings?.showObsMetaData} 
+          fieldsToSkip={settings?.fieldsToSkip}
+          controller={controller}
+        />
       </div>
     {/if}
   </div>

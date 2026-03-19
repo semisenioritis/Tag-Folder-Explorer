@@ -2,6 +2,8 @@ import { Plugin, ItemView, WorkspaceLeaf } from 'obsidian'
 
 
 import { TreeRoot } from './TreeRoot';
+import { ControllerInterface } from './controllerInterface';
+import { Orchestrator } from './orchestrator';
 
 
 /*
@@ -225,6 +227,7 @@ class TagExplorerView extends ItemView {
       target: this.contentEl,
       props: {
         settings: this.plugin.settings,
+        controller: this.plugin.controller,
         initialTreeData: treeData,
         initialVersion: version,
         initialCurrentPath: this.savedState.currentPath,
@@ -257,6 +260,7 @@ export default class TagFolderPlugin extends Plugin {
 
 
 	treeRoot: TreeRoot | null = null;
+	controller: ControllerInterface | null = null;
 	
 	/**
 	 * Track all active TagExplorerView instances for broadcasting updates.
@@ -325,6 +329,10 @@ export default class TagFolderPlugin extends Plugin {
 	private initializeTree(): void {
 		// Construct the tag tree structure
 		this.treeRoot = new TreeRoot(this.app, this.settings);
+		
+		// Initialize controller interface for frontend access
+		const orchestrator = new Orchestrator(this.app, this.treeRoot, this);
+		this.controller = new ControllerInterface(orchestrator);
 		
 		console.log('Tag tree constructed successfully (metadata cache resolved)');
     console.log(this.treeRoot)
@@ -428,6 +436,7 @@ export default class TagFolderPlugin extends Plugin {
 		
 		// Clean up the tree reference
 		this.treeRoot = null;
+		this.controller = null;
     
 
     

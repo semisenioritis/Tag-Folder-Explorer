@@ -941,7 +941,6 @@ export async function replaceMetadataSection(
 	try {
 		// Process frontmatter to update/add keys
  
-		let namee = "date8"
 		// @ts-ignore
 		const properties = app.metadataTypeManager?.properties;
 		// console.log(properties["date3"])
