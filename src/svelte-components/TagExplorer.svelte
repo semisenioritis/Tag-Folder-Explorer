@@ -223,6 +223,47 @@
     handleFocusChange('folder', currentPath, tempCurrPath)
 
   }
+
+  let leftWidth = $state(250);
+  let rightWidth = $state(250);
+  let containerEl: HTMLDivElement | null = null;
+
+  let resizing: String = "";
+
+  function startResize(event: MouseEvent, side: 'left' | 'right') {
+    resizing = side;
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', stopResize);
+  }
+
+  function onMouseMove(event: MouseEvent) {
+    if (!containerEl) {
+      return;
+    }
+
+    const bounds = containerEl.getBoundingClientRect();
+
+    if (resizing === 'left') {
+      leftWidth = Math.max(0, event.clientX - bounds.left);
+    }
+
+    if (resizing === 'right') {
+      rightWidth = Math.max(0, bounds.right - event.clientX);
+    }
+  }
+
+  function stopResize() {
+    resizing = "";
+    window.removeEventListener('mousemove', onMouseMove);
+    window.removeEventListener('mouseup', stopResize);
+  }
+
+
+
+
+
+
 </script>
 
 
@@ -231,9 +272,13 @@
 
 
 
-<div class="dual-sidebar-container">
+<div class="dual-sidebar-container" bind:this={containerEl}>
   <!-- Left Sidebar -->
-  <div class="sidebar left-sidebar" class:collapsed={leftCollapsed}>
+  <div class="sidebar left-sidebar" 
+  class:collapsed={leftCollapsed}  
+  style:min-width={leftCollapsed ? '0px' : '250px'} 
+  style:width={leftCollapsed ? 'auto' : `${leftWidth}px`}
+  style:max-width="450px">
     <div class="sidebar-header">
 
       <button class="collapse-btn left-btn" onclick={toggleLeft} aria-label="Toggle left sidebar">
@@ -261,7 +306,12 @@
     </div>
   </div>
 
-
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    id="leftHandle"
+    class="handle"
+    onmousedown={(e) => startResize(e, 'left')}
+  ></div>
 
 
 
@@ -364,12 +414,20 @@
 
 
 
-
-
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    id="rightHandle"
+    class="handle"
+    onmousedown={(e) => startResize(e, 'right')}
+  ></div>
 
 
   <!-- Right Sidebar -->
-  <div class="sidebar right-sidebar" class:collapsed={rightCollapsed}>
+  <div class="sidebar right-sidebar" 
+  class:collapsed={rightCollapsed} 
+  style:min-width={rightCollapsed ? '0px' : '250px'} 
+  style:width={rightCollapsed ? 'auto' : `${rightWidth}px`}
+  style:max-width="450px">
     <div class="sidebar-header">
       <button class="collapse-btn right-btn" onclick={toggleRight} aria-label="Toggle right sidebar">
         {#if rightCollapsed}
@@ -409,6 +467,12 @@
 
 
 <style>
+
+  .handle {
+    width: 5px;
+    cursor: ew-resize;
+  }
+
   .dual-sidebar-container {
     display: flex;
     height: 100%;
@@ -426,12 +490,10 @@
   }
 
   .left-sidebar {
-    width: 250px;
     border-right: 1px solid var(--background-modifier-border);
   }
 
   .right-sidebar {
-    width: 250px;
     border-left: 1px solid var(--background-modifier-border);
   }
 
@@ -498,8 +560,6 @@
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    padding-left: 5px;
-    padding-right: 5px;
     background-color: var(--background-primary);
     min-height: 0;
   }

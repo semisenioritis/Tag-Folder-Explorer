@@ -392,7 +392,9 @@
   }
 
   .folder-image-container {
-    width: 65%;
+    /* width: 65%; */
+    /* above one grows when sidebar is resized */
+    width: 150px;
     aspect-ratio: 1 / 1;
     margin-bottom: 20px;
     margin-left: auto;
