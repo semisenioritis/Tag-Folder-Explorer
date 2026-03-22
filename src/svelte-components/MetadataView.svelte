@@ -136,6 +136,8 @@
                     description: descriptionValue
                 });
             }
+
+            recomputeMetadata()
         } catch (error) {
             console.error('Failed to update description:', error);
         }
@@ -154,9 +156,14 @@
                 console.log('Legend update successful');
                 console.log("Result",result)
             }
+            recomputeMetadata()
         } catch (error) {
             console.error('Failed to update legend:', error);
         }
+    }
+
+    function recomputeMetadata(): void {
+        metadataViewData = getrightSidebarData(focusedObjectParent, focusedObjectType, focusedObjectPath);
     }
 
 </script>
