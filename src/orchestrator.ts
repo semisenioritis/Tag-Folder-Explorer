@@ -116,6 +116,22 @@ export class Orchestrator {
                 }
     // 🔴 write action step post
 
+                const jsonObject: Record<string, any> = {}
+                const newModifiedDate = new Date().toISOString()
+                jsonObject["modified"] = newModifiedDate
+                
+                // Get the target TagNode by tag path
+                const targetNode = this.treeRoot.getNode(folderTagPath);
+                if (!targetNode) {
+                    return { success: false, error: `Tag node not found for path: ${folderTagPath}` };
+                }
+
+                // Call updateMeta function with jsonobject and replace
+                const updateSuccess = targetNode.updateMeta(jsonObject, 'replace');
+                if (!updateSuccess) {
+                    return { success: false, error: "Failed to update folder metadata" };
+                }
+
             // ---(Physical File Edits End)---
 
             // ---(Virtual Edits)---
@@ -131,11 +147,6 @@ export class Orchestrator {
                 filePathMap.set(createdFile.path, fileLeaf);
 
                 // Add the FileLeaf to the TreeRoot object
-                // Get the target TagNode by tag path
-                const targetNode = this.treeRoot.getNode(folderTagPath);
-                if (!targetNode) {
-                    return { success: false, error: `Tag node not found for path: ${folderTagPath}` };
-                }
 
                 // Add file to the TagNode's files list
                 const addFileSuccess = targetNode.createNewFile(createdFile.name, createdFile.path);
@@ -212,6 +223,17 @@ export class Orchestrator {
                     ? `${folderTagPath}/${finalFolderName}` 
                     : finalFolderName;
 
+
+                const jsonObject: Record<string, any> = {}
+                const newModifiedDate = new Date().toISOString()
+                jsonObject["modified"] = newModifiedDate
+                
+                // Call updateMeta function with jsonobject and replace
+                const updateSuccess = parentNode.updateMeta(jsonObject, 'replace');
+                if (!updateSuccess) {
+                    return { success: false, error: "Failed to update folder metadata" };
+                }
+            
                 // Invalidate cache
                 this.treeRoot.invalidateCache();
             // ---(Virtual Edits End)---
@@ -390,6 +412,29 @@ export class Orchestrator {
                     currentLevelNodes = nextLevelNodes;
                 }
 
+
+                const jsonObject: Record<string, any> = {}
+                const newModifiedDate = new Date().toISOString()
+                jsonObject["modified"] = newModifiedDate
+                
+                // Call updateMeta function with jsonobject and replace
+                const updateSuccess = parentNode.updateMeta(jsonObject, 'replace');
+                if (!updateSuccess) {
+                    return { success: false, error: "Failed to update folder metadata" };
+                }
+
+                const jsonObjectTarget: Record<string, any> = {}
+                jsonObjectTarget["modified"] = newModifiedDate
+                jsonObjectTarget["path"] = newFolderTagPath
+                jsonObjectTarget["name"] = newTagName
+
+                // Call updateMeta function with jsonobject and replace
+                const updateSuccessTarget = targetNode.updateMeta(jsonObjectTarget, 'replace');
+                if (!updateSuccessTarget) {
+                    return { success: false, error: "Failed to update folder metadata" };
+                }
+
+
                 // BFS traversal - Update metadata files for all tagnodes
                 currentLevelNodes = [targetNode];
                 while (currentLevelNodes.length > 0) {
@@ -560,6 +605,18 @@ export class Orchestrator {
                         await this.removePinnedFromFile(filePath, folderTagPath, false);
                     }
                 }
+
+
+                const jsonObject: Record<string, any> = {}
+                const newModifiedDate = new Date().toISOString()
+                jsonObject["modified"] = newModifiedDate
+                
+                // Call updateMeta function with jsonobject and replace
+                const updateSuccess = tagNode.updateMeta(jsonObject, 'replace');
+                if (!updateSuccess) {
+                    return { success: false, error: "Failed to update folder metadata" };
+                }
+
             // ---(Physical File Edits End)---
 
             // ---(Virtual Edits)---
@@ -714,6 +771,17 @@ export class Orchestrator {
                     
                     currentLevelNodes = nextLevelNodes;
                 }
+
+                const jsonObject: Record<string, any> = {}
+                const newModifiedDate = new Date().toISOString()
+                jsonObject["modified"] = newModifiedDate
+                
+                // Call updateMeta function with jsonobject and replace
+                const updateSuccess = parentTagNode.updateMeta(jsonObject, 'replace');
+                if (!updateSuccess) {
+                    return { success: false, error: "Failed to update folder metadata" };
+                }
+
             // ---(Physical File Edits End)---
 
             // ---(Virtual Edits)---
@@ -791,6 +859,10 @@ export class Orchestrator {
                 const filePathMap = this.treeRoot.getFilePathMap();
                 filePathMap.delete(filePath);
 
+                const jsonObject: Record<string, any> = {}
+                const newModifiedDate = new Date().toISOString()
+                jsonObject["modified"] = newModifiedDate
+
                 // For each tagnode path where fileleaf exists
                 for (const tagNodePath of tagNodePaths) {
                     // Extract tagnode object
@@ -798,6 +870,12 @@ export class Orchestrator {
                     if (tagNode) {
                         // Remove fileleaf object from tagnode's files property
                         tagNode.removeFile(filePath);
+
+                        // Call updateMeta function with jsonobject and replace
+                        const updateSuccess = tagNode.updateMeta(jsonObject, 'replace');
+                        if (!updateSuccess) {
+                            return { success: false, error: "Failed to update folder metadata" };
+                        }
                     }
                 }
 
@@ -927,6 +1005,24 @@ export class Orchestrator {
             }
 
             // ---(Physical File Edits)---
+
+                const jsonObject: Record<string, any> = {}
+                const newModifiedDate = new Date().toISOString()
+                jsonObject["modified"] = newModifiedDate
+                
+
+                // Call updateMeta function with jsonobject and replace
+                const updateSuccessSource = sourceTagNode.updateMeta(jsonObject, 'replace');
+                if (!updateSuccessSource) {
+                    return { success: false, error: "Failed to update folder metadata" };
+                }
+
+                // Call updateMeta function with jsonobject and replace
+                const updateSuccessDestination = destinationTagNode.updateMeta(jsonObject, 'replace');
+                if (!updateSuccessDestination) {
+                    return { success: false, error: "Failed to update folder metadata" };
+                }
+
                 // BFS traversal - Update all files
                 let currentLevelNodes: ITagNode[] = [mainTagNode];
                 
@@ -1025,7 +1121,7 @@ export class Orchestrator {
                         const oldTagPath = node.getPath();
                         const pathDiff = oldTagPath.substring(mainFolderTagPath.length);
                         const newTagPath = newMainFolderTagPath + pathDiff;
-                        
+
                         // Rename physical metadata file
                         const renameSuccess = fileEditor.metadataRenameFile(
                             this.app,
@@ -1040,7 +1136,8 @@ export class Orchestrator {
                         const updateSuccess = fileEditor.metadataReplaceExistingProperty(
                             this.app,
                             newTagPath,
-                            { path: newTagPath }
+                            { path: newTagPath,
+                              modified: newModifiedDate}
                         );
                         if (!updateSuccess) {
                             return { success: false, error: `Failed to update metadata properties for: ${newTagPath}` };
@@ -1209,6 +1306,25 @@ export class Orchestrator {
                 if (!addSuccess) {
                     return { success: false, error: `Failed to add destination tag to file: ${filePath}` };
                 }
+
+
+                const jsonObject: Record<string, any> = {}
+                const newModifiedDate = new Date().toISOString()
+                jsonObject["modified"] = newModifiedDate
+                
+
+                // Call updateMeta function with jsonobject and replace
+                const updateSuccessSource = sourceTagNode.updateMeta(jsonObject, 'replace');
+                if (!updateSuccessSource) {
+                    return { success: false, error: "Failed to update folder metadata" };
+                }
+
+                // Call updateMeta function with jsonobject and replace
+                const updateSuccessDestination = destinationTagNode.updateMeta(jsonObject, 'replace');
+                if (!updateSuccessDestination) {
+                    return { success: false, error: "Failed to update folder metadata" };
+                }
+
             // ---(Physical File Edits End)---
 
             // ---(Virtual Edits)---
@@ -1296,6 +1412,18 @@ export class Orchestrator {
                 if (!addSuccess) {
                     return { success: false, error: `Failed to add destination tag to file: ${filePath}` };
                 }
+
+                const jsonObject: Record<string, any> = {}
+                const newModifiedDate = new Date().toISOString()
+                jsonObject["modified"] = newModifiedDate
+                
+
+                // Call updateMeta function with jsonobject and replace
+                const updateSuccessDestination = destinationTagNode.updateMeta(jsonObject, 'replace');
+                if (!updateSuccessDestination) {
+                    return { success: false, error: "Failed to update folder metadata" };
+                }
+
             // ---(Physical File Edits End)---
 
             // ---(Virtual Edits)---
@@ -1348,6 +1476,10 @@ export class Orchestrator {
                 return { success: false, error: "JSON object must contain only one key called 'description'" };
             }
 
+
+            const newModifiedDate = new Date().toISOString()
+            jsonObject["modified"] = newModifiedDate
+
             // Call updateMeta function with jsonobject and replace
             const updateSuccess = tagFolderNode.updateMeta(jsonObject, 'replace');
             if (!updateSuccess) {
@@ -1393,6 +1525,10 @@ export class Orchestrator {
             if (keys.length !== 1 || keys[0] !== 'legend') {
                 return { success: false, error: "JSON object must contain only one key called 'legend'" };
             }
+
+
+            const newModifiedDate = new Date().toISOString()
+            jsonObject["modified"] = newModifiedDate
 
             // Call updateMeta function with jsonobject and replace
             const updateSuccess = tagFolderNode.updateMeta(jsonObject, 'replace');
@@ -1694,7 +1830,7 @@ export class Orchestrator {
                     
                     if (metadata) {
                         // Extract description and legend
-                        const { description, legend } = metadata;
+                        const { description, legend, SelfLegend, Pinned, Bookmarked } = metadata;
                         const propertiesToCopy: Record<string, any> = {};
                         
                         if (description !== undefined) {
@@ -1702,6 +1838,15 @@ export class Orchestrator {
                         }
                         if (legend !== undefined) {
                             propertiesToCopy.legend = legend;
+                        }
+                        if (SelfLegend !== undefined) {
+                            propertiesToCopy.SelfLegend = SelfLegend;
+                        }
+                        if (Pinned !== undefined) {
+                            propertiesToCopy.Pinned = Pinned;
+                        }
+                        if (Bookmarked !== undefined) {
+                            propertiesToCopy.Bookmarked = Bookmarked;
                         }
                         
                         // Copy properties to new metadata file
@@ -1721,6 +1866,17 @@ export class Orchestrator {
                 
                 currentLevelNodes = nextLevelNodes;
             }
+
+            const jsonObject: Record<string, any> = {}
+            const newModifiedDate = new Date().toISOString()
+            jsonObject["modified"] = newModifiedDate
+            
+            // Call updateMeta function with jsonobject and replace
+            const updateSuccess = parentTagNode.updateMeta(jsonObject, 'replace');
+            if (!updateSuccess) {
+                return { success: false, error: "Failed to update folder metadata" };
+            }
+
             // ---(Physical File Edits End - Second Phase)---
 
             // Clean up metadata for the new folder (only for the root)
@@ -2010,7 +2166,7 @@ export class Orchestrator {
                     
                     if (metadata) {
                         // Extract description and legend
-                        const { description, legend } = metadata;
+                        const { description, legend, SelfLegend, Pinned, Bookmarked } = metadata;
                         const propertiesToCopy: Record<string, any> = {};
                         
                         if (description !== undefined) {
@@ -2019,7 +2175,16 @@ export class Orchestrator {
                         if (legend !== undefined) {
                             propertiesToCopy.legend = legend;
                         }
-                        
+                        if (SelfLegend !== undefined) {
+                            propertiesToCopy.SelfLegend = SelfLegend;
+                        }
+                        if (Pinned !== undefined) {
+                            propertiesToCopy.Pinned = Pinned;
+                        }
+                        if (Bookmarked !== undefined) {
+                            propertiesToCopy.Bookmarked = Bookmarked;
+                        }
+
                         // Copy properties to new metadata file
                         if (Object.keys(propertiesToCopy).length > 0) {
                             fileEditor.metadataReplaceExistingProperty(
@@ -2037,6 +2202,23 @@ export class Orchestrator {
                 
                 currentLevelNodes = nextLevelNodes;
             }
+
+            const jsonObject: Record<string, any> = {}
+            const newModifiedDate = new Date().toISOString()
+            jsonObject["modified"] = newModifiedDate
+            
+            // Call updateMeta function with jsonobject and replace
+            const updateSuccessSource = parentTagNode.updateMeta(jsonObject, 'replace');
+            if (!updateSuccessSource) {
+                return { success: false, error: "Failed to update folder metadata" };
+            }
+
+            // Call updateMeta function with jsonobject and replace
+            const updateSuccessDestination = destinationTagNode.updateMeta(jsonObject, 'replace');
+            if (!updateSuccessDestination) {
+                return { success: false, error: "Failed to update folder metadata" };
+            }
+
             // ---(Physical File Edits End - Second Phase)---
 
             // Clean up metadata for the new folder (only for the root)
@@ -3514,7 +3696,10 @@ export class Orchestrator {
                         pinned: true,
                         locked: false
                     };
-                    
+
+                    const newModifiedDate = new Date().toISOString()
+                    updateContent["modified"] = newModifiedDate
+
                     fileEditor.metadataReplaceExistingProperty(
                         this.app,
                         tagPath,
@@ -3592,6 +3777,9 @@ export class Orchestrator {
                         ...pinnedValue,
                         pinned: false
                     };
+
+                    const newModifiedDate = new Date().toISOString()
+                    updateContent["modified"] = newModifiedDate
                     
                     fileEditor.metadataReplaceExistingProperty(
                         this.app,
@@ -3673,7 +3861,10 @@ export class Orchestrator {
                     pinned: true,
                     locked: false
                 };
-                
+
+                const newModifiedDate = new Date().toISOString()
+                updateContent["modified"] = newModifiedDate
+                    
                 fileEditor.metadataAddNewProperty(
                     this.app,
                     tagPath,
@@ -3699,6 +3890,9 @@ export class Orchestrator {
                         pinned: false,
                         locked: false
                     };
+
+                    const newModifiedDate = new Date().toISOString()
+                    updateContent["modified"] = newModifiedDate
                     
                     fileEditor.metadataReplaceExistingProperty(
                         this.app,
@@ -3716,6 +3910,9 @@ export class Orchestrator {
                         pinned: true,
                         locked: false
                     };
+
+                    const newModifiedDate = new Date().toISOString()
+                    updateContent["modified"] = newModifiedDate
                     
                     fileEditor.metadataReplaceExistingProperty(
                         this.app,
@@ -3774,6 +3971,9 @@ export class Orchestrator {
                     pinned: true,
                     locked: true
                 };
+
+                const newModifiedDate = new Date().toISOString()
+                updateContent["modified"] = newModifiedDate
                 
                 fileEditor.metadataAddNewProperty(
                     this.app,
@@ -3795,6 +3995,9 @@ export class Orchestrator {
                     pinned: true,
                     locked: true
                 };
+
+                const newModifiedDate = new Date().toISOString()
+                updateContent["modified"] = newModifiedDate
                 
                 fileEditor.metadataReplaceExistingProperty(
                     this.app,
@@ -3814,6 +4017,9 @@ export class Orchestrator {
                     pinned: true,
                     locked: true
                 };
+
+                const newModifiedDate = new Date().toISOString()
+                updateContent["modified"] = newModifiedDate
                 
                 fileEditor.metadataReplaceExistingProperty(
                     this.app,
@@ -3871,13 +4077,15 @@ export class Orchestrator {
                     pinned: true,
                     locked: false
                 };
+
+                const newModifiedDate = new Date().toISOString()
+                updateContent["modified"] = newModifiedDate
                 
                 fileEditor.metadataAddNewProperty(
                     this.app,
                     tagPath,
                     updateContent
                 );
-
 
                 return { success: true };
             }
@@ -3890,14 +4098,15 @@ export class Orchestrator {
                     pinned: true,
                     locked: false
                 };
+
+                const newModifiedDate = new Date().toISOString()
+                updateContent["modified"] = newModifiedDate
                 
                 fileEditor.metadataReplaceExistingProperty(
                     this.app,
                     tagPath,
                     updateContent
                 );
-
-
 
                 return { success: true };
             }
@@ -4290,6 +4499,9 @@ export class Orchestrator {
                 // Add Bookmarked as true
                 const updateContent: Record<string, any> = {};
                 updateContent[key] = true;
+
+                const newModifiedDate = new Date().toISOString()
+                updateContent["modified"] = newModifiedDate
                 
                 // Update file of metadata for tagnode
                 fileEditor.metadataReplaceExistingProperty(
@@ -4303,6 +4515,9 @@ export class Orchestrator {
                 // Add Bookmarked as true
                 const updateContent: Record<string, any> = {};
                 updateContent[key] = true;
+
+                const newModifiedDate = new Date().toISOString()
+                updateContent["modified"] = newModifiedDate
                 
                 // Update file of metadata for tagnode
                 fileEditor.metadataAddNewProperty(
@@ -4353,6 +4568,9 @@ export class Orchestrator {
             // Prepare update content
             const updateContent: Record<string, any> = {};
             updateContent[key] = false;
+
+            const newModifiedDate = new Date().toISOString()
+            updateContent["modified"] = newModifiedDate
 
             // If Bookmarked is not present or if Bookmarked is false
             if (currentValue == false) {
@@ -4421,6 +4639,9 @@ export class Orchestrator {
 
             // Prepare update content
             const updateContent: Record<string, any> = {};
+
+            const newModifiedDate = new Date().toISOString()
+            updateContent["modified"] = newModifiedDate
 
             // If Bookmarked is not present or if Bookmarked is false
             if (currentValue == false) {
@@ -4544,7 +4765,10 @@ export class Orchestrator {
                     legend: legendColor,
                     locked: false
                 };
-                
+
+                const newModifiedDate = new Date().toISOString()
+                updateContent["modified"] = newModifiedDate
+
                 // Update file of metadata for tagnode
                 fileEditor.metadataAddNewProperty(
                     this.app,
@@ -4600,7 +4824,10 @@ export class Orchestrator {
                     legend: "",
                     locked: false
                 };
-                
+
+                const newModifiedDate = new Date().toISOString()
+                updateContent["modified"] = newModifiedDate
+
                 // Update file of metadata for tagnode
                 fileEditor.metadataAddNewProperty(
                     this.app,
@@ -4668,7 +4895,10 @@ export class Orchestrator {
                     legend: nextColor,
                     locked: false
                 };
-                
+
+                const newModifiedDate = new Date().toISOString()
+                updateContent["modified"] = newModifiedDate
+
                 // Update file of metadata for tagnode
                 fileEditor.metadataAddNewProperty(
                     this.app,
@@ -4726,7 +4956,10 @@ export class Orchestrator {
                     legend: legendColor,
                     locked: true
                 };
-                
+
+                const newModifiedDate = new Date().toISOString()
+                updateContent["modified"] = newModifiedDate
+
                 // Update file of metadata for tagnode
                 fileEditor.metadataAddNewProperty(
                     this.app,
@@ -4780,7 +5013,10 @@ export class Orchestrator {
                 legend: legendColor,
                 locked: false
             };
-            
+
+            const newModifiedDate = new Date().toISOString()
+            updateContent["modified"] = newModifiedDate
+
             // Update file of metadata for tagnode
             fileEditor.metadataAddNewProperty(
                 this.app,
