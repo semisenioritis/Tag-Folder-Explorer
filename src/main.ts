@@ -3,6 +3,7 @@ import { Plugin, ItemView, WorkspaceLeaf } from 'obsidian'
 
 import { TreeRoot } from './TreeRoot';
 import { ControllerInterface } from './controllerInterface';
+import { ModelInterface } from './modelInterface';
 import { Orchestrator } from './orchestrator';
 
 
@@ -23,7 +24,6 @@ import TagExplorer from './svelte-components/TagExplorer.svelte';
 import { mount, unmount } from 'svelte';
 
  
-import {initModelInterface} from './modelInterface'
 
 
 import {DEFAULT_SETTINGS, TagFolderSettingTab} from "./settings";
@@ -228,6 +228,7 @@ class TagExplorerView extends ItemView {
       props: {
         settings: this.plugin.settings,
         controller: this.plugin.controller,
+        model: this.plugin.model,
         initialTreeData: treeData,
         initialVersion: version,
         initialCurrentPath: this.savedState.currentPath,
@@ -261,6 +262,7 @@ export default class TagFolderPlugin extends Plugin {
 
 	treeRoot: TreeRoot | null = null;
 	controller: ControllerInterface | null = null;
+  model: ModelInterface | null = null;
 	
 	/**
 	 * Track all active TagExplorerView instances for broadcasting updates.
@@ -336,7 +338,8 @@ export default class TagFolderPlugin extends Plugin {
 		
 		console.log('Tag tree constructed successfully (metadata cache resolved)');
     console.log(this.treeRoot)
-		initModelInterface(this.treeRoot, this.app);
+
+    this.model = new ModelInterface(this.treeRoot, this.app)
 
 		const temp = this.treeRoot.getSortedTree();
 		console.log(temp);
@@ -437,6 +440,7 @@ export default class TagFolderPlugin extends Plugin {
 		// Clean up the tree reference
 		this.treeRoot = null;
 		this.controller = null;
+    this.model = null;
     
 
     

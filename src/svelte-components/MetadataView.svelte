@@ -1,7 +1,8 @@
 <script lang="ts">
 
-  import { getrightSidebarData } from '../modelInterface'
+//   import { getrightSidebarData } from '../modelInterface'
   import type { ControllerInterface } from '../controllerInterface';
+  import type { ModelInterface } from '../modelInterface';
 
     // Props
     interface Props {
@@ -12,13 +13,18 @@
         showObsMetaData?: boolean;
         fieldsToSkip?: string;
         controller: ControllerInterface | null | undefined;
+        model: ModelInterface | null | undefined;
     }
 
 
-    let { currentPath, focusedObjectType, focusedObjectPath, focusedObjectParent, showObsMetaData = true, fieldsToSkip = '', controller}:Props = $props();
+    let { currentPath, focusedObjectType, focusedObjectPath, focusedObjectParent, showObsMetaData = true, fieldsToSkip = '', controller, model}:Props = $props();
     
 
-    let metadataViewData: any | null = $derived(getrightSidebarData(focusedObjectParent, focusedObjectType, focusedObjectPath));
+    if (!model) {
+        throw new Error("model is not initialized");
+    }
+
+    let metadataViewData: any | null = $derived(model.getrightSidebarData(focusedObjectParent, focusedObjectType, focusedObjectPath));
 
 
 	let descriptionValue = $derived.by(() => {
@@ -163,7 +169,10 @@
     }
 
     function recomputeMetadata(): void {
-        metadataViewData = getrightSidebarData(focusedObjectParent, focusedObjectType, focusedObjectPath);
+        if (!model) {
+            throw new Error("model is not initialized");
+        }
+        metadataViewData = model.getrightSidebarData(focusedObjectParent, focusedObjectType, focusedObjectPath);
     }
 
 </script>

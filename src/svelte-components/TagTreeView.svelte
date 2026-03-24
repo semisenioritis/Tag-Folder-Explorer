@@ -1,7 +1,9 @@
 <script lang="ts">
-  import { getleftSidebarTree} from '../modelInterface'
+  // import { getleftSidebarTree} from '../modelInterface'
 
   import { openFileInNewTab } from '../windows'
+  import type { ControllerInterface } from '../controllerInterface';
+  import type { ModelInterface } from '../modelInterface';
 
   // Props
   interface Props {
@@ -10,6 +12,8 @@
     onFocusChange?: (type: 'folder' | 'file', path: string, parentpath: string) => void;  // Handler for focus changes
     initialTreeData?: unknown;
     initialVersion?: number;
+    controller: ControllerInterface | null | undefined;
+    model: ModelInterface | null | undefined;
   }
   
   // Type definitions
@@ -32,13 +36,17 @@
     untaggedFiles: FileData[];
   }
 
-  let { currentPath, onUpdate, onFocusChange, initialTreeData, initialVersion = 0 }:Props = $props();
+  let { currentPath, onUpdate, onFocusChange, initialTreeData, initialVersion = 0, controller, model }:Props = $props();
+  
+  if (!model) {
+      throw new Error("model is not initialized");
+  }
 
   // State - Initialize with provided data or fetch from backend
   let treeData = $state<TreeData>(
     initialTreeData 
       ? (initialTreeData as TreeData) 
-      : (getleftSidebarTree().tree as TreeData)
+      : (model.getleftSidebarTree().tree as TreeData)
   );
   let treeVersion = $state<number>(initialVersion);
   let expandedTags = $state<Set<string>>(new Set())

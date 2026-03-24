@@ -6,19 +6,17 @@
 
   import type {TagFolderPluginSettings} from '../settings';
 
-  import {getVaultName, doesTagPathExist} from '../modelInterface'
+  // import {getVaultName, doesTagPathExist} from '../modelInterface'
   import type { ControllerInterface } from '../controllerInterface';
-
+  import type { ModelInterface } from '../modelInterface';
 	import BottomStatusBar from './BottomStatusBar.svelte';
 
-
- 
-  let currVaultName  = getVaultName()
 
   // Props
   interface Props {
     settings?: TagFolderPluginSettings;
     controller?: ControllerInterface | null;
+    model?:ModelInterface | null;
     initialTreeData?: unknown;
     initialVersion?: number;
     initialCurrentPath?: string;
@@ -30,6 +28,7 @@
   let { 
     settings, 
     controller,
+    model,
     initialTreeData, 
     initialVersion = 0,
     initialCurrentPath = "",
@@ -38,8 +37,18 @@
     onNavigationChange
   }: Props = $props();
 
+
+  if (!model) {
+  throw new Error("model is not initialized");
+  }
+
+  let currVaultName  = model.getVaultName()
+
   function pathExists(path: string): boolean {
-    return doesTagPathExist(path);
+    if (!model) {
+      throw new Error("model is not initialized");
+    }
+    return model.doesTagPathExist(path);
   }
 
   function getNearestExistingPath(path: string): string {
@@ -302,6 +311,8 @@
         onFocusChange={handleFocusChange}
         initialTreeData={initialTreeData}
         initialVersion={initialVersion}
+        controller={controller}
+        model={model}
       />
     </div>
   </div>
@@ -405,6 +416,8 @@
       onUpdate={handleUpdate} 
       onFocusChange={handleFocusChange}
       refreshKey={mainViewRefreshKey}
+      controller={controller}
+      model={model}
     />
 
     <BottomStatusBar
@@ -449,6 +462,7 @@
           showObsMetaData={settings?.showObsMetaData} 
           fieldsToSkip={settings?.fieldsToSkip}
           controller={controller}
+          model= {model}
         />
       </div>
     {/if}

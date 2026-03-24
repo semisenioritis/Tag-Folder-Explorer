@@ -408,20 +408,6 @@ export class ControllerInterface {
     }
 
     /**
-     * Read legend status for file in folder
-     * 
-     * @param filePath - The file path
-     * @param tagPath - The tag path
-     * @returns Object with color and lock status, or empty string if not found
-     */
-    readLegendStatusOfFile(
-        filePath: string,
-        tagPath: string
-    ): { color: string; status: string } | { color: "" } {
-        return this.orchestrator.readLegendStatusOfFile(filePath, tagPath);
-    }
-
-    /**
      * Add to pinned for file in folder
      * 
      * @param filePath - The file path
@@ -502,20 +488,6 @@ export class ControllerInterface {
     }
 
     /**
-     * Read pinned status for file in folder
-     * 
-     * @param filePath - The file path
-     * @param tagPath - The tag path
-     * @returns Object with pinned status, or pinned: false if not found
-     */
-    readPinnedStatusOfFile(
-        filePath: string,
-        tagPath: string
-    ): { pinned: boolean; status?: string } {
-        return this.orchestrator.readPinnedStatusOfFile(filePath, tagPath);
-    }
-
-    /**
      * Add to pinned for folder
      * 
      * @param tagPath - The tag path
@@ -586,18 +558,6 @@ export class ControllerInterface {
     }
 
     /**
-     * Read pinned status for folder
-     * 
-     * @param tagPath - The tag path
-     * @returns Object with pinned and locked status
-     */
-    readPinnedStatusOfFolder(
-        tagPath: string
-    ): { pinned: boolean; locked: boolean } {
-        return this.orchestrator.readPinnedStatusOfFolder(tagPath);
-    }
-
-    /**
      * Add to bookmarked for file of a specific path
      * 
      * @param filePath - The file path
@@ -645,21 +605,6 @@ export class ControllerInterface {
         return await this.orchestrator.cycleBookmarkOfFile(filePath, tagPath, owner);
     }
 
-    /**
-     * Read bookmarked status for file
-     * 
-     * @param filePath - The file path
-     * @param tagPath - The tag path
-     * @param owner - Whether this is an owner operation (default false for read operations)
-     * @returns Object with bookmarked status (true if bookmarked, false otherwise)
-     */
-    async readBookmarkStatusOfFile(
-        filePath: string,
-        tagPath: string,
-        owner: boolean = false
-    ): Promise<{ bookmarked: boolean }> {
-        return await this.orchestrator.readBookmarkStatusOfFile(filePath, tagPath, owner);
-    }
 
     /**
      * Add to bookmarked for folder
@@ -703,19 +648,7 @@ export class ControllerInterface {
         return await this.orchestrator.cycleBookmarkOfFolder(tagPath, owner);
     }
 
-    /**
-     * Read bookmarked status for folder
-     * 
-     * @param tagPath - The tag path
-     * @param owner - Whether this is an owner operation (default false for read operations)
-     * @returns Object with bookmarked status (true if bookmarked, false otherwise)
-     */
-    async readBookmarkStatusOfFolder(
-        tagPath: string,
-        owner: boolean = false
-    ): Promise<{ bookmarked: boolean }> {
-        return await this.orchestrator.readBookmarkStatusOfFolder(tagPath, owner);
-    }
+
     /**
      * Add legend to folder
      * 
@@ -794,6 +727,54 @@ export class ControllerInterface {
         return await this.orchestrator.removeLegendLockFromFolder(legendColor, tagPath, owner);
     }
 
+
+
+
+
+    /**
+     * Read legend status for file in folder
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @returns Object with color and lock status, or empty string if not found
+     */
+    readLegendStatusOfFile(
+        filePath: string,
+        tagPath: string
+    ): { color: string; status: string } | { color: "" } {
+        return this.orchestrator.readLegendStatusOfFile(filePath, tagPath);
+    }
+
+    /**
+     * Read pinned status for file in folder
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @returns Object with pinned status, or pinned: false if not found
+     */
+    readPinnedStatusOfFile(
+        filePath: string,
+        tagPath: string
+    ): { pinned: boolean; status?: string } {
+        return this.orchestrator.readPinnedStatusOfFile(filePath, tagPath);
+    }
+
+    /**
+     * Read bookmarked status for file
+     * 
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default false for read operations)
+     * @returns Object with bookmarked status (true if bookmarked, false otherwise)
+     */
+    readBookmarkStatusOfFile(
+        filePath: string,
+        tagPath: string,
+        owner: boolean = false
+    ): { bookmarked: boolean } {
+        return this.orchestrator.readBookmarkStatusOfFile(filePath, tagPath, owner);
+    }
+    
     /**
      * Read legend status for folder
      * 
@@ -801,10 +782,36 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default false for read operations)
      * @returns Object with legend color and locked status
      */
-    async readLegendStatusOfFolder(
+    readLegendStatusOfFolder(
         tagPath: string
-    ): Promise<{ legend: string; locked: boolean }> {
-        return await this.orchestrator.readLegendStatusOfFolder(tagPath);
+    ): { legend: string; locked: boolean } {
+        return this.orchestrator.readLegendStatusOfFolder(tagPath);
+    }
+
+    /**
+     * Read pinned status for folder
+     * 
+     * @param tagPath - The tag path
+     * @returns Object with pinned and locked status
+     */
+    readPinnedStatusOfFolder(
+        tagPath: string
+    ): { pinned: boolean; locked: boolean } {
+        return this.orchestrator.readPinnedStatusOfFolder(tagPath);
+    }
+
+    /**
+     * Read bookmarked status for folder
+     * 
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default false for read operations)
+     * @returns Object with bookmarked status (true if bookmarked, false otherwise)
+     */
+    readBookmarkStatusOfFolder(
+        tagPath: string,
+        owner: boolean = false
+    ): { bookmarked: boolean } {
+        return this.orchestrator.readBookmarkStatusOfFolder(tagPath, owner);
     }
 
 }

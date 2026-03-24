@@ -1,7 +1,9 @@
 <script lang="ts">
-  import { getmainViewData } from '../modelInterface'
+  // import { getmainViewData, ModelInterface, readLegendStatusOfFile, readLegendStatusOfFolder } from '../modelInterface'
   import type { ISerializedTagNode, frontendFile, frontendFolder } from '../interfaces'
   import { openFileInNewTab } from '../windows'
+  import type { ControllerInterface } from '../controllerInterface';
+  import type { ModelInterface } from '../modelInterface';
 
   // Props
   interface Props {
@@ -9,18 +11,24 @@
     onUpdate: (newPath: string) => void;  // Add function signature
     onFocusChange?: (type: 'folder' | 'file', path: string, parentpath: string) => void;  // Handler for focus changes
     refreshKey?: number;  // Key to force re-derivation of mainViewData
+    controller: ControllerInterface | null | undefined;
+    model: ModelInterface | null | undefined;
   }
 
 
-  let { currentPath, onUpdate, onFocusChange, refreshKey = 0 }:Props = $props();
+  let { currentPath, onUpdate, onFocusChange, refreshKey = 0, controller, model }:Props = $props();
   // let { currentPath }: Props = $props();
 
+
+  if (!model) {
+  throw new Error("model is not initialized");
+  }
 
 
   let mainViewData: ISerializedTagNode | null = $derived.by(() => {
     // Include refreshKey in the derivation to force recalculation when it changes
     void refreshKey;
-    return getmainViewData(currentPath);
+    return model.getmainViewData(currentPath);
   });
 
   
@@ -157,6 +165,38 @@
     handler(item);
   }
 
+  function handleActionButtonClick(event: MouseEvent, label: string) {
+    event.stopPropagation();
+    console.log(label);
+  }
+
+  function getFileButtonColor(file: frontendFile): string {
+    try {
+      if (!controller) {
+        throw new Error("model is not initialized");
+      }
+      const status = controller.readLegendStatusOfFile(file.path, currentPath);
+      return status.color || "";
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function getFolderButtonColor(folder: frontendFolder): string {
+    try {
+      if (!controller) {
+        throw new Error("model is not initialized");
+      }
+      console.log("getting color for ",folder)
+      const status = controller.readLegendStatusOfFolder(folder.path);
+      console.log(status)
+      console.log("legend",status.legend)
+      return status.legend || "";
+    } catch (e) {
+      return "";
+    }
+  }
+
 </script>
 
 
@@ -180,6 +220,9 @@
         <div class="item folder" role="button" tabindex="0" onclick={(e) => handleItemClick(e, handleFolderClick, child)}  ondblclick={(e) => { e.stopPropagation(); handleFolderDblClick(child); }} onkeydown={(e) => handleKeyDown(e, handleFolderDblClick, child)}>
           <div class="icon">📁</div>
           <div class="label">{child.name}</div>
+          <button class="action-button" style="background-color: {getFolderButtonColor(child)}" onclick={(e) => handleActionButtonClick(e, child.name)} title="Action">
+            
+          </button>
         </div>
       {/each}
 
@@ -188,6 +231,7 @@
         <div class="item file" role="button" tabindex="0" onclick={(e) => handleItemClick(e, handleFileClick, file)} ondblclick={(e) => { e.stopPropagation(); handleFileDblClick(file); }} onkeydown={(e) => handleKeyDown(e, handleFileDblClick, file)}>
           <div class="icon">📄</div>
           <div class="label">{file.name}</div>
+          <button class="action-button" style="background-color: {getFileButtonColor(file)}" onclick={(e) => handleActionButtonClick(e, file.name)} title="Action"></button>
         </div>
       {/each}
     </div>
@@ -196,7 +240,7 @@
       <p>No data available for this path</p>
     </div>
   {/if}
-</div>
+</div>  
 
 
 
@@ -240,7 +284,7 @@
   /* border:10px solid blue; */
   /* border: 1px solid var(--background-modifier-border); */
 
-
+  position: relative;
   border-radius:6px;
   padding:12px 8px;
   display:flex;
@@ -273,6 +317,28 @@
   font-size:13px;
   text-align:center;
   word-break:break-word;
+}
+
+.action-button {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--background-secondary-alt);
+  border-radius: 3px;
+  background: var(--background-secondary);
+  cursor: pointer;
+
+}
+
+.item:hover .action-button {
+  display: block;
+}
+
+.action-button:hover {
+  background: var(--background-secondary-alt);
 }
 
 .empty-state {
