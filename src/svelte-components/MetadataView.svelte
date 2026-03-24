@@ -14,10 +14,12 @@
         fieldsToSkip?: string;
         controller: ControllerInterface | null | undefined;
         model: ModelInterface | null | undefined;
+        colorDictionary:Record<string, string>
+        getColorForName: (name: string) => string;
     }
 
 
-    let { currentPath, focusedObjectType, focusedObjectPath, focusedObjectParent, showObsMetaData = true, fieldsToSkip = '', controller, model}:Props = $props();
+    let { currentPath, focusedObjectType, focusedObjectPath, focusedObjectParent, showObsMetaData = true, fieldsToSkip = '', controller, model, colorDictionary, getColorForName}:Props = $props();
     
 
     if (!model) {
@@ -70,26 +72,6 @@
         );
     });
 
-    // Color dictionary mapping color names to CSS color values
-    const colorDictionary: Record<string, string> = {
-        'red': '#ff0000',
-        'green': '#00ff00',
-        'blue': '#0000ff',
-        'yellow': '#ffff00',
-        'orange': '#ff8800',
-        'purple': '#800080'
-    };
-
-
-    function getColorForName(colorName: string): string {
-        const normalizedName = colorName.toLowerCase().trim();
-        // Check if it's a known color name
-        if (colorDictionary[normalizedName]) {
-            return colorDictionary[normalizedName];
-        }
-        // Default fallback color
-        return '#cccccc';
-    }
 
     
     // Helper function to check if a field should be displayed
@@ -518,7 +500,7 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  border: 2px solid #333;
+  border: 1px solid #333;
 }
   .legend-label {
     color: var(--text-normal);

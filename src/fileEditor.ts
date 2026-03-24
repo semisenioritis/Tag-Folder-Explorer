@@ -943,50 +943,18 @@ export async function replaceMetadataSection(
  
 		// @ts-ignore
 		const properties = app.metadataTypeManager?.properties;
-		// console.log(properties["date3"])
-		// switch (properties[name].widget) {
-		// 	case 'text':      // 
-		// 		console.log(name);
-		// 		console.log("text");
-		// 		break
-		// 	case 'multitext': // List
-		// 		console.log(name);
-		// 		console.log("multitext");
-		// 		break
-		// 	case 'number':    // Number
-		// 		console.log(name);
-		// 		console.log("number");
-		// 		break
-		// 	case 'checkbox':  // Checkbox
-		// 		console.log(name);
-		// 		console.log("checkbox");
-		// 		break
-		// 	case 'date':      // Date
-		// 		console.log(name);
-		// 		console.log("date");
-		// 		break
-		// 	case 'datetime':  // Date & time
-		// 		console.log(name);
-		// 		console.log("datetime");
-		// 		break
-		// 	case 'aliases':   // Aliases
-		// 		console.log(name);
-		// 		console.log("aliases");
-		// 		break
-		// 	case 'tags':      // Tags
-		// 		console.log(name);
-		// 		console.log("tags");
-		// 		break
-		// 	}		
+
+		
 
 		await app.fileManager.processFrontMatter(file, (frontmatter) => {
 			// Iterate through each key in the content object
 			for (const key in content) {
-
-				console.log(key)
-				console.log(properties[key].widget)
+				// let lowCaseKey = key.toLowerCase()
+				// console.log(properties[lowCaseKey])
+				// console.log(properties[lowCaseKey].widget)
+				// console.log(properties[key].widget)
+				
 				// only check if the key already exists. only if exists get its widget. else if it is new then just create it
-				console.log("----------------")
 				// Update if exists, create if doesn't exist
 				frontmatter[key] = content[key];
 			}

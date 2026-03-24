@@ -13,10 +13,12 @@
     refreshKey?: number;  // Key to force re-derivation of mainViewData
     controller: ControllerInterface | null | undefined;
     model: ModelInterface | null | undefined;
+    colorDictionary:Record<string, string>
+    getColorForName: (name: string) => string;
   }
 
 
-  let { currentPath, onUpdate, onFocusChange, refreshKey = 0, controller, model }:Props = $props();
+  let { currentPath, onUpdate, onFocusChange, refreshKey = 0, controller, model, colorDictionary, getColorForName }:Props = $props();
   // let { currentPath }: Props = $props();
 
 
@@ -165,17 +167,60 @@
     handler(item);
   }
 
-  function handleActionButtonClick(event: MouseEvent, label: string) {
+  async function handleActionButtonClickFolder(event: MouseEvent, currColor:string, tagPath:string ) {
     event.stopPropagation();
-    console.log(label);
+    console.log(currColor)
+    console.log(tagPath);
+    console.log("changing color")
+    const newColor = await controller?.cycleLegendForFolder(currColor, tagPath)
+
+    // Update local reactive data
+    recomputeMainView()
+
   }
+  let fileActionButtonIsWorking = false
+  async function handleActionButtonClickFile(event: MouseEvent, currColor:string, filePath:string ) {
+    event.stopPropagation();
+    if (fileActionButtonIsWorking) {
+      console.log("skippppppppppppppping")
+      return;
+    }
+
+    fileActionButtonIsWorking = true
+
+    try{
+      console.log("- fn handleActionButtonClickFile")
+      console.log("- currentPath");
+      console.log(currentPath);
+      console.log("- filePath")
+      console.log(filePath)
+      console.log("------------------")
+
+      const fileNewColor = await controller?.cycleLegendOfFile(currColor,filePath,currentPath)
+
+      // Update local reactive data
+      // recomputeMainView()
+      await new Promise(r => setTimeout(r, 3000));
+    } finally {
+
+      fileActionButtonIsWorking = false
+    }
+  }
+
+
 
   function getFileButtonColor(file: frontendFile): string {
     try {
       if (!controller) {
-        throw new Error("model is not initialized");
+        throw new Error("controller is not initialized");
       }
       const status = controller.readLegendStatusOfFile(file.path, currentPath);
+      console.log("- fn getFileButtonColor")
+      console.log("- file.name")
+      console.log(file.name)
+      console.log("- status.color")
+      console.log(status.color)
+      console.log("------------------")
       return status.color || "";
     } catch (e) {
       return "";
@@ -187,15 +232,20 @@
       if (!controller) {
         throw new Error("model is not initialized");
       }
-      console.log("getting color for ",folder)
+      // console.log("getting color for ",folder)
       const status = controller.readLegendStatusOfFolder(folder.path);
-      console.log(status)
-      console.log("legend",status.legend)
+      // console.log(status)
+      // console.log("legend",status.legend)
       return status.legend || "";
     } catch (e) {
       return "";
     }
   }
+
+    function recomputeMainView(): void {
+        refreshKey++
+    }
+
 
 </script>
 
@@ -220,9 +270,7 @@
         <div class="item folder" role="button" tabindex="0" onclick={(e) => handleItemClick(e, handleFolderClick, child)}  ondblclick={(e) => { e.stopPropagation(); handleFolderDblClick(child); }} onkeydown={(e) => handleKeyDown(e, handleFolderDblClick, child)}>
           <div class="icon">📁</div>
           <div class="label">{child.name}</div>
-          <button class="action-button" style="background-color: {getFolderButtonColor(child)}" onclick={(e) => handleActionButtonClick(e, child.name)} title="Action">
-            
-          </button>
+          <button class="action-button circle" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleActionButtonClickFolder(e, getFolderButtonColor(child) ,child.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button>
         </div>
       {/each}
 
@@ -231,7 +279,7 @@
         <div class="item file" role="button" tabindex="0" onclick={(e) => handleItemClick(e, handleFileClick, file)} ondblclick={(e) => { e.stopPropagation(); handleFileDblClick(file); }} onkeydown={(e) => handleKeyDown(e, handleFileDblClick, file)}>
           <div class="icon">📄</div>
           <div class="label">{file.name}</div>
-          <button class="action-button" style="background-color: {getFileButtonColor(file)}" onclick={(e) => handleActionButtonClick(e, file.name)} title="Action"></button>
+          <button class="action-button circle" class:hidden={getFileButtonColor(file) === ""} style="background-color: {getColorForName(getFileButtonColor(file))}" onclick={(e) => handleActionButtonClickFile(e, getFileButtonColor(file), file.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button>
         </div>
       {/each}
     </div>
@@ -350,9 +398,24 @@
 
 
 
+.circle {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid #333;
+  opacity: 50%;
+  transition: opacity 0.3s ease; /* smooth fade */
+}
 
+  .item:hover .circle {
+    opacity: 1;
+  }
 
+  .hidden {
 
+    opacity: 0;
+  }
 
 
 

@@ -2599,7 +2599,12 @@ export class Orchestrator {
                     fileStatusList = [fileMetadata[key]];
                 }
             }
-
+            console.log("- fn addLegendToFile")
+            console.log("fileMetadata")
+            // console.log(fileMetadata)
+            console.log(JSON.parse(JSON.stringify(fileMetadata)))
+            console.log("fileMetadata[key]")
+            console.log(structuredClone(fileMetadata[key]))
             // Construct prefixed and locked tag paths
             const prefixedTagPath = `🏠/${tagPath}`;
             const lockedTagPath = `🔒/ ${tagPath}`;
@@ -2616,6 +2621,10 @@ export class Orchestrator {
             // Add prefixedtagpath to status lists
             fileStatusList.push(prefixedTagPath);
 
+            
+            console.log("fileStatusList")
+            console.log(structuredClone(fileStatusList))
+            console.log("🔴 ------------------")
 
             // Write new status list to file
             const fileUpdateContent: Record<string, any> = {};
@@ -2686,7 +2695,18 @@ export class Orchestrator {
                 }
             }
 
+            console.log("- fn removeLegendFromFile")
+            console.log("- fileStatusList")
+            console.log(fileStatusList)
+            console.log("- key")
+            console.log(key)
 
+            console.log("- fileMetadata before removal")
+            // console.log(fileMetadata)
+            console.log(JSON.parse(JSON.stringify(fileMetadata)))
+
+            
+            
 
             // Construct prefixed and locked tag paths
             const prefixedTagPath = `🏠/${tagPath}`;
@@ -2713,6 +2733,8 @@ export class Orchestrator {
             // Write new status list to file
             const fileUpdateContent: Record<string, any> = {};
             fileUpdateContent[key] = fileStatusList;
+            console.log("- fileUpdateContent")
+            console.log(fileUpdateContent)
             
             const fileWriteSuccess = await fileEditor.replaceMetadataSection(
                 this.app,
@@ -2720,6 +2742,12 @@ export class Orchestrator {
                 fileUpdateContent
             );
 
+
+            const fileMetadata2 = fileLeaf.fileMetadata();
+            console.log("- fileMetadata after removal")
+            // console.log(fileMetadata2)
+            console.log(JSON.parse(JSON.stringify(fileMetadata2)))
+            console.log("🔵🔴")
             if (!fileWriteSuccess) {
                 return { success: false, error: "Failed to write to file metadata" };
             }
@@ -2777,14 +2805,31 @@ export class Orchestrator {
             const nextIndex = (currentIndex + 1) % colorList.length;
             const nextColor = colorList[nextIndex];
 
+
+            console.log("- fn cycleLegendOfFile")
+            console.log("- currentIndex")
+            console.log(currentIndex)
+            console.log("- nextIndex")
+            console.log(nextIndex)
+            console.log("- nextColor")
+            console.log(nextColor)
+            console.log("- currLegendColor")
+            console.log(currLegendColor)
+            console.log("- part1------------------")
+
             // If legend color is ""
             if (currLegendColor === "") {
                 // Call add to legend with next index color
+                console.log("- option1.1 currLegendColor === ''")
+                console.log("- proceeding to addlegendtofile")
                 return await this.addLegendToFile(nextColor, filePath, tagPath, false);
             } else {
                 // Construct key as "🏷-Legend-" + currlegendcolor
                 const key = `🏷-Legend-${currLegendColor}`;
-
+                console.log("- option1.2 some color is assigned to file")
+                
+                console.log("- constructed key")
+                console.log(key)
                 // Read status of the key for file metadata
                 const fileMetadata = fileLeaf.fileMetadata();
                 let fileStatusList: string[] = [];
@@ -2796,6 +2841,8 @@ export class Orchestrator {
                         fileStatusList = [fileMetadata[key]];
                     }
                 }
+                console.log("- all the folders where the file has the same color as old")
+                console.log(fileStatusList)
 
 
                 // Construct prefixed and locked tag paths
@@ -2811,6 +2858,17 @@ export class Orchestrator {
                 const hasPrefix = fileStatusList.includes(prefixedTagPath);
 
                 if (hasPrefix) {
+
+                    console.log("- option 2.1 the file is in the old location according to the list")
+                    console.log("- currLegendColor")
+                    console.log(currLegendColor)
+                    console.log("- filePath")
+                    console.log(filePath)
+                    console.log("- tagPath")
+                    console.log(tagPath)
+                    console.log("- nextColor")
+                    console.log(nextColor)
+
                     // If next index color is ""
                     if (nextColor === "") {
                         // Call remove from legend
@@ -2823,6 +2881,7 @@ export class Orchestrator {
                         }
                         
                         return await this.addLegendToFile(nextColor, filePath, tagPath, false);
+                        
                     }
                 } else {
                     // Doesn't have prefixedtagpath and lockedtagpath
@@ -4593,6 +4652,9 @@ export class Orchestrator {
                 return { success: false, error: `TagNode not found for path: ${tagPath}` };
             }
 
+            console.log("inside orchestrator")
+            console.log(currLegendColor)
+
             // Maintain list of colors
             const colorList = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple", ""];
             
@@ -4603,6 +4665,11 @@ export class Orchestrator {
             const nextIndex = (currentIndex + 1) % colorList.length;
             const nextColor = colorList[nextIndex];
 
+
+            console.log(currentIndex)
+            console.log(nextIndex)
+            console.log(nextColor)
+
             // Read metadata of tagnode
             const metadata = fileEditor.metadataReadAllFrontmatter(this.app, tagPath);
             
@@ -4611,7 +4678,7 @@ export class Orchestrator {
             const selfLegendValue = metadata ? metadata[key] : undefined;
 
             // Check if SelfLegend is not present or if SelfLegend.locked is false or not present
-            if (!selfLegendValue || selfLegendValue.locked !== true) {
+            if (!selfLegendValue ) {
                 // Add SelfLegend.legend value as next index color
                 // Add SelfLegend.locked value as false
                 const updateContent: Record<string, any> = {};
@@ -4630,6 +4697,31 @@ export class Orchestrator {
                     updateContent
                 );
 
+
+                console.log("im hoping this went well")
+                return { success: true };
+            } else if (selfLegendValue.locked !== true) {
+
+                // Add SelfLegend.legend value as next index color
+                // Add SelfLegend.locked value as false
+                const updateContent: Record<string, any> = {};
+                updateContent[key] = {
+                    legend: nextColor,
+                    locked: false
+                };
+
+                const newModifiedDate = new Date().toISOString()
+                updateContent["modified"] = newModifiedDate
+
+                // Update file of metadata for tagnode
+                fileEditor.metadataReplaceExistingProperty(
+                    this.app,
+                    tagPath,
+                    updateContent
+                );
+
+
+                console.log("im hoping this went well")
                 return { success: true };
             } else {
                 // SelfLegend is locked
@@ -4771,6 +4863,7 @@ export class Orchestrator {
     ): { color: string; status: string }  {
         try {
 
+            console.log("- fn readLegendStatusOfFile")
             if (!this.treeRoot) {
                 console.warn("treeRoot not initialized in readLegendStatusOfFile");
                 return { color: "" , status: "notlocked" };
@@ -4798,6 +4891,11 @@ export class Orchestrator {
                 return { color: "", status: "notlocked"  };
             }
 
+            console.log("- fileMetadata")
+            console.log(fileMetadata)
+            console.log("- prefixedTagPath")
+            console.log(prefixedTagPath)
+
             // Key list for all legend colors
             const legendKeys = [
                 { key: "🏷-Legend-Red", color: "Red" },
@@ -4811,6 +4909,8 @@ export class Orchestrator {
             // Extract all 6 fields and check for matches
             for (const { key, color } of legendKeys) {
                 const value = fileMetadata[key];
+                console.log("- value of the key ", key)
+                console.log(value)
                 if (!value) continue;
 
                 // Convert to array if needed
@@ -4824,6 +4924,10 @@ export class Orchestrator {
                 // Check each element in array
                 for (const element of statusArray) {
                     if (element === prefixedTagPath) {
+                        console.log("- the matched element")
+                        console.log(element)
+                        console.log("- prefixedTagPath")
+                        console.log(prefixedTagPath)
                         return { color, status: "notlocked" };
                     }
                     if (element === lockedTagPath) {
