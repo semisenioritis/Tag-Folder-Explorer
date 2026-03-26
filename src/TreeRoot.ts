@@ -77,7 +77,7 @@ export class TreeRoot implements ITreeRoot {
      * 
      * Simply put it is the Root Tag Node.
      */
-    private rootTagNode: ITagNode;
+    private rootTagNode!: ITagNode;
 
     // ==================== CONSTRUCTOR ====================
     
@@ -104,15 +104,12 @@ export class TreeRoot implements ITreeRoot {
         
         // console.log (settings)
 
-        this.recomputeTree(settings);
+        this.recomputeTree(settings).then(()=>{
+            this.rootTagNode = this.constructRootNode()
+        });
  
-        this.rootTagNode = this.constructRootNode()
-
-
-
-        
     }
-    
+
     // ==================== READ METHODS ====================
     
     /**
@@ -644,7 +641,7 @@ export class TreeRoot implements ITreeRoot {
      * 
      * Used when: Initial tree creation, tree refresh, bulk changes
      */
-    public recomputeTree(currentSettings:TagFolderPluginSettings): void {
+    public async recomputeTree(currentSettings:TagFolderPluginSettings): Promise<void> {
         // Clear existing tree
         this.rootTags.clear();
         this.untaggedFiles.clear();
@@ -662,7 +659,7 @@ export class TreeRoot implements ITreeRoot {
         // Build file path dictionary BEFORE tree construction
         this.filePathToLeafMap = this.buildFilePathDictionary();
         // Recursively process all files
-        this.processVaultFolder(vaultRoot);
+        await this.processVaultFolder(vaultRoot);
 
         // After computing tree from files, populate empty tag folders from metadata
         this.populateEmptyTagFoldersFromMetadata();
@@ -835,7 +832,7 @@ export class TreeRoot implements ITreeRoot {
      * 
      * @param folder - The folder to process
      */
-    private processVaultFolder(folder: TFolder): void {
+    private async processVaultFolder(folder: TFolder): Promise<void> {
         // Check if this folder should be excluded
         if (this.isExcludedFolder(folder.path)) {
             return;
@@ -845,7 +842,7 @@ export class TreeRoot implements ITreeRoot {
         for (const child of folder.children) {
             if (child instanceof TFolder) {
                 // Recursively process subfolders
-                this.processVaultFolder(child);
+                await this.processVaultFolder(child);
             } else if (child instanceof TFile) {
                 // Process file
                 this.processFile(child);
@@ -858,7 +855,7 @@ export class TreeRoot implements ITreeRoot {
      * 
      * @param file - The file to process
      */
-    private processFile(file: TFile): void {
+    private async processFile(file: TFile): Promise<void> {
         try {
             // Create FileLeaf for this file
             // const fileLeaf = new FileLeaf(file.basename, file.path, this.app);
@@ -870,7 +867,7 @@ export class TreeRoot implements ITreeRoot {
 
             if (fileLeaf){
                 // Get all tags from the file
-                const tagPaths = fileLeaf.retrieveAllTagPaths();
+                const tagPaths = await fileLeaf.retrieveAllTagPaths();
                 
                 if (tagPaths.length === 0) {
                     // No tags, add to untagged files
