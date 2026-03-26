@@ -117,7 +117,7 @@ export interface IFileLeaf {
      * 
      * Used when: Building tree structure, updating file positions, tree validation
      */
-    retrieveAllTagPaths(): string[];
+    retrieveAllTagPaths(): Promise<string[]>;
     
     /**
      * Retrieves the metadata of the actual file

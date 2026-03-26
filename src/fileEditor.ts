@@ -76,8 +76,11 @@ export async function hasFrontMatter(
 	file: TFile
 ): Promise<{ hasFrontmatter: boolean; file: TFile }> {
 	try {
-		const cache = app.metadataCache.getFileCache(file);
-		const hasFrontmatter = cache?.frontmatter !== undefined;
+		let hasFrontmatter = false;
+		await app.fileManager.processFrontMatter(file, (frontmatter) => {
+			hasFrontmatter = frontmatter !== undefined;
+		});
+
 		return { hasFrontmatter, file };
 	} catch (error) {
 		console.error("Error checking frontmatter:", error);
@@ -135,13 +138,13 @@ export async function readAllFileYaml(
 	file: TFile
 ): Promise<Record<string, any>> {
 	try {
-		const cache = app.metadataCache.getFileCache(file);
-		if (!cache?.frontmatter) {
-			return {};
-		}
-		
-		// Return a copy of the frontmatter object, excluding the internal 'position' property
-		const { position, ...frontmatterData } = cache.frontmatter;
+		let frontmatterData: Record<string, any> = {};
+		await app.fileManager.processFrontMatter(file, (frontmatter) => {
+			if (frontmatter) {
+				const { ...rest } = frontmatter;
+				frontmatterData = JSON.parse(JSON.stringify(rest));
+			}
+		});
 		return frontmatterData;
 	} catch (error) {
 		console.error("Error reading frontmatter:", error);
@@ -162,12 +165,14 @@ export async function readSpecificYamlSection(
 	key: string
 ): Promise<any> {
 	try {
-		const cache = app.metadataCache.getFileCache(file);
-		if (!cache?.frontmatter) {
-			return undefined;
-		}
+		let value: any = undefined;
+		await app.fileManager.processFrontMatter(file, (frontmatter) => {
+			if (frontmatter && frontmatter.hasOwnProperty(key)) {
+				value = frontmatter[key];
+			}
+		});
 		
-		return cache.frontmatter[key];
+		return value;
 	} catch (error) {
 		console.error("Error reading specific frontmatter key:", error);
 		return undefined;
@@ -185,22 +190,19 @@ export async function extractAllTagsFromYaml(
 	file: TFile
 ): Promise<string[]> {
 	try {
-		const cache = app.metadataCache.getFileCache(file);
-		if (!cache?.frontmatter) {
-			return [];
-		}
-		
-		const frontmatter = cache.frontmatter;
 		const tags: string[] = [];
-		
-		// Check for 'tags' property (can be array or string)
-		if (frontmatter.tags) {
-			if (Array.isArray(frontmatter.tags)) {
-				tags.push(...frontmatter.tags);
-			} else if (typeof frontmatter.tags === 'string') {
-				tags.push(frontmatter.tags);
+		await app.fileManager.processFrontMatter(file, (frontmatter) => {
+			if (!frontmatter) return;
+			
+			// Check for 'tags' property (can be array or string)
+			if (frontmatter.tags) {
+				if (Array.isArray(frontmatter.tags)) {
+					tags.push(...frontmatter.tags);
+				} else if (typeof frontmatter.tags === 'string') {
+					tags.push(frontmatter.tags);
+				}
 			}
-		}
+		});
 		
 		// Remove '#' prefix from all tags
 		return tags.map(tag => tag.startsWith('#') ? tag.slice(1) : tag);
@@ -216,11 +218,18 @@ export async function extractAllTagsFromYaml(
  * @param file - TFile object to extract tags from
  * @returns Array of tag strings from file body
  */
+// 🔴🔴 DEPRECATED 
+// reading tags from the body is not a bad idea, but just that im reading from the cache. 
+// which means this could be stale at any point. 
+// we have shifted away from this because functions end up using this function to read the state the write to physical. 
+// if done frequently enough it will corrupt the cache, since the file changes mid read.
 export async function extractAllTagsFromFileBody(
 	app: App,
 	file: TFile
 ): Promise<string[]> {
 	try {
+
+		// 
 		const cache = app.metadataCache.getFileCache(file);
 		if (!cache?.tags) {
 			return [];
@@ -357,21 +366,13 @@ export async function removeTagFromFileYaml(
 		if (!checkIfTagIsValid(tag)) {
 			return false;
 		}
-
+		
 		// Normalize the tag (remove '#' if present)
 		const normalizedTag = tag.startsWith('#') ? tag.slice(1) : tag;
 		
-		// Get current tags from metadata cache
-		const cache = app.metadataCache.getFileCache(file);
-		const currentTags = cache?.frontmatter?.tags;
-		
-		if (!currentTags) {
-			return true; // No tags to remove
-		}
-		
 		// Process frontmatter to update tags
 		await app.fileManager.processFrontMatter(file, (frontmatter) => {
-			if (frontmatter.tags) {
+			if (frontmatter && frontmatter.tags) {
 				let tags = frontmatter.tags;
 				
 				// Ensure tags is an array
@@ -381,9 +382,14 @@ export async function removeTagFromFileYaml(
 				
 				// Filter out the tag to remove (normalize each tag for comparison)
 				frontmatter.tags = tags.filter((t: string) => {
-					const cleanTag = t.startsWith('#') ? t.slice(1) : t;
+					const cleanTag = typeof t === 'string' && t.startsWith('#') ? t.slice(1) : t;
 					return cleanTag !== normalizedTag;
 				});
+
+				// Optional cleanup if tags array is empty
+				if (frontmatter.tags.length === 0) {
+					delete frontmatter.tags;
+				}
 			}
 		});
 		
@@ -816,18 +822,14 @@ export async function deleteAllYaml(
 	file: TFile
 ): Promise<boolean> {
 	try {
-		// Check if file has frontmatter
-		const cache = app.metadataCache.getFileCache(file);
-		if (!cache?.frontmatter) {
-			return true; // No frontmatter to delete
-		}
-		
 		// Process frontmatter to delete all keys
 		await app.fileManager.processFrontMatter(file, (frontmatter) => {
-			// Get all keys and delete them
-			const keys = Object.keys(frontmatter);
-			for (const key of keys) {
-				delete frontmatter[key];
+			if (frontmatter) {
+				// Get all keys and delete them
+				const keys = Object.keys(frontmatter);
+				for (const key of keys) {
+					delete frontmatter[key];
+				}
 			}
 		});
 		
@@ -851,15 +853,11 @@ export async function deleteSpecificYaml(
 	key: string
 ): Promise<boolean> {
 	try {
-		// Check if file has frontmatter
-		const cache = app.metadataCache.getFileCache(file);
-		if (!cache?.frontmatter) {
-			return true; // No frontmatter exists
-		}
-		
 		// Process frontmatter to delete the specific key
 		await app.fileManager.processFrontMatter(file, (frontmatter) => {
-			delete frontmatter[key];
+			if (frontmatter) {
+				delete frontmatter[key];
+			}
 		});
 		
 		return true;
@@ -1031,28 +1029,24 @@ export async function normalizeFrontmatter(
 	file: TFile
 ): Promise<boolean> {
 	try {
-		// Get current tags from frontmatter
-		const cache = app.metadataCache.getFileCache(file);
-		if (!cache?.frontmatter?.tags) {
-			return true; // No tags to normalize
-		}
-		
-		// Extract and deduplicate tags
-		let tags = cache.frontmatter.tags;
-		if (!Array.isArray(tags)) {
-			tags = [tags];
-		}
-		
-		// Convert to set and back to array to remove duplicates
-		// Also normalize by removing '#' prefix if present
-		const normalizedTags: string[] = Array.from(new Set(tags.map((tag: string) => {
-			return tag.startsWith('#') ? tag.slice(1) : tag;
-		})));
-		
-		
-
 		// Update frontmatter with normalized tags
 		await app.fileManager.processFrontMatter(file, (frontmatter) => {
+			if (!frontmatter || !frontmatter.tags) {
+				return; // No tags to normalize
+			}
+			
+			// Extract and deduplicate tags
+			let tags = frontmatter.tags;
+			if (!Array.isArray(tags)) {
+				tags = [tags];
+			}
+			
+			// Convert to set and back to array to remove duplicates
+			// Also normalize by removing '#' prefix if present
+			const normalizedTags: string[] = Array.from(new Set(tags.map((tag: string) => {
+				return typeof tag === 'string' && tag.startsWith('#') ? tag.slice(1) : tag;
+			})));
+			
 			frontmatter.tags = normalizedTags;
 		});
 		

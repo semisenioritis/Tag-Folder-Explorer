@@ -116,43 +116,30 @@ export class FileLeaf implements IFileLeaf {
      * 
      * Used when: Building tree structure, updating file positions, tree validation
      */
-    public retrieveAllTagPaths(): string[] {
+    public async retrieveAllTagPaths(): Promise<string[]> {
         try {
-            // Get the cached metadata for this file
-            const metadata = this.app.metadataCache.getFileCache(this.file);
-            
-            const allTags: string[] = [];
-            
+
             // Extract all tags from file body
             // 🔴🔴  ONLY PARTIAL SECTION OF FUNCTION IS DEPRECATED 
             // Since we are not handling the existence of tags inside the body, because deleting them from the body is a very tedious task, right now we are not using this at all. 
-            // if (metadata?.tags) {
-            //     for (const tagCache of metadata.tags) {
-            //         // Remove the # prefix from tag names
-            //         const tagName = tagCache.tag.startsWith('#') ? tagCache.tag.slice(1) : tagCache.tag;
-            //         allTags.push(tagName);
-            //     }
-            // }
 
-            if (!metadata?.frontmatter) {
-                return allTags;
-            }
-            else {
-                const frontmatter = metadata.frontmatter
+            const allTags: string[] = [];
+            
+            await this.app.fileManager.processFrontMatter(this.file, (frontmatter) => {
+                if (!frontmatter) {
+                    return;
+                }
+                
                 const cleanTag = (tag:string) => tag.replace(/^#/, '');
                 if (frontmatter.tags) {
-                    if (Array.isArray(metadata.frontmatter.tags)) {
+                    if (Array.isArray(frontmatter.tags)) {
                         allTags.push(...frontmatter.tags.map(cleanTag));
                     } else if (typeof frontmatter.tags === 'string') {
                         allTags.push(cleanTag(frontmatter.tags));
                     }
                 }
-            }
+            });
 
-
-            
-            // Since metadata.tags already includes both frontmatter and inline tags,
-            // we don't need to check frontmatter.tags separately
             return allTags;
         } catch (error) {
             console.error('Failed to retrieve all paths:', error);
