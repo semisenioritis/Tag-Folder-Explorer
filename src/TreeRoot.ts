@@ -90,7 +90,7 @@ export class TreeRoot implements ITreeRoot {
      * @param app - The Obsidian App instance for vault access and file operations
      * @param excludedFolders - Optional set of folder paths to skip during computation
      */
-    constructor(app: App, settings: TagFolderPluginSettings ) {
+    private constructor(app: App, settings: TagFolderPluginSettings ) {
         this.app = app;
         this.excludedFolders = new Set<string>();
 
@@ -101,13 +101,15 @@ export class TreeRoot implements ITreeRoot {
         this.rootTags = new Set<ITagNode>();
         this.untaggedFiles = new Set<IFileLeaf>();
 
-        
-        // console.log (settings)
+        // rootTagNode will be properly initialized in create
+        this.rootTagNode = null as unknown as ITagNode;
+    }
 
-        this.recomputeTree(settings).then(()=>{
-            this.rootTagNode = this.constructRootNode()
-        });
- 
+    public static async create(app: App, settings: TagFolderPluginSettings): Promise<TreeRoot> {
+        const instance = new TreeRoot(app, settings);
+        await instance.recomputeTree(settings);
+        instance.rootTagNode = instance.constructRootNode();
+        return instance;
     }
 
     // ==================== READ METHODS ====================

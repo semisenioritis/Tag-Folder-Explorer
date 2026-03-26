@@ -300,14 +300,14 @@ export default class TagFolderPlugin extends Plugin {
 		// Wait for the metadata cache to be fully resolved before computing the tree
 		// The metadata cache is populated asynchronously after vault load,
 		// so we need to wait for it to be ready before building the tag tree
-		this.app.workspace.onLayoutReady(() => {
+		this.app.workspace.onLayoutReady(async () => {
 			// Check if metadata cache is already resolved
 			if (this.app.metadataCache.resolvedLinks) {
-				this.initializeTree();
+				await this.initializeTree();
 			} else {
 				// Wait for the metadata cache to finish resolving
-				const resolveRef = this.app.metadataCache.on('resolved', () => {
-					this.initializeTree();
+				const resolveRef = this.app.metadataCache.on('resolved', async () => {
+					await this.initializeTree();
 					this.app.metadataCache.offref(resolveRef);
 				});
 				this.registerEvent(resolveRef);
@@ -328,9 +328,9 @@ export default class TagFolderPlugin extends Plugin {
 	 * Initializes the tag tree after the metadata cache is ready.
 	 * This is called after both the layout and metadata cache are resolved.
 	 */
-	private initializeTree(): void {
+	private async initializeTree(): Promise<void> {
 		// Construct the tag tree structure
-		this.treeRoot = new TreeRoot(this.app, this.settings);
+		this.treeRoot = await TreeRoot.create(this.app, this.settings);
 		
 		// Initialize controller interface for frontend access
 		const orchestrator = new Orchestrator(this.app, this.treeRoot, this);
