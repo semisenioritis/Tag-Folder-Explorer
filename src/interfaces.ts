@@ -125,11 +125,11 @@ export interface IFileLeaf {
      * Returns the metadata of the actual file as a dictionary/object with
      * keys representing the metadata fields.
      * 
-     * @returns Record<string, any> - Dictionary with keys as the metadata fields
+     * @returns Promise<Record<string, any>> - Dictionary with keys as the metadata fields
      * 
      * Used when: Displaying file properties, metadata-based operations, file analysis
      */
-    fileMetadata(): Record<string, any>;
+    fileMetadata(): Promise<Record<string, any>>;
     
 
     /**

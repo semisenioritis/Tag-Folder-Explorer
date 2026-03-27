@@ -48,7 +48,7 @@ export class ModelInterface {
     /**
      * Get data for the right sidebar (placeholder)
      */
-    getrightSidebarData(parentfolder: string, type: string, path: string) {
+    async getrightSidebarData(parentfolder: string, type: string, path: string) {
 
 
         
@@ -69,7 +69,7 @@ export class ModelInterface {
             const file = this.treeObj?.getFile(filename, path, parentfolder)
             let filenamestring = file?.getName()
             let filepathstring = file?.getPath()
-            let filemetadata = file?.fileMetadata()
+            let filemetadata = await file?.fileMetadata()
             let fileinitial = file?.readInitial()
             let fileobsdata = file?.fileObsCreateModDate()
 

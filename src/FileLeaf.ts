@@ -157,16 +157,16 @@ export class FileLeaf implements IFileLeaf {
      * 
      * Used when: Displaying file properties, metadata-based operations, file analysis
      */
-    public fileMetadata(): Record<string, any> {
+    public async fileMetadata(): Promise<Record<string, any>> {
         try {
-            // Get the cached metadata for this file
-            const metadata = this.app.metadataCache.getFileCache(this.file);
-            
-            if (metadata?.frontmatter) {
-                return metadata.frontmatter;
-            } else {
-                return {};
-            }
+            let metadataData: Record<string, any> = {};
+            await this.app.fileManager.processFrontMatter(this.file, (frontmatter) => {
+                if (frontmatter) {
+                    // Make a deep copy to ensure we don't accidentally hold references to Obsidian's internal object
+                    metadataData = JSON.parse(JSON.stringify(frontmatter));
+                }
+            });
+            return metadataData;
         } catch (error) {
             console.error('Failed to retrieve file metadata:', error);
             return {};

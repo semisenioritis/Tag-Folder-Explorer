@@ -26,7 +26,7 @@
         throw new Error("model is not initialized");
     }
 
-    let metadataViewData: any | null = $derived(model.getrightSidebarData(focusedObjectParent, focusedObjectType, focusedObjectPath));
+    let metadataViewData: any | null = $derived(await model.getrightSidebarData(focusedObjectParent, focusedObjectType, focusedObjectPath));
 
 
 	let descriptionValue = $derived.by(() => {
@@ -125,7 +125,7 @@
                 });
             }
 
-            recomputeMetadata()
+            await recomputeMetadata()
         } catch (error) {
             console.error('Failed to update description:', error);
         }
@@ -144,17 +144,17 @@
                 console.log('Legend update successful');
                 console.log("Result",result)
             }
-            recomputeMetadata()
+            await recomputeMetadata()
         } catch (error) {
             console.error('Failed to update legend:', error);
         }
     }
 
-    function recomputeMetadata(): void {
+    async function recomputeMetadata(): Promise<void> {
         if (!model) {
             throw new Error("model is not initialized");
         }
-        metadataViewData = model.getrightSidebarData(focusedObjectParent, focusedObjectType, focusedObjectPath);
+        metadataViewData = await model.getrightSidebarData(focusedObjectParent, focusedObjectType, focusedObjectPath);
     }
 
 </script>

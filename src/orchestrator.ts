@@ -579,7 +579,7 @@ export class Orchestrator {
                 const lockedTagPath = `🔒/ ${folderTagPath}`;
 
                 // Read legend status of file
-                const legendStatus = this.readLegendStatusOfFile(filePath, folderTagPath);
+                const legendStatus = await this.readLegendStatusOfFile(filePath, folderTagPath);
                 if (legendStatus.color) {
                     if (legendStatus.status === "locked") {
                         // Unlock it using removeLegendLockFromFile
@@ -593,7 +593,7 @@ export class Orchestrator {
                 }
 
                 // Read pinned status of file
-                const pinnedStatus = this.readPinnedStatusOfFile(filePath, folderTagPath);
+                const pinnedStatus = await this.readPinnedStatusOfFile(filePath, folderTagPath);
                 if (pinnedStatus.pinned) {
                     if (pinnedStatus.status === "locked") {
                         // Unlock it using removePinnedLockFromFile
@@ -714,7 +714,7 @@ export class Orchestrator {
                             const lockedTagPath = `🔒/ ${tagPath}`;
 
                             // Read legend status of file
-                            const legendStatus = this.readLegendStatusOfFile(filePath, tagPath);
+                            const legendStatus = await this.readLegendStatusOfFile(filePath, tagPath);
                             if (legendStatus.color) {
                                 if (legendStatus.status === "locked") {
                                     // Unlock it using removeLegendLockFromFile
@@ -728,7 +728,7 @@ export class Orchestrator {
                             }
 
                             // Read pinned status of file
-                            const pinnedStatus = this.readPinnedStatusOfFile(filePath, tagPath);
+                            const pinnedStatus = await this.readPinnedStatusOfFile(filePath, tagPath);
                             if (pinnedStatus.pinned) {
                                 if (pinnedStatus.status === "locked") {
                                     // Unlock it using removePinnedLockFromFile
@@ -1067,7 +1067,7 @@ export class Orchestrator {
                             const lockedOldTagPath = `🔒/ ${oldTagPath}`;
 
                             // Read legend status of file with respect to old tag
-                            const legendStatus = this.readLegendStatusOfFile(filePath, oldTagPath);
+                            const legendStatus = await this.readLegendStatusOfFile(filePath, oldTagPath);
                             if (legendStatus.color) {
                                 if (legendStatus.status === "locked") {
                                     // Unlock it using removeLegendLockFromFile
@@ -1085,7 +1085,7 @@ export class Orchestrator {
                             }
 
                             // Read pinned status of file with respect to old tag
-                            const pinnedStatus = this.readPinnedStatusOfFile(filePath, oldTagPath);
+                            const pinnedStatus = await this.readPinnedStatusOfFile(filePath, oldTagPath);
                             if (pinnedStatus.pinned) {
                                 if (pinnedStatus.status === "locked") {
                                     // Unlock it using removePinnedLockFromFile
@@ -1270,7 +1270,7 @@ export class Orchestrator {
                 const lockedSourcePath = `🔒/ ${sourceFolderTagPath}`;
 
                 // Read legend status of file with respect to source tag
-                const legendStatus = this.readLegendStatusOfFile(filePath, sourceFolderTagPath);
+                const legendStatus = await this.readLegendStatusOfFile(filePath, sourceFolderTagPath);
                 if (legendStatus.color) {
                     if (legendStatus.status === "locked") {
                         // Unlock it using removeLegendLockFromFile
@@ -1284,7 +1284,7 @@ export class Orchestrator {
                 }
 
                 // Read pinned status of file with respect to source tag
-                const pinnedStatus = this.readPinnedStatusOfFile(filePath, sourceFolderTagPath);
+                const pinnedStatus = await this.readPinnedStatusOfFile(filePath, sourceFolderTagPath);
                 if (pinnedStatus.pinned) {
                     if (pinnedStatus.status === "locked") {
                         // Unlock it using removePinnedLockFromFile
@@ -1698,7 +1698,7 @@ export class Orchestrator {
                         const lockedOldTagPath = `🔒/ ${oldTagPath}`;
 
                         // Read legend status of file with respect to old tag
-                        const legendStatus = this.readLegendStatusOfFile(filePath, oldTagPath);
+                        const legendStatus = await this.readLegendStatusOfFile(filePath, oldTagPath);
                         if (legendStatus.color) {
                             if (legendStatus.status === "locked") {
                                 // Add same legend with lock on new tagpath using addLegendLockToFile
@@ -1710,7 +1710,7 @@ export class Orchestrator {
                         }
 
                         // Read pinned status of file with respect to old tag
-                        const pinnedStatus = this.readPinnedStatusOfFile(filePath, oldTagPath);
+                        const pinnedStatus = await this.readPinnedStatusOfFile(filePath, oldTagPath);
                         if (pinnedStatus.pinned) {
                             if (pinnedStatus.status === "locked") {
                                 // Add pinned with lock on new tagpath using addPinnedLockToFile
@@ -2034,7 +2034,7 @@ export class Orchestrator {
                         const lockedOldTagPath = `🔒/ ${oldTagPath}`;
 
                         // Read legend status of file with respect to old tag
-                        const legendStatus = this.readLegendStatusOfFile(filePath, oldTagPath);
+                        const legendStatus = await this.readLegendStatusOfFile(filePath, oldTagPath);
                         if (legendStatus.color) {
                             if (legendStatus.status === "locked") {
                                 // Add same legend with lock on new tagpath using addLegendLockToFile
@@ -2046,7 +2046,7 @@ export class Orchestrator {
                         }
 
                         // Read pinned status of file with respect to old tag
-                        const pinnedStatus = this.readPinnedStatusOfFile(filePath, oldTagPath);
+                        const pinnedStatus = await this.readPinnedStatusOfFile(filePath, oldTagPath);
                         if (pinnedStatus.pinned) {
                             if (pinnedStatus.status === "locked") {
                                 // Add pinned with lock on new tagpath using addPinnedLockToFile
@@ -2589,7 +2589,7 @@ export class Orchestrator {
             const key = `🏷-Legend-${legendColor}`;
 
             // Read status of the key for file metadata
-            const fileMetadata = fileLeaf.fileMetadata();
+            const fileMetadata = await fileLeaf.fileMetadata();
             let fileStatusList: string[] = [];
             
             if (fileMetadata && fileMetadata[key]) {
@@ -2684,7 +2684,7 @@ export class Orchestrator {
             const key = `🏷-Legend-${legendColor}`;
 
             // Read status of the key for file metadata
-            const fileMetadata = fileLeaf.fileMetadata();
+            const fileMetadata = await fileLeaf.fileMetadata();
             let fileStatusList: string[] = [];
             
             if (fileMetadata && fileMetadata[key]) {
@@ -2743,7 +2743,7 @@ export class Orchestrator {
             );
 
 
-            const fileMetadata2 = fileLeaf.fileMetadata();
+            const fileMetadata2 = await fileLeaf.fileMetadata();
             console.log("- fileMetadata after removal")
             // console.log(fileMetadata2)
             console.log(JSON.parse(JSON.stringify(fileMetadata2)))
@@ -2774,7 +2774,6 @@ export class Orchestrator {
      * @returns Promise with success status and error if failed
      */
     async cycleLegendOfFile(
-        currLegendColor: string,
         filePath: string,
         tagPath: string,
         owner: boolean = true
@@ -2795,102 +2794,150 @@ export class Orchestrator {
             // Maintain list of colors
             const colorList = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple", ""];
             
-            // Extract index of colorlist matching currlegendcolor
-            const currentIndex = colorList.indexOf(currLegendColor);
-            if (currentIndex === -1) {
-                return { success: false, error: `Invalid legend color: ${currLegendColor}` };
-            }
+            // Construct prefixed and locked tag paths
+            const prefixedTagPath = `🏠/${tagPath}`;
+            const lockedTagPath = `🔒/ ${tagPath}`;
 
-            // Extract next index color from color list
-            const nextIndex = (currentIndex + 1) % colorList.length;
-            const nextColor = colorList[nextIndex];
+            // Key list for all legend colors
+            const legendKeys = [
+                { key: "🏷-Legend-Red", color: "Red" },
+                { key: "🏷-Legend-Orange", color: "Orange" },
+                { key: "🏷-Legend-Yellow", color: "Yellow" },
+                { key: "🏷-Legend-Green", color: "Green" },
+                { key: "🏷-Legend-Blue", color: "Blue" },
+                { key: "🏷-Legend-Purple", color: "Purple" }
+            ];
+
+            let currColor = ""
+            let lockStatus = "notlocked"
 
 
-            console.log("- fn cycleLegendOfFile")
-            console.log("- currentIndex")
-            console.log(currentIndex)
-            console.log("- nextIndex")
-            console.log(nextIndex)
-            console.log("- nextColor")
-            console.log(nextColor)
-            console.log("- currLegendColor")
-            console.log(currLegendColor)
-            console.log("- part1------------------")
+            let successStatus = true
+            let successStatusReason = ""       
+            await this.app.fileManager.processFrontMatter(tFile, (frontmatter) => {
+                /*
+                    im modifying the cyclelegendoffile function. here im reading the metadata directly using the processfrontmatter function.
+                    inside it i want to extract the current legend value. 
+                    then calculate the next legend key and removing the old value from the list , append the tagpath to the new key for the next legend.
+                    complete the function
+                **/ 
 
-            // If legend color is ""
-            if (currLegendColor === "") {
-                // Call add to legend with next index color
-                console.log("- option1.1 currLegendColor === ''")
-                console.log("- proceeding to addlegendtofile")
-                return await this.addLegendToFile(nextColor, filePath, tagPath, false);
-            } else {
-                // Construct key as "🏷-Legend-" + currlegendcolor
-                const key = `🏷-Legend-${currLegendColor}`;
-                console.log("- option1.2 some color is assigned to file")
-                
-                console.log("- constructed key")
-                console.log(key)
-                // Read status of the key for file metadata
-                const fileMetadata = fileLeaf.fileMetadata();
-                let fileStatusList: string[] = [];
-                
-                if (fileMetadata && fileMetadata[key]) {
-                    if (Array.isArray(fileMetadata[key])) {
-                        fileStatusList = fileMetadata[key];
-                    } else if (typeof fileMetadata[key] === 'string') {
-                        fileStatusList = [fileMetadata[key]];
+            
+                // Extract all 6 fields and check for matches
+                for (const { key, color } of legendKeys) {
+                    const value = frontmatter[key];
+
+                    if (!value) continue;
+
+                    // Convert to array if needed
+                    let statusArray: string[] = [];
+                    if (Array.isArray(value)) {
+                        statusArray = value;
+                    } else if (typeof value === 'string') {
+                        statusArray = [value];
                     }
-                }
-                console.log("- all the folders where the file has the same color as old")
-                console.log(fileStatusList)
 
+                    // Check each element in array
+                    for (const element of statusArray) {
+                        if (element === prefixedTagPath) {
 
-                // Construct prefixed and locked tag paths
-                const prefixedTagPath = `🏠/${tagPath}`;
-                const lockedTagPath = `🔒/ ${tagPath}`;
-
-                // Check if status lists have lockedtagpath
-                if (fileStatusList.includes(lockedTagPath) ) {
-                    return { success: false, error: `File has locked tag path: ${lockedTagPath}` };
-                }
-
-                // Check if status lists have prefixedtagpath
-                const hasPrefix = fileStatusList.includes(prefixedTagPath);
-
-                if (hasPrefix) {
-
-                    console.log("- option 2.1 the file is in the old location according to the list")
-                    console.log("- currLegendColor")
-                    console.log(currLegendColor)
-                    console.log("- filePath")
-                    console.log(filePath)
-                    console.log("- tagPath")
-                    console.log(tagPath)
-                    console.log("- nextColor")
-                    console.log(nextColor)
-
-                    // If next index color is ""
-                    if (nextColor === "") {
-                        // Call remove from legend
-                        return await this.removeLegendFromFile(currLegendColor, filePath, tagPath, false);
-                    } else {
-                        // Call remove from legend then add to legend
-                        const removeResult = await this.removeLegendFromFile(currLegendColor, filePath, tagPath, false);
-                        if (!removeResult.success) {
-                            return removeResult;
+                            currColor = color
+                            lockStatus = "notlocked"
+                            break
                         }
-                        
-                        return await this.addLegendToFile(nextColor, filePath, tagPath, false);
-                        
+                        if (element === lockedTagPath) {
+                            
+                            currColor = color
+                            lockStatus = "locked"
+                            break
+                        }
                     }
-                } else {
-                    // Doesn't have prefixedtagpath and lockedtagpath
-                    return { 
-                        success: false, 
-                        error: "Color was provided but no folder was found. If new append was expected, no color should be passed as a parameter" 
-                    };
                 }
+
+
+                // Extract index of colorlist matching currlegendcolor
+                const currentIndex = colorList.indexOf(currColor);
+                if (currentIndex === -1) {
+                    return { success: false, error: `Invalid legend color: ${currColor}` };
+                }
+
+                // Extract next index color from color list
+                const nextIndex = (currentIndex + 1) % colorList.length;
+                const nextColor = colorList[nextIndex];
+
+                const currkey = `🏷-Legend-${currColor}`;
+                const nextkey = `🏷-Legend-${nextColor}`;
+
+                let nextKeyListHolder = []
+                // If legend color is ""
+                if (currColor === "") {
+                    // Just add next index color
+
+                    if (frontmatter && frontmatter[nextkey]) {
+                        if (Array.isArray(frontmatter[nextkey])) {
+                            nextKeyListHolder = frontmatter[nextkey];
+                        } else if (typeof frontmatter[nextkey] === 'string') {
+                            nextKeyListHolder = [frontmatter[nextkey]];
+                        }
+                    }
+
+                    nextKeyListHolder.push(prefixedTagPath)
+
+                    frontmatter[nextkey] = nextKeyListHolder
+                    // return correct statements here
+                } else {
+                    if (lockStatus == "notlocked"){
+                        
+                        // remove tag from my key
+                        let currKeyListHolder = []
+
+                        if (frontmatter && frontmatter[currkey]) {
+                            if (Array.isArray(frontmatter[currkey])) {
+                                currKeyListHolder = frontmatter[currkey];
+                            } else if (typeof frontmatter[currkey] === 'string') {
+                                currKeyListHolder = [frontmatter[currkey]];
+                            }
+                        }
+
+                        currKeyListHolder = currKeyListHolder.filter(item => item !== prefixedTagPath);
+
+                        frontmatter[currkey] = currKeyListHolder
+
+                        if (nextColor == ""){
+                            // add the return statement or the alternative here
+                        } else {
+
+                            if (frontmatter && frontmatter[nextkey]) {
+                                if (Array.isArray(frontmatter[nextkey])) {
+                                    nextKeyListHolder = frontmatter[nextkey];
+                                } else if (typeof frontmatter[nextkey] === 'string') {
+                                    nextKeyListHolder = [frontmatter[nextkey]];
+                                }
+                            }
+
+                            nextKeyListHolder.push(prefixedTagPath)
+
+                            frontmatter[nextkey] = nextKeyListHolder
+                            // remember to return here too
+                        }
+
+
+                    }else {
+                        // need to notify with a return that lock is present so no mod
+                        successStatus = false
+                        successStatusReason = "File has locked tag path: ${lockedTagPath}"      
+                    }
+                    
+                }
+
+            });
+
+            if (successStatus == true){
+                return { success: true}
+            } else {
+                return { success: false, error: successStatusReason };
             }
+
         } catch (error) {
             console.error("Error in cycleLegend:", error);
             return { success: false, error };
@@ -2932,7 +2979,7 @@ export class Orchestrator {
             const key = `🏷-Legend-${legendColor}`;
 
             // Read status of the key for file metadata
-            const fileMetadata = fileLeaf.fileMetadata();
+            const fileMetadata = await fileLeaf.fileMetadata();
             let fileStatusList: string[] = [];
             
             if (fileMetadata && fileMetadata[key]) {
@@ -3026,7 +3073,7 @@ export class Orchestrator {
             const key = `🏷-Legend-${legendColor}`;
 
             // Read status of the key for file metadata
-            const fileMetadata = fileLeaf.fileMetadata();
+            const fileMetadata = await fileLeaf.fileMetadata();
             let fileStatusList: string[] = [];
             
             if (fileMetadata && fileMetadata[key]) {
@@ -3119,7 +3166,7 @@ export class Orchestrator {
             const key = "🏷-Pinned";
 
             // Read status of the key for file metadata
-            const fileMetadata = fileLeaf.fileMetadata();
+            const fileMetadata = await fileLeaf.fileMetadata();
             let fileStatusList: string[] = [];
             
             if (fileMetadata && fileMetadata[key]) {
@@ -3204,7 +3251,7 @@ export class Orchestrator {
             const key = "🏷-Pinned";
 
             // Read status of the key for file metadata
-            const fileMetadata = fileLeaf.fileMetadata();
+            const fileMetadata = await fileLeaf.fileMetadata();
             let fileStatusList: string[] = [];
             
             if (fileMetadata && fileMetadata[key]) {
@@ -3294,7 +3341,7 @@ export class Orchestrator {
             const key = "🏷-Pinned";
 
             // Read status of the key for file metadata
-            const fileMetadata = fileLeaf.fileMetadata();
+            const fileMetadata = await fileLeaf.fileMetadata();
             let fileStatusList: string[] = [];
             
             if (fileMetadata && fileMetadata[key]) {
@@ -3386,7 +3433,7 @@ export class Orchestrator {
             const key = "🏷-Pinned";
 
             // Read status of the key for file metadata
-            const fileMetadata = fileLeaf.fileMetadata();
+            const fileMetadata = await fileLeaf.fileMetadata();
             let fileStatusList: string[] = [];
             
             if (fileMetadata && fileMetadata[key]) {
@@ -3474,7 +3521,7 @@ export class Orchestrator {
             const key = "🏷-Pinned";
 
             // Read status of the key for file metadata
-            const fileMetadata = fileLeaf.fileMetadata();
+            const fileMetadata = await fileLeaf.fileMetadata();
             let fileStatusList: string[] = [];
             
             if (fileMetadata && fileMetadata[key]) {
@@ -4073,7 +4120,7 @@ export class Orchestrator {
             const key = "🏷-Bookmarked";
 
             // Read status of the key for file metadata
-            const fileMetadata = fileLeaf.fileMetadata();
+            const fileMetadata = await fileLeaf.fileMetadata();
             let fileStatusList: string[] = [];
             
             if (fileMetadata && fileMetadata[key]) {
@@ -4151,7 +4198,7 @@ export class Orchestrator {
             const key = "🏷-Bookmarked";
 
             // Read status of the key for file metadata
-            const fileMetadata = fileLeaf.fileMetadata();
+            const fileMetadata = await fileLeaf.fileMetadata();
             let fileStatusList: string[] = [];
             
             if (fileMetadata && fileMetadata[key]) {
@@ -4236,7 +4283,7 @@ export class Orchestrator {
             const key = "🏷-Bookmarked";
 
             // Read status of the key for file metadata
-            const fileMetadata = fileLeaf.fileMetadata();
+            const fileMetadata = await fileLeaf.fileMetadata();
             let fileStatusList: string[] = [];
             
             if (fileMetadata && fileMetadata[key]) {
@@ -4857,10 +4904,10 @@ export class Orchestrator {
      * @param tagPath - The tag path
      * @returns Object with color and lock status, or empty string if not found
      */
-    readLegendStatusOfFile(
+    async readLegendStatusOfFile(
         filePath: string,
         tagPath: string
-    ): { color: string; status: string }  {
+    ): Promise<{ color: string; status: string }>  {
         try {
 
             console.log("- fn readLegendStatusOfFile")
@@ -4886,7 +4933,7 @@ export class Orchestrator {
             const lockedTagPath = `🔒/ ${tagPath}`;
 
             // Read file metadata
-            const fileMetadata = fileLeaf.fileMetadata();
+            const fileMetadata = await fileLeaf.fileMetadata();
             if (!fileMetadata) {
                 return { color: "", status: "notlocked"  };
             }
@@ -4951,10 +4998,10 @@ export class Orchestrator {
      * @param tagPath - The tag path
      * @returns Object with pinned status, or pinned: false if not found
      */
-    readPinnedStatusOfFile(
+    async readPinnedStatusOfFile(
         filePath: string,
         tagPath: string
-    ): { pinned: boolean; status?: string } {
+    ): Promise<{ pinned: boolean; status?: string }> {
         try {
             if (this.treeRoot){
                 // Extract fileleaf using filepath from fileleaf map
@@ -4974,7 +5021,7 @@ export class Orchestrator {
                 const lockedTagPath = `🔒/ ${tagPath}`;
 
                 // Read file metadata
-                const fileMetadata = fileLeaf.fileMetadata();
+                const fileMetadata = await fileLeaf.fileMetadata();
                 if (!fileMetadata) {
                     return { pinned: false };
                 }
@@ -5024,11 +5071,11 @@ export class Orchestrator {
      * @param owner - Whether this is an owner operation (default false for read operations)
      * @returns Object with bookmarked status (true if bookmarked, false otherwise)
      */
-    readBookmarkStatusOfFile(
+    async readBookmarkStatusOfFile(
         filePath: string,
         tagPath: string,
         owner: boolean = false
-    ): { bookmarked: boolean } {
+    ): Promise<{ bookmarked: boolean }> {
         try {
             if (this.treeRoot && this.app){
                 // Extract fileleaf using filepath from fileleaf map
@@ -5047,7 +5094,7 @@ export class Orchestrator {
                 const prefixedTagPath = `🏠/${tagPath}`;
 
                 // Read file metadata
-                const fileMetadata = fileLeaf.fileMetadata();
+                const fileMetadata = await fileLeaf.fileMetadata();
                 const key = "🏷-Bookmarked";
                 
                 if (fileMetadata && fileMetadata[key]) {

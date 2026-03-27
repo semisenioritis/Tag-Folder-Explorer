@@ -363,12 +363,11 @@ export class ControllerInterface {
      * @returns Promise with success status and error if failed
      */
     async cycleLegendOfFile(
-        currLegendColor: string,
         filePath: string,
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.cycleLegendOfFile(currLegendColor, filePath, tagPath, owner);
+        return await this.orchestrator.cycleLegendOfFile(filePath, tagPath, owner);
     }
 
     /**
@@ -739,11 +738,11 @@ export class ControllerInterface {
      * @param tagPath - The tag path
      * @returns Object with color and lock status, or empty string if not found
      */
-    readLegendStatusOfFile(
+    async readLegendStatusOfFile(
         filePath: string,
         tagPath: string
-    ): { color: string; status: string } | { color: "" } {
-        return this.orchestrator.readLegendStatusOfFile(filePath, tagPath);
+    ): Promise<{ color: string; status: string } | { color: "" }> {
+        return await this.orchestrator.readLegendStatusOfFile(filePath, tagPath);
     }
 
     /**
@@ -753,11 +752,11 @@ export class ControllerInterface {
      * @param tagPath - The tag path
      * @returns Object with pinned status, or pinned: false if not found
      */
-    readPinnedStatusOfFile(
+    async readPinnedStatusOfFile(
         filePath: string,
         tagPath: string
-    ): { pinned: boolean; status?: string } {
-        return this.orchestrator.readPinnedStatusOfFile(filePath, tagPath);
+    ): Promise<{ pinned: boolean; status?: string }> {
+        return await this.orchestrator.readPinnedStatusOfFile(filePath, tagPath);
     }
 
     /**
@@ -768,12 +767,12 @@ export class ControllerInterface {
      * @param owner - Whether this is an owner operation (default false for read operations)
      * @returns Object with bookmarked status (true if bookmarked, false otherwise)
      */
-    readBookmarkStatusOfFile(
+    async readBookmarkStatusOfFile(
         filePath: string,
         tagPath: string,
         owner: boolean = false
-    ): { bookmarked: boolean } {
-        return this.orchestrator.readBookmarkStatusOfFile(filePath, tagPath, owner);
+    ): Promise<{ bookmarked: boolean }> {
+        return await this.orchestrator.readBookmarkStatusOfFile(filePath, tagPath, owner);
     }
     
     /**
