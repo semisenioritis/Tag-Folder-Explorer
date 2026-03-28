@@ -43,70 +43,6 @@
   let clickTimeout: number | null = null;
   const CLICK_DELAY = 250; // milliseconds
 
-  // Cache file legend button colors per (tagPath, filePath) to avoid re-await flashing
-  let fileButtonColors = $state<Record<string, string>>({});
-  let fileButtonColorLoaded = $state<Record<string, boolean>>({});
-  let fileButtonColorLoading = $state<Record<string, boolean>>({});
-  let previousPath = $state(currentPath);
-
-  function getFileLegendKey(filePath: string, tagPath: string): string {
-    return `${tagPath}::${filePath}`;
-  }
-
-  function getCachedFileButtonColor(filePath: string, tagPath: string): string {
-    const key = getFileLegendKey(filePath, tagPath);
-    return fileButtonColors[key] ?? "";
-  }
-
-  async function refreshFileButtonColor(filePath: string, tagPath: string): Promise<void> {
-    const key = getFileLegendKey(filePath, tagPath);
-
-    try {
-      if (!controller) {
-        throw new Error("controller is not initialized");
-      }
-
-      fileButtonColorLoading = { ...fileButtonColorLoading, [key]: true };
-      const status = await controller.readLegendStatusOfFile(filePath, tagPath);
-      fileButtonColors = { ...fileButtonColors, [key]: status.color || "" };
-      fileButtonColorLoaded = { ...fileButtonColorLoaded, [key]: true };
-    } catch (e) {
-      fileButtonColors = { ...fileButtonColors, [key]: "" };
-      fileButtonColorLoaded = { ...fileButtonColorLoaded, [key]: true };
-    } finally {
-      fileButtonColorLoading = { ...fileButtonColorLoading, [key]: false };
-    }
-  }
-
-  function ensureVisibleFileColorsLoaded(): void {
-    if (!mainViewData) {
-      return;
-    }
-
-    for (const file of mainViewData.files) {
-      const key = getFileLegendKey(file.path, currentPath);
-      if (fileButtonColorLoaded[key] || fileButtonColorLoading[key]) {
-        continue;
-      }
-      void refreshFileButtonColor(file.path, currentPath);
-    }
-  }
-
-  $effect(() => {
-    void mainViewData;
-    void currentPath;
-
-    if (previousPath !== currentPath) {
-      fileButtonColors = {};
-      fileButtonColorLoaded = {};
-      fileButtonColorLoading = {};
-      previousPath = currentPath;
-    }
-
-    ensureVisibleFileColorsLoaded();
-  });
-
-
   function handleFolderDblClick(folder:frontendFolder) {
     // Cancel any pending single-click
     if (clickTimeout !== null) {
@@ -246,10 +182,40 @@
     await controller?.cycleLegendOfFile(filePath,currentPath)
 
     // Update only this file's cached legend color; avoid full-view recompute
-    await refreshFileButtonColor(filePath, currentPath);
+    // recomputeMainView()
     // await new Promise(r => setTimeout(r, 3000));
+    // await refreshFileButtonColors();
+
+
+    // After the action, re-fetch just this file's color
+    const file = mainViewData!.files.find(f => f.path === filePath);
+    if (file) {
+      fileButtonColors[filePath] = await getFileButtonColor(file);
+    }
     
   }
+
+  async function getFileButtonColor(file: frontendFile): Promise<string> {
+
+    try {
+      if (!controller) {
+        throw new Error("controller is not initialized");
+      }
+      const status = await controller.readLegendStatusOfFile(file.path, currentPath);
+      console.log("- fn getFileButtonColor")
+      console.log("- file.name")
+      console.log(file.name)
+      console.log("- status.color")
+      console.log(status.color)
+      console.log("------------------")
+      return status.color || "";
+    } catch (e) {
+      return "";
+    }
+
+  }
+
+
 
   function getFolderButtonColor(folder: frontendFolder): string {
     try {
@@ -269,6 +235,27 @@
     function recomputeMainView(): void {
         refreshKey++
     }
+
+
+  let fileButtonColors = $state<Record<string, string>>({});
+
+
+  // Load all colors initially
+  async function loadFileColors() {
+    const entries = await Promise.all(
+      mainViewData!.files.map(async (file) => [file.path, await getFileButtonColor(file)])
+    );
+    fileButtonColors = Object.fromEntries(entries);
+    console.log("🔵🔵🔵🔵🔵🔵")
+    console.log(fileButtonColors)
+  }
+
+  $effect(() => {
+    if (mainViewData!.files) loadFileColors();
+
+  });
+
+
 
 
 </script>
@@ -303,7 +290,8 @@
         <div class="item file" role="button" tabindex="0" onclick={(e) => handleItemClick(e, handleFileClick, file)} ondblclick={(e) => { e.stopPropagation(); handleFileDblClick(file); }} onkeydown={(e) => handleKeyDown(e, handleFileDblClick, file)}>
           <div class="icon">📄</div>
           <div class="label">{file.name}</div>
-          <button class="action-button circle" class:hidden={getCachedFileButtonColor(file.path, currentPath) === ""} style="background-color: {getColorForName(getCachedFileButtonColor(file.path, currentPath))}" onclick={(e) => handleActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button>
+          <!-- <button class="action-button circle" class:hidden={await getFileButtonColor(file) === ""} style="background-color: {getColorForName( await getFileButtonColor(file))}" onclick={(e) => handleActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button> -->
+          <button class="action-button circle" class:hidden={!fileButtonColors[file.path]} style="background-color: {fileButtonColors[file.path] ?? ''}" onclick={(e) => handleActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button>
         </div>
       {/each}
     </div>
