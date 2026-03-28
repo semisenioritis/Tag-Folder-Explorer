@@ -211,14 +211,14 @@ export class TagNode implements ITagNode {
                 name: this.name,
                 created: new Date().toISOString(),
                 modified: new Date().toISOString(),
-                description: `TagNode Metadata for ${this.name}\nThis file contains metadata for the TagNode at path: \`${this.path}\``,
+                description: ``,
                 legend:{
-                    Red: "label one new",
-                    Orange: "label two new",
-                    Yellow: "label three new",
-                    Green: "label four new",
-                    Blue: "label five new",
-                    Purple: "label six new"
+                    Red: "",
+                    Orange: "",
+                    Yellow: "",
+                    Green: "",
+                    Blue: "",
+                    Purple: ""
                 }
             };
             

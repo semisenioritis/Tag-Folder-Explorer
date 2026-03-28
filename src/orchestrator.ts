@@ -3340,60 +3340,46 @@ export class Orchestrator {
             // Key is "🏷-Pinned"
             const key = "🏷-Pinned";
 
-            // Read status of the key for file metadata
-            const fileMetadata = await fileLeaf.fileMetadata();
-            let fileStatusList: string[] = [];
-            
-            if (fileMetadata && fileMetadata[key]) {
-                if (Array.isArray(fileMetadata[key])) {
-                    fileStatusList = fileMetadata[key];
-                } else if (typeof fileMetadata[key] === 'string') {
-                    fileStatusList = [fileMetadata[key]];
-                }
-            }
-
-
-
             // Construct prefixed and locked tag paths
             const prefixedTagPath = `🏠/${tagPath}`;
             const lockedTagPath = `🔒/ ${tagPath}`;
+            let fileStatusList: string[] = [];
 
-            // Check if status lists have lockedtagpath
-            if (fileStatusList.includes(lockedTagPath)) {
-                return { success: false, error: `File is locked, cannot toggle: ${lockedTagPath}` };
-            }
+            let successStatus = true
+            let successStatusReason = ""    
+            let lockStatus = false
 
-            // Check if status lists have prefixedtagpath
-            const fileHasPrefix = fileStatusList.includes(prefixedTagPath);
+            await this.app.fileManager.processFrontMatter(tFile, (frontmatter) => {
 
-            if (fileHasPrefix) {
-                // Remove prefixedtagpath from status lists
-                fileStatusList = fileStatusList.filter(item => item !== prefixedTagPath);
+                if (frontmatter && frontmatter[key]) {
+                    if (Array.isArray(frontmatter[key])) {
+                        fileStatusList = frontmatter[key];
+                    } else if (typeof frontmatter[key] === 'string') {
+                        fileStatusList = [frontmatter[key]];
+                    }
+                }
                 
 
-            } else {
-                // Add prefixedtagpath to status lists
-                fileStatusList.push(prefixedTagPath);
-
-            }
-
-            // Write new status list to file
-            const fileUpdateContent: Record<string, any> = {};
-            fileUpdateContent[key] = fileStatusList;
+                // Check if status lists have lockedtagpath
+                if (fileStatusList.includes(lockedTagPath)) {
+                    // return { success: false, error: `File is locked, cannot toggle: ${lockedTagPath}` };
+                    lockStatus = true
+                    successStatus = false
+                    successStatusReason = `File is locked, cannot toggle: ${lockedTagPath}`
+                } else {
+                    if (fileStatusList.includes(prefixedTagPath)) {
+                        fileStatusList = fileStatusList.filter(item => item !== prefixedTagPath);
             
-            const fileWriteSuccess = await fileEditor.replaceMetadataSection(
-                this.app,
-                tFile,
-                fileUpdateContent
-            );
 
-            if (!fileWriteSuccess) {
-                return { success: false, error: "Failed to write to file metadata" };
-            }
+                    } else {
+                        fileStatusList.push(prefixedTagPath);
+                    }
 
+                    frontmatter[key] = fileStatusList
+                }
+            })
 
-
-            return { success: true };
+            return { success: successStatus, error: successStatusReason };
         } catch (error) {
             console.error("Error in cyclePinned:", error);
             return { success: false, error };
@@ -4282,51 +4268,37 @@ export class Orchestrator {
             // Key is "🏷-Bookmarked"
             const key = "🏷-Bookmarked";
 
-            // Read status of the key for file metadata
-            const fileMetadata = await fileLeaf.fileMetadata();
-            let fileStatusList: string[] = [];
-            
-            if (fileMetadata && fileMetadata[key]) {
-                if (Array.isArray(fileMetadata[key])) {
-                    fileStatusList = fileMetadata[key];
-                } else if (typeof fileMetadata[key] === 'string') {
-                    fileStatusList = [fileMetadata[key]];
-                }
-            }
-
-
             // Construct prefixed tag path
             const prefixedTagPath = `🏠/${tagPath}`;
-
-            // Check if status lists have prefixedtagpath
-            const fileHasPrefix = fileStatusList.includes(prefixedTagPath);
-
-            if (fileHasPrefix ) {
-                // Remove prefixedtagpath from status lists
-                fileStatusList = fileStatusList.filter(item => item !== prefixedTagPath);
-
-
-            } else {
-                // Add prefixedtagpath to status lists
-                fileStatusList.push(prefixedTagPath);
-            }
-
-            // Write new status list to file
-            const fileUpdateContent: Record<string, any> = {};
-            fileUpdateContent[key] = fileStatusList;
+            let fileStatusList: string[] = [];
             
-            const fileWriteSuccess = await fileEditor.replaceMetadataSection(
-                this.app,
-                tFile,
-                fileUpdateContent
-            );
 
-            if (!fileWriteSuccess) {
-                return { success: false, error: "Failed to write to file metadata" };
-            }
+            let successStatus = true
+            let successStatusReason = ""    
 
+            await this.app.fileManager.processFrontMatter(tFile, (frontmatter) => {
 
-            return { success: true };
+                if (frontmatter && frontmatter[key]) {
+                    if (Array.isArray(frontmatter[key])) {
+                        fileStatusList = frontmatter[key];
+                    } else if (typeof frontmatter[key] === 'string') {
+                        fileStatusList = [frontmatter[key]];
+                    }
+                }
+
+                if (fileStatusList.includes(prefixedTagPath)) {
+                    fileStatusList = fileStatusList.filter(item => item !== prefixedTagPath);
+        
+
+                } else {
+                    fileStatusList.push(prefixedTagPath);
+                }
+
+                frontmatter[key] = fileStatusList
+
+            })
+
+            return { success: successStatus, error: successStatusReason };
         } catch (error) {
             console.error("Error in cycleBookmarked:", error);
             return { success: false, error };

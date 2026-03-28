@@ -278,20 +278,24 @@
     <div class="file-grid">
       <!-- Render child folders/tags -->
       {#each mainViewData.children as child}
-        <div class="item folder" role="button" tabindex="0" onclick={(e) => handleItemClick(e, handleFolderClick, child)}  ondblclick={(e) => { e.stopPropagation(); handleFolderDblClick(child); }} onkeydown={(e) => handleKeyDown(e, handleFolderDblClick, child)}>
+        <div class="item folder" role="button" tabindex="0" title="{child.path}" onclick={(e) => handleItemClick(e, handleFolderClick, child)}  ondblclick={(e) => { e.stopPropagation(); handleFolderDblClick(child); }} onkeydown={(e) => handleKeyDown(e, handleFolderDblClick, child)}>
           <div class="icon">📁</div>
           <div class="label">{child.name}</div>
-          <button class="action-button circle" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleActionButtonClickFolder(e, getFolderButtonColor(child) ,child.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button>
+          {#if currentPath !== ""}
+            <button class="action-button circle" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleActionButtonClickFolder(e, getFolderButtonColor(child) ,child.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button>
+          {/if}
         </div>
       {/each}
 
       <!-- Render files -->
       {#each mainViewData.files as file}
-        <div class="item file" role="button" tabindex="0" onclick={(e) => handleItemClick(e, handleFileClick, file)} ondblclick={(e) => { e.stopPropagation(); handleFileDblClick(file); }} onkeydown={(e) => handleKeyDown(e, handleFileDblClick, file)}>
+        <div class="item file" role="button" tabindex="0" title="{file.path}" onclick={(e) => handleItemClick(e, handleFileClick, file)} ondblclick={(e) => { e.stopPropagation(); handleFileDblClick(file); }} onkeydown={(e) => handleKeyDown(e, handleFileDblClick, file)}>
           <div class="icon">📄</div>
           <div class="label">{file.name}</div>
-          <!-- <button class="action-button circle" class:hidden={await getFileButtonColor(file) === ""} style="background-color: {getColorForName( await getFileButtonColor(file))}" onclick={(e) => handleActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button> -->
-          <button class="action-button circle" class:hidden={!fileButtonColors[file.path]} style="background-color: {fileButtonColors[file.path] ?? ''}" onclick={(e) => handleActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button>
+          {#if currentPath !== ""}
+            <!-- <button class="action-button circle" class:hidden={await getFileButtonColor(file) === ""} style="background-color: {getColorForName( await getFileButtonColor(file))}" onclick={(e) => handleActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button> -->
+            <button class="action-button circle" class:hidden={!fileButtonColors[file.path]}  style="background-color: {fileButtonColors[file.path] ?? ''}" onclick={(e) => handleActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button>
+          {/if} 
         </div>
       {/each}
     </div>
@@ -428,10 +432,5 @@
 
     opacity: 0;
   }
-
-
-
-
-
 
 </style>

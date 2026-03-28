@@ -157,6 +157,18 @@
         metadataViewData = await model.getrightSidebarData(focusedObjectParent, focusedObjectType, focusedObjectPath);
     }
 
+    function doesNotStartWithPluginPrefixes(
+    value: string,
+    prefixes: string[] = ["🏷-Legend-"]
+    ): boolean {
+        const lowerValue = value.toLowerCase();
+
+        return !prefixes.some(prefix =>
+            lowerValue.startsWith(prefix.toLowerCase())
+        );
+    }
+
+
 </script>
 
 
@@ -342,10 +354,12 @@
       <div class="metadata-section">
           <h5 class="metadata-title">File Metadata</h5>
           {#each filteredMetadata as [key, value]}
+            {#if doesNotStartWithPluginPrefixes(key)}
               <div class="metadata-field">
                   <span class="field-label">{formatFieldName(key)}:</span>
                   <span class="field-value">{value || 'N/A'}</span>
               </div>
+            {/if}
           {/each}
       </div>
       {/if}
