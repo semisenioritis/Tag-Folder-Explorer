@@ -168,9 +168,9 @@
 
   async function handleActionButtonClickFolder(event: MouseEvent, currColor:string, tagPath:string ) {
     event.stopPropagation();
-    console.log(currColor)
-    console.log(tagPath);
-    console.log("changing color")
+    // console.log(currColor)
+    // console.log(tagPath);
+    // console.log("changing color")
     const newColor = await controller?.cycleLegendForFolder(currColor, tagPath)
 
     // Update local reactive data
@@ -202,12 +202,12 @@
         throw new Error("controller is not initialized");
       }
       const status = await controller.readLegendStatusOfFile(file.path, currentPath);
-      console.log("- fn getFileButtonColor")
-      console.log("- file.name")
-      console.log(file.name)
-      console.log("- status.color")
-      console.log(status.color)
-      console.log("------------------")
+      // console.log("- fn getFileButtonColor")
+      // console.log("- file.name")
+      // console.log(file.name)
+      // console.log("- status.color")
+      // console.log(status.color)
+      // console.log("------------------")
       return status.color || "";
     } catch (e) {
       return "";

@@ -2599,12 +2599,12 @@ export class Orchestrator {
                     fileStatusList = [fileMetadata[key]];
                 }
             }
-            console.log("- fn addLegendToFile")
-            console.log("fileMetadata")
+            // console.log("- fn addLegendToFile")
+            // console.log("fileMetadata")
             // console.log(fileMetadata)
-            console.log(JSON.parse(JSON.stringify(fileMetadata)))
-            console.log("fileMetadata[key]")
-            console.log(structuredClone(fileMetadata[key]))
+            // console.log(JSON.parse(JSON.stringify(fileMetadata)))
+            // console.log("fileMetadata[key]")
+            // console.log(structuredClone(fileMetadata[key]))
             // Construct prefixed and locked tag paths
             const prefixedTagPath = `🏠/${tagPath}`;
             const lockedTagPath = `🔒/ ${tagPath}`;
@@ -2695,15 +2695,15 @@ export class Orchestrator {
                 }
             }
 
-            console.log("- fn removeLegendFromFile")
-            console.log("- fileStatusList")
-            console.log(fileStatusList)
-            console.log("- key")
-            console.log(key)
+            // console.log("- fn removeLegendFromFile")
+            // console.log("- fileStatusList")
+            // console.log(fileStatusList)
+            // console.log("- key")
+            // console.log(key)
 
-            console.log("- fileMetadata before removal")
+            // console.log("- fileMetadata before removal")
             // console.log(fileMetadata)
-            console.log(JSON.parse(JSON.stringify(fileMetadata)))
+            // console.log(JSON.parse(JSON.stringify(fileMetadata)))
 
             
             
@@ -2733,8 +2733,8 @@ export class Orchestrator {
             // Write new status list to file
             const fileUpdateContent: Record<string, any> = {};
             fileUpdateContent[key] = fileStatusList;
-            console.log("- fileUpdateContent")
-            console.log(fileUpdateContent)
+            // console.log("- fileUpdateContent")
+            // console.log(fileUpdateContent)
             
             const fileWriteSuccess = await fileEditor.replaceMetadataSection(
                 this.app,
@@ -2744,10 +2744,10 @@ export class Orchestrator {
 
 
             const fileMetadata2 = await fileLeaf.fileMetadata();
-            console.log("- fileMetadata after removal")
+            // console.log("- fileMetadata after removal")
             // console.log(fileMetadata2)
-            console.log(JSON.parse(JSON.stringify(fileMetadata2)))
-            console.log("🔵🔴")
+            // console.log(JSON.parse(JSON.stringify(fileMetadata2)))
+            // console.log("🔵🔴")
             if (!fileWriteSuccess) {
                 return { success: false, error: "Failed to write to file metadata" };
             }
@@ -4910,7 +4910,7 @@ export class Orchestrator {
     ): Promise<{ color: string; status: string }>  {
         try {
 
-            console.log("- fn readLegendStatusOfFile")
+            // console.log("- fn readLegendStatusOfFile")
             if (!this.treeRoot) {
                 console.warn("treeRoot not initialized in readLegendStatusOfFile");
                 return { color: "" , status: "notlocked" };
@@ -4938,10 +4938,10 @@ export class Orchestrator {
                 return { color: "", status: "notlocked"  };
             }
 
-            console.log("- fileMetadata")
-            console.log(fileMetadata)
-            console.log("- prefixedTagPath")
-            console.log(prefixedTagPath)
+            // console.log("- fileMetadata")
+            // console.log(fileMetadata)
+            // console.log("- prefixedTagPath")
+            // console.log(prefixedTagPath)
 
             // Key list for all legend colors
             const legendKeys = [
@@ -4956,8 +4956,8 @@ export class Orchestrator {
             // Extract all 6 fields and check for matches
             for (const { key, color } of legendKeys) {
                 const value = fileMetadata[key];
-                console.log("- value of the key ", key)
-                console.log(value)
+                // console.log("- value of the key ", key)
+                // console.log(value)
                 if (!value) continue;
 
                 // Convert to array if needed
@@ -4971,10 +4971,10 @@ export class Orchestrator {
                 // Check each element in array
                 for (const element of statusArray) {
                     if (element === prefixedTagPath) {
-                        console.log("- the matched element")
-                        console.log(element)
-                        console.log("- prefixedTagPath")
-                        console.log(prefixedTagPath)
+                        // console.log("- the matched element")
+                        // console.log(element)
+                        // console.log("- prefixedTagPath")
+                        // console.log(prefixedTagPath)
                         return { color, status: "notlocked" };
                     }
                     if (element === lockedTagPath) {

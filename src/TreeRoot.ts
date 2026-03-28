@@ -847,7 +847,7 @@ export class TreeRoot implements ITreeRoot {
                 await this.processVaultFolder(child);
             } else if (child instanceof TFile) {
                 // Process file
-                this.processFile(child);
+                await this.processFile(child);
             }
         }
     }

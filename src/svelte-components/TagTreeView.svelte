@@ -48,6 +48,10 @@
       ? (initialTreeData as TreeData) 
       : (model.getleftSidebarTree().tree as TreeData)
   );
+  // console.log("test")
+  // console.log(treeData) 
+  // console.log($state.snapshot(treeData));
+  // $inspect(treeData)
   let treeVersion = $state<number>(initialVersion);
   let expandedTags = $state<Set<string>>(new Set())
 
