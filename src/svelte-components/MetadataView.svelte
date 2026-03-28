@@ -159,7 +159,7 @@
 
     function doesNotStartWithPluginPrefixes(
     value: string,
-    prefixes: string[] = ["🏷-Legend-"]
+    prefixes: string[] = ["🏷-Legend-", "Description"]
     ): boolean {
         const lowerValue = value.toLowerCase();
 

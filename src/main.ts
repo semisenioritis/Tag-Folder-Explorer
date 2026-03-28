@@ -258,6 +258,19 @@ class TagExplorerView extends ItemView {
 export default class TagFolderPlugin extends Plugin {
 
 	settings: TagFolderPluginSettings = DEFAULT_SETTINGS;
+	
+  /**
+   * Shared runtime flag for all Tag Explorer view instances.
+   * This is process-wide state for this plugin instance (per vault session).
+   * It indicates if any tree/system is in an inconsistent state. 
+   * Each function reads this flag before it proceeds.
+   * If the flag is false, it proceeds.
+   * It first makes the flag true, ensureing that it is locked.
+   * Then it completes its own function.
+   * Once it is done or it encounters an error and is about to return, it resets the flag to false
+   * This prevents race conditions. 
+   */
+  private tagExplorerInconsistentState: boolean = false;
 
 
 	treeRoot: TreeRoot | null = null;
@@ -369,6 +382,21 @@ export default class TagFolderPlugin extends Plugin {
 
     await this.openInRightSidebar("https://app.raindrop.io/my/68548149");
   }
+
+  /**
+   * Read the shared Tag Explorer flag.
+   */
+  getTagExplorerInconsistentStateFlag(): boolean {
+    return this.tagExplorerInconsistentState;
+  }
+
+  /**
+   * Update the shared Tag Explorer flag.
+   */
+  setTagExplorerInconsistentStateFlag(value: boolean): void {
+    this.tagExplorerInconsistentState = value;
+  }
+
   
   /**
    * Register a TagExplorerView instance with the plugin for tracking
