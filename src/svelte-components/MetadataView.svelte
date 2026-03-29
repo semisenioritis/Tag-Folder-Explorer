@@ -159,7 +159,7 @@
 
     function doesNotStartWithPluginPrefixes(
     value: string,
-    prefixes: string[] = ["🏷-Legend-", "Description"]
+    prefixes: string[] = ["🏷-Legend-", "Description", "🏷-Pinned" ]
     ): boolean {
         const lowerValue = value.toLowerCase();
 
@@ -266,28 +266,33 @@
             </div>
 
 
-            {#if metadataViewData.legend}
-            <div class="metadata-section">
-                <h5 class="metadata-title">Legend</h5>
-                <div class="legend-list">
-                    {#each Object.entries(metadataViewData.legend) as [color, label]}
-                        <div class="legend-item">
-                            <span class="legend-icon" data-legend-color="{color}">
-                                <span class="circle" style="background-color: {getColorForName(color)};" ></span>
-                            </span>
-                            <!-- <span class="legend-label">{label}</span> -->
-                            <textarea
-                                placeholder="Legend Label"
-                                class="legend-label"
-                                bind:value={metadataViewData.legend[color]}
-                                onchange={handleLegendUpdate}
 
-                            ></textarea>
-                        </div>
-                    {/each}
+
+            {#if currentPath != ""}
+                {#if metadataViewData.legend}
+                <div class="metadata-section">
+                    <h5 class="metadata-title">Legend</h5>
+                    <div class="legend-list">
+                        {#each Object.entries(metadataViewData.legend) as [color, label]}
+                            <div class="legend-item">
+                                <span class="legend-icon" data-legend-color="{color}">
+                                    <span class="circle" style="background-color: {getColorForName(color)};" ></span>
+                                </span>
+                                <!-- <span class="legend-label">{label}</span> -->
+                                <textarea
+                                    placeholder="Legend Label"
+                                    class="legend-label"
+                                    bind:value={metadataViewData.legend[color]}
+                                    onchange={handleLegendUpdate}
+
+                                ></textarea>
+                            </div>
+                        {/each}
+                    </div>
                 </div>
-            </div>
+                {/if}
             {/if}
+
         </div>
         {:else}
         <div class="empty-state">

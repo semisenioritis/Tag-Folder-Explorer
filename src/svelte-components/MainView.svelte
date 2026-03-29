@@ -166,7 +166,7 @@
     handler(item);
   }
 
-  async function handleActionButtonClickFolder(event: MouseEvent, currColor:string, tagPath:string ) {
+  async function handleLegendActionButtonClickFolder(event: MouseEvent, currColor:string, tagPath:string ) {
     event.stopPropagation();
     // console.log(currColor)
     // console.log(tagPath);
@@ -177,7 +177,7 @@
     recomputeMainView()
 
   }
-  async function handleActionButtonClickFile(event: MouseEvent, filePath:string ) {
+  async function handleLegendActionButtonClickFile(event: MouseEvent, filePath:string ) {
     event.stopPropagation();
     await controller?.cycleLegendOfFile(filePath,currentPath)
 
@@ -232,12 +232,70 @@
     }
   }
 
+  async function handlePinnedActionButtonClickFolder(event: MouseEvent, tagPath:string ) {
+    event.stopPropagation();
+
+    const newColor = await controller?.cyclePinnedOfFolder(tagPath)
+
+    // Update local reactive data
+    recomputeMainView()
+
+  }
+
+  async function handlePinnedActionButtonClickFile(event: MouseEvent, filePath:string ) {
+    event.stopPropagation();
+    await controller?.cyclePinnedOfFile(filePath,currentPath)
+
+    // recomputeMainView()
+    // await new Promise(r => setTimeout(r, 3000));
+
+
+    // After the action, re-fetch just this file's pinned status
+    const file = mainViewData!.files.find(f => f.path === filePath);
+    if (file) {
+      filePinnedStatuses[filePath] = await getFilePinnedStatus(file);
+    }
+    
+  }
+
+  function getFolderPinnedStatus(folder: frontendFolder): boolean {
+    try {
+      if (!controller) {
+        throw new Error("model is not initialized");
+      }
+      // console.log("getting color for ",folder)
+      const status = controller.readPinnedStatusOfFolder(folder.path);
+      // console.log(status)
+      // console.log("legend",status.legend)
+      return status.pinned || false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  async function getFilePinnedStatus(file: frontendFile): Promise<boolean> {
+
+    try {
+      if (!controller) {
+        throw new Error("controller is not initialized");
+      }
+      const status = await controller.readPinnedStatusOfFile(file.path, currentPath);
+
+      return status.pinned || false;
+    } catch (e) {
+      return false;
+    }
+
+  }
     function recomputeMainView(): void {
         refreshKey++
     }
 
 
   let fileButtonColors = $state<Record<string, string>>({});
+  let filePinnedStatuses = $state<Record<string, boolean>>({});
+
+
 
 
   // Load all colors initially
@@ -250,8 +308,25 @@
     console.log(fileButtonColors)
   }
 
+  // Load all pinned statuses initially
+  async function loadFilePinnedStatuses() {
+    const entries = await Promise.all(
+      mainViewData!.files.map(async (file) => [file.path, await getFilePinnedStatus(file)])
+    );
+    filePinnedStatuses = Object.fromEntries(entries);
+    console.log("🟣🟣🟣🟣🟣🟣")
+    console.log(filePinnedStatuses)
+  }
+
+  async function loadFileData(){
+      await loadFileColors();
+      await loadFilePinnedStatuses();
+  }
+
   $effect(() => {
-    if (mainViewData!.files) loadFileColors();
+    if (mainViewData!.files) {
+      loadFileData();
+    }
 
   });
 
@@ -282,8 +357,12 @@
           <div class="icon">📁</div>
           <div class="label">{child.name}</div>
           {#if currentPath !== ""}
-            <button class="action-button circle" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleActionButtonClickFolder(e, getFolderButtonColor(child) ,child.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button>
+            <button class="legend-button circle" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleLegendActionButtonClickFolder(e, getFolderButtonColor(child) ,child.path)} ondblclick={(e) => e.stopPropagation()} title="Legend: {getFolderButtonColor(child)}"></button>
           {/if}
+            
+          <button class="top-left square"   class:pinned={getFolderPinnedStatus(child) == true} onclick={(e) => handlePinnedActionButtonClickFolder(e, child.path)} ondblclick={(e) => e.stopPropagation()} title="Pinned">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" style="opacity: 70%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
+          </button>
         </div>
       {/each}
 
@@ -293,9 +372,14 @@
           <div class="icon">📄</div>
           <div class="label">{file.name}</div>
           {#if currentPath !== ""}
-            <!-- <button class="action-button circle" class:hidden={await getFileButtonColor(file) === ""} style="background-color: {getColorForName( await getFileButtonColor(file))}" onclick={(e) => handleActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button> -->
-            <button class="action-button circle" class:hidden={!fileButtonColors[file.path]}  style="background-color: {fileButtonColors[file.path] ?? ''}" onclick={(e) => handleActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button>
+            <!-- <button class="legend-button circle" class:hidden={await getFileButtonColor(file) === ""} style="background-color: {getColorForName( await getFileButtonColor(file))}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button> -->
+            <button class="legend-button circle" class:hidden={!fileButtonColors[file.path]}  style="background-color: {fileButtonColors[file.path] ?? ''}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Legend: {fileButtonColors[file.path]}"></button>
           {/if} 
+
+          <button class="top-left square" class:pinned={filePinnedStatuses[file.path] === true} onclick={(e) => handlePinnedActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Pinned">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" style="opacity: 70%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
+          </button>
+
         </div>
       {/each}
     </div>
@@ -383,7 +467,7 @@
   word-break:break-word;
 }
 
-.action-button {
+.legend-button {
   position: absolute;
   bottom: 4px;
   right: 4px;
@@ -396,12 +480,23 @@
   cursor: pointer;
 
 }
+.top-left{
+  position: absolute;
+  top: 4px;
+  left: 4px;
 
-.item:hover .action-button {
+  padding: 0;
+  /* background: var(--background-secondary); */
+  cursor: pointer;
+  opacity: 0%;
+
+}
+
+.item:hover .legend-button {
   display: block;
 }
 
-.action-button:hover {
+.legend-button:hover {
   background: var(--background-secondary-alt);
 }
 
@@ -424,13 +519,35 @@
   transition: opacity 0.3s ease; /* smooth fade */
 }
 
-  .item:hover .circle {
-    opacity: 1;
-  }
+.item:hover .circle {
+  opacity: 1;
+}
 
-  .hidden {
 
-    opacity: 0;
-  }
+.square {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  /* border: 1px solid #333; */
+  transition: opacity 0.3s ease; /* smooth fade */
+  box-shadow: none;
+  background: transparent;
+}
 
+.item:hover .square {
+  opacity: 1;
+}
+
+.hidden {
+
+  opacity: 0;
+}
+
+.pinned{
+  opacity: 1;
+
+}
+.pinned svg {
+  stroke: var(--color-accent);
+}
 </style>
