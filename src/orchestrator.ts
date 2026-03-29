@@ -6,6 +6,7 @@ import type { ITagNode, IFileLeaf } from "./interfaces";
 
 import TagFolderPlugin from "./main";
 
+import { inconsistencyFlag } from './store';
 
 /**
  * Orchestrator class - coordinates all write operations between file system and tree structure
@@ -42,6 +43,10 @@ export class Orchestrator {
      */
     setInconsistencyFlag(value: boolean): void {
         this.plugin.setTagExplorerInconsistentStateFlag(value);
+        // Defer the store update to avoid Svelte state_unsafe_mutation during render
+        queueMicrotask(() => {
+            inconsistencyFlag.set(value);
+        });
     }
 
 
@@ -193,6 +198,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in createFileInTagFolder:", error);
             return { success: false, error };
         }
@@ -286,6 +292,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in createFolderInFolder:", error);
             return { success: false, error };
         }
@@ -369,6 +376,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in renameFile:", error);
             return { success: false, error };
         }
@@ -587,6 +595,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in renameFolder:", error);
             return { success: false, error };
         }
@@ -717,6 +726,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in removeFileFromFolder:", error);
             return { success: false, error };
         }
@@ -896,6 +906,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in removeFolderFromFolder:", error);
             return { success: false, error };
         }
@@ -990,6 +1001,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in hardDeleteFile:", error);
             return { success: false, error };
         }
@@ -1319,6 +1331,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in moveFolderToFolder:", error);
             return { success: false, error };
         }
@@ -1485,6 +1498,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in moveFileToFolder:", error);
             return { success: false, error };
         }
@@ -1592,6 +1606,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in copyFileToFolder:", error);
             return { success: false, error };
         }
@@ -1652,6 +1667,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in updateFolderDescription:", error);
             return { success: false, error };
         }
@@ -1712,6 +1728,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in updateFolderLegend:", error);
             return { success: false, error };
         }
@@ -1779,6 +1796,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in updateFileDescription:", error);
             return { success: false, error };
         }
@@ -2115,6 +2133,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in duplicateFolder:", error);
             return { success: false, error };
         }
@@ -2473,6 +2492,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in recreateFolder:", error);
             return { success: false, error };
         }
@@ -2767,6 +2787,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in pasteFilesAndFolders:", error);
             return { success: false, error };
         }
@@ -2873,6 +2894,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in addToLegend:", error);
             return { success: false, error };
         }
@@ -2996,6 +3018,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in removeFromLegend:", error);
             return { success: false, error };
         }
@@ -3191,6 +3214,7 @@ export class Orchestrator {
             }
 
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in cycleLegend:", error);
             return { success: false, error };
         }
@@ -3297,6 +3321,7 @@ export class Orchestrator {
             }
 
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in addToLegendLock:", error);
             return { success: false, error };
         }
@@ -3404,6 +3429,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in removeFromLegendLock:", error);
             return { success: false, error };
         }
@@ -3501,6 +3527,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in addToPinned:", error);
             return { success: false, error };
         }
@@ -3603,6 +3630,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in removeFromPinned:", error);
             return { success: false, error };
         }
@@ -3690,6 +3718,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in cyclePinned:", error);
             return { success: false, error };
         }
@@ -3789,6 +3818,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in addToPinnedLock:", error);
             return { success: false, error };
         }
@@ -3890,6 +3920,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in removeFromPinnedLock:", error);
             return { success: false, error };
         }
@@ -4004,6 +4035,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in addToPinnedForFolder:", error);
             return { success: false, error };
         }
@@ -4124,6 +4156,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in removeFromPinnedForFolder:", error);
             return { success: false, error };
         }
@@ -4244,6 +4277,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in cyclePinnedForFolder:", error);
             return { success: false, error };
         }
@@ -4363,6 +4397,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in addToPinnedLockForFolder:", error);
             return { success: false, error };
         }
@@ -4459,6 +4494,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in removeFromPinnedLockForFolder:", error);
             return { success: false, error };
         }
@@ -4548,6 +4584,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in addToBookmarked:", error);
             return { success: false, error };
         }
@@ -4644,6 +4681,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in removeFromBookmarked:", error);
             return { success: false, error };
         }
@@ -4722,6 +4760,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in cycleBookmarked:", error);
             return { success: false, error };
         }
@@ -4803,6 +4842,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in addToBookmarkedForFolder:", error);
             return { success: false, error };
         }
@@ -4886,6 +4926,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in removeFromBookmarkedForFolder:", error);
             return { success: false, error };
         }
@@ -4974,6 +5015,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in cycleBookmarkedForFolder:", error);
             return { success: false, error };
         }
@@ -5044,6 +5086,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in addLegendToFolder:", error);
             return { success: false, error };
         }
@@ -5112,6 +5155,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in removeLegendFromFolder:", error);
             return { success: false, error };
         }
@@ -5226,6 +5270,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in cycleLegendForFolder:", error);
             return { success: false, error };
         }
@@ -5296,6 +5341,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in addLockedLegendToFolder:", error);
             return { success: false, error };
         }
@@ -5358,6 +5404,7 @@ export class Orchestrator {
                 return { success: false, error: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in removeLegendLockFromFolder:", error);
             return { success: false, error };
         }
@@ -5467,6 +5514,7 @@ export class Orchestrator {
                 return { color: "", status: "Inconsistency flag is true" }
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in readLegendStatus:", error);
             return { color: "" , status: "notlocked" };
         }
@@ -5554,6 +5602,7 @@ export class Orchestrator {
                 return { pinned: false}
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in readPinnedStatus:", error);
             return { pinned: false };
         }
@@ -5627,6 +5676,7 @@ export class Orchestrator {
                 return { bookmarked: false };
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in readBookmarkedStatus:", error);
             return { bookmarked: false };
         }
@@ -5691,6 +5741,7 @@ export class Orchestrator {
                 return { legend: "", locked: false };
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in readLegendStatusForFolder:", error);
             return { legend: "", locked: false };
         }
@@ -5743,6 +5794,7 @@ export class Orchestrator {
                 return { pinned: false, locked: false };
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in readPinnedStatusForFolder:", error);
             return { pinned: false, locked: false };
         }
@@ -5794,6 +5846,7 @@ export class Orchestrator {
                 return { bookmarked: false }; 
             }
         } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in readBookmarkedStatusForFolder:", error);
             return { bookmarked: false };
         }
