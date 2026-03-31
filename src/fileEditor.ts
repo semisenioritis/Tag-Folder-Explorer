@@ -363,6 +363,10 @@ export async function removeTagFromFileYaml(
 ): Promise<boolean> {
 	try {
 		// Check if the tag is valid
+
+		if (tag === ""){
+			return true
+		}
 		if (!checkIfTagIsValid(tag)) {
 			return false;
 		}

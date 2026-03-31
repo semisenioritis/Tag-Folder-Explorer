@@ -1062,7 +1062,7 @@ export class Orchestrator {
                 // Validate that mainfoldertagpath is not an ancestor of destinationfoldertagpath
                 // Check if destination path starts with main path
                 if (destinationFolderTagPath.startsWith(mainFolderTagPath + '/') || 
-                    destinationFolderTagPath === mainFolderTagPath) {
+                    destinationFolderTagPath === mainFolderTagPath || destinationFolderTagPath === sourceFolderTagPath || mainFolderTagPath === sourceFolderTagPath) {
                     if (owner){this.setInconsistencyFlag(false)}
                     return { success: false, error: "Cannot move folder into itself or its descendants" };
                 }
@@ -1134,17 +1134,22 @@ export class Orchestrator {
                     
 
                     // Call updateMeta function with jsonobject and replace
-                    const updateSuccessSource = sourceTagNode.updateMeta(jsonObject, 'replace');
-                    if (!updateSuccessSource) {
-                        if (owner){this.setInconsistencyFlag(false)}
-                        return { success: false, error: "Failed to update folder metadata" };
+                    if(sourceTagNode.getPath() != ""){
+                        const updateSuccessSource = sourceTagNode.updateMeta(jsonObject, 'replace');
+                        if (!updateSuccessSource) {
+                            if (owner){this.setInconsistencyFlag(false)}
+                            return { success: false, error: "Failed to update folder metadata" };
+                        }
                     }
 
-                    // Call updateMeta function with jsonobject and replace
-                    const updateSuccessDestination = destinationTagNode.updateMeta(jsonObject, 'replace');
-                    if (!updateSuccessDestination) {
-                        if (owner){this.setInconsistencyFlag(false)}
-                        return { success: false, error: "Failed to update folder metadata" };
+                    if(destinationTagNode.getPath() != ""){
+
+                        // Call updateMeta function with jsonobject and replace
+                        const updateSuccessDestination = destinationTagNode.updateMeta(jsonObject, 'replace');
+                        if (!updateSuccessDestination) {
+                            if (owner){this.setInconsistencyFlag(false)}
+                            return { success: false, error: "Failed to update folder metadata" };
+                        }
                     }
 
                     // BFS traversal - Update all files
@@ -1311,11 +1316,20 @@ export class Orchestrator {
                     (mainTagNode as any).parent = destinationTagNode;
                     
                     // In source-tagnode: remove main-tagnode from children property
-                    const sourceChildren = sourceTagNode.getChildren();
-                    delete sourceChildren[finalMainName];
+                    if (sourceTagNode === this.treeRoot.getNode("")) {
+                        this.treeRoot.getRootTags().delete(mainTagNode);
+                    } else {
+                        const sourceChildren = sourceTagNode.getChildren();
+                        delete sourceChildren[finalMainName];
+                    }
                     
                     // In destination-tagnode: add main-tagnode to children property
-                    destinationChildren[finalMainName] = mainTagNode;
+                    if (destinationTagNode === this.treeRoot.getNode("")) {
+                        this.treeRoot.getRootTags().add(mainTagNode);
+                    } else {
+                        const destinationChildren = destinationTagNode.getChildren();
+                        destinationChildren[finalMainName] = mainTagNode;
+                    }
 
                     // Invalidate cache
                     this.treeRoot.invalidateCache();
@@ -1357,7 +1371,6 @@ export class Orchestrator {
     async moveFileToFolder(
         sourceFolderTagPath: string,
         destinationFolderTagPath: string,
-        fileName: string,
         filePath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
@@ -1386,7 +1399,12 @@ export class Orchestrator {
                     return { success: false, error: `Destination tag node not found for path: ${destinationFolderTagPath}` };
                 }
 
-
+                // Validate that mainfoldertagpath is not an ancestor of destinationfoldertagpath
+                // Check if destination path starts with main path
+                if (destinationFolderTagPath === sourceFolderTagPath) {
+                    if (owner){this.setInconsistencyFlag(false)}
+                    return { success: false, error: "Cannot move file to same parent folder" };
+                }
 
                 // ---(Physical File Edits)---
                     const tFile = fileLeaf.getTFile();
@@ -1455,10 +1473,12 @@ export class Orchestrator {
                     
 
                     // Call updateMeta function with jsonobject and replace
-                    const updateSuccessSource = sourceTagNode.updateMeta(jsonObject, 'replace');
-                    if (!updateSuccessSource) {
-                        if (owner){this.setInconsistencyFlag(false)}
-                        return { success: false, error: "Failed to update folder metadata" };
+                    if(sourceTagNode.getPath() != ""){
+                        const updateSuccessSource = sourceTagNode.updateMeta(jsonObject, 'replace');
+                        if (!updateSuccessSource) {
+                            if (owner){this.setInconsistencyFlag(false)}
+                            return { success: false, error: "Failed to update folder metadata" };
+                        }
                     }
 
                     // Call updateMeta function with jsonobject and replace
@@ -1472,11 +1492,12 @@ export class Orchestrator {
 
                 // ---(Virtual Edits)---
                     // Delete fileleaf reference from sourcetagnode
-                    const removeFromSourceSuccess = sourceTagNode.removeFile(filePath);
-                    if (!removeFromSourceSuccess) {
-                        console.warn(`Failed to remove file from source tag node: ${sourceFolderTagPath}`);
-                    }
-
+                    // if(sourceTagNode.getPath() != ""){
+                        const removeFromSourceSuccess = sourceTagNode.removeFile(filePath);
+                        if (!removeFromSourceSuccess) {
+                            console.warn(`Failed to remove file from source tag node: ${sourceFolderTagPath}`);
+                        }
+                    // }
                     // Append fileleaf reference to destinationtagnode
                     const addToDestSuccess = destinationTagNode.addFileLeaftoFiles(fileLeaf);
                     if (!addToDestSuccess) {
@@ -1486,9 +1507,8 @@ export class Orchestrator {
 
                     // Invalidate cache
                     this.treeRoot.invalidateCache();
-                // ---(Virtual Edits End)---
-
-                // ---(Frontend Refresh)---
+                    // ---(Virtual Edits End)---
+                    // ---(Frontend Refresh)---
                     this.plugin.broadcastTreeUpdate();
                 // ---(Frontend Refresh End)---
                 
@@ -2722,7 +2742,6 @@ export class Orchestrator {
                         await this.moveFileToFolder(
                             parent,
                             destinationTagPath,
-                            fileName,
                             filePath,
                             false
                         );

@@ -1144,6 +1144,7 @@ export class TreeRoot implements ITreeRoot {
                 name: node.getName(),
                 path: node.getPath(),
                 children: serializedChildren,
+                parentPath: node.getParent()?.getPath() ?? "",
                 files: Array.from(node.getFiles()).map(file => ({
                     name: file.getName(),
                     path: file.getPath()

@@ -26,6 +26,7 @@
   interface TagNodeData {
     name: string;
     path: string;
+    parentPath: string;
     children: TagNodeData[];
     files: FileData[];
     totalFileCount: number;
@@ -54,6 +55,7 @@
   // $inspect(treeData)
   let treeVersion = $state<number>(initialVersion);
   let expandedTags = $state<Set<string>>(new Set())
+  const ROOT_TAGS_NODE_PATH = '__root_tags__';
 
   /**
    * Update tree data - called when the backend broadcasts an update
@@ -115,15 +117,131 @@
 
 
 
+  function handleDragOverDisabled(event: DragEvent){
+    event.preventDefault(); // Necessary to allow dropping
+    if (event.dataTransfer) {
+
+      event.dataTransfer.dropEffect = 'none';
+    }
+  }
+
+  function handleDropDisabled(event: DragEvent, targetType: 'folder' | 'file', targetPath: string, parentPath:string) {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      try {
+        event.dataTransfer.dropEffect = 'none';
+      } catch (e) {
+        console.error("Failed to parse drag data:", e);
+      }
+    }
+  }
+
+  function handleDragStart(event: DragEvent, type: 'folder' | 'file', path: string, parentPath: string) {
+    if (event.dataTransfer) {
+      event.dataTransfer.setData('application/json', JSON.stringify({ type, path, parentPath }));
+      event.dataTransfer.effectAllowed = 'move';
+    }
+  }
+
+  function handleDragOver(event: DragEvent) {
+    event.preventDefault(); // Necessary to allow dropping
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+  }
+
+
+  function handleDrop(event: DragEvent, targetType: 'folder', targetPath: string, targetParentPath: string) {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      try {
+        const dataStr = event.dataTransfer.getData('application/json');
+        if (!dataStr) return;
+        
+        const data = JSON.parse(dataStr);
+        const sourcePath = data.path;
+        const sourceType = data.type;
+        const sourceParentPath = data.parentPath;
+        
+        // Trigger the requested function
+        onItemDrop(sourceType, sourcePath, sourceParentPath, targetType, targetPath, targetParentPath);
+      } catch (e) {
+        console.error("Failed to parse drag data:", e);
+      }
+    }
+  }
+
+  function handleRootDrop(event: DragEvent, targetType: 'folder', targetPath: string) {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      try {
+        const dataStr = event.dataTransfer.getData('application/json');
+        if (!dataStr) return;
+        
+        const data = JSON.parse(dataStr);
+        const sourcePath = data.path;
+        const sourceType = data.type;
+        const sourceParentPath = data.parentPath;
+        
+        if(sourceType == "folder"){
+          // Trigger the requested function
+          onItemDrop(sourceType, sourcePath, sourceParentPath, targetType, targetPath, "");
+        }
+
+      } catch (e) {
+        console.error("Failed to parse drag data:", e);
+      }
+    }
+  }
+
+
+
+  async function onItemDrop(
+    sourceType: 'folder' | 'file', 
+    sourcePath: string, 
+    sourceParentPath: string, 
+    targetType: 'folder', 
+    targetPath: string, 
+    targetParentPath: string) {
+
+
+    console.log(`Item dropped: source (${sourceType}) ${sourcePath}  ${sourceParentPath} -> target (${targetType}) ${targetPath}  ${targetParentPath} `);
+    // Add additional logic here to handle the drop action
+
+    if (sourceType === "file"){
+
+      await controller!.moveFileToFolder(sourceParentPath, targetPath, sourcePath)
+      // probably display a notice that somethign moved from somewhere to somewhere
+      
+    } else if (sourceType === "folder"){
+      
+      await controller!.moveFolderToFolder(sourceParentPath, targetPath, sourcePath)
+      // probably display a notice that somethign moved from somewhere to somewhere
+
+    }
+
+
+
+
+  }
+
+
+
+
 
 </script>
 
 {#snippet renderTagNode(node: TagNodeData, parentPath: string = '')}
   <!-- Tag/Folder Item using Obsidian's native classes -->
   <div class="tree-item nav-folder" class:is-collapsed={!isExpanded(node.path)}>
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div 
       class="tree-item-self nav-folder-title is-clickable mod-collapsible"
       data-path={node.path}
+      draggable="true"
+      ondragstart={(e) => handleDragStart(e, 'folder', node.path, parentPath)}
+      ondragover={handleDragOver}
+      ondrop={(e) => handleDrop(e, 'folder', node.path, parentPath)}
     >
       <div 
         class="tree-item-icon collapse-icon is-clickable" 
@@ -155,12 +273,17 @@
         {#if node.files && node.files.length > 0}
           {#each node.files as file}
             <div class="tree-item nav-file">
+              <!-- svelte-ignore a11y_no_static_element_interactions -->
               <div 
                 class="tree-item-self nav-file-title tappable is-clickable"
                 data-path={file.path}
                 role="button"
                 tabindex="0"
-                onclick={() => handleFileClick(file.path, node.path)}
+                draggable="true"
+                ondragstart={(e) => handleDragStart(e, 'file', file.path, node.path)}
+                ondragover={handleDragOver}
+                ondrop={(e) => handleDrop(e, 'folder', node.path, node.parentPath)}
+                ondblclick={() => handleFileClick(file.path, node.path)}
                 onkeydown={(e) => e.key === 'Enter' && handleFileClick(file.path, node.path)}
               >
                 <div class="tree-item-inner nav-file-title-content">{file.name}</div>
@@ -183,9 +306,36 @@
 <!-- Tag Tree using Obsidian's native classes -->
 {#if treeData && treeData.rootTags}
   <div class="nav-files-container node-insert-event">
-    {#each treeData.rootTags as tagNode}
-      {@render renderTagNode(tagNode)}
-    {/each}
+    <div class="tree-item nav-folder" class:is-collapsed={!isExpanded(ROOT_TAGS_NODE_PATH)}>
+      <div 
+        class="tree-item-self nav-folder-title is-clickable mod-collapsible"
+        data-path={""}
+        role="button"
+        tabindex="0"
+        ondragover={handleDragOver}
+        ondrop={(e) => handleRootDrop(e, 'folder', "")}
+        onclick={() => toggleTag(ROOT_TAGS_NODE_PATH)}
+        onkeydown={(e) => e.key === 'Enter' && toggleTag(ROOT_TAGS_NODE_PATH)}
+      >
+        <div class="tree-item-icon collapse-icon" class:is-collapsed={!isExpanded(ROOT_TAGS_NODE_PATH)}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle">
+            <path d="M3 8L12 17L21 8"></path>
+          </svg>
+        </div>
+        <div class="tree-item-inner nav-folder-title-content">Tags</div>
+        <div class="tree-item-flair-outer">
+          <span class="tree-item-flair">{treeData.rootTags.length}</span>
+        </div>
+      </div>
+
+      {#if isExpanded(ROOT_TAGS_NODE_PATH)}
+        <div class="tree-item-children nav-folder-children">
+          {#each treeData.rootTags as tagNode}
+            {@render renderTagNode(tagNode)}
+          {/each}
+        </div>
+      {/if}
+    </div>
     
     {#if treeData.untaggedFiles && treeData.untaggedFiles.length > 0}
       <!-- Untagged Files as a special folder -->
@@ -213,14 +363,18 @@
           <div class="tree-item-children nav-folder-children">
             {#each treeData.untaggedFiles as file}
               <div class="tree-item nav-file">
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div 
                   class="tree-item-self nav-file-title tappable is-clickable"
-
                   data-path={file.path}
                   role="button"
                   tabindex="0"
-                onclick={() => handleFileClick(file.path, '')}
-                onkeydown={(e) => e.key === 'Enter' && handleFileClick(file.path, '__untagged__')}
+                  draggable="true"
+                  ondragstart={(e) => handleDragStart(e, 'file', file.path, "")}
+                  ondragover={handleDragOverDisabled}
+                  ondrop={(e) => handleDropDisabled(e, 'file', file.path, "")}
+                  ondblclick={() => handleFileClick(file.path, '')}
+                  onkeydown={(e) => e.key === 'Enter' && handleFileClick(file.path, '__untagged__')}
                 >
                   <div class="tree-item-inner nav-file-title-content">{file.name}</div>
                 </div>

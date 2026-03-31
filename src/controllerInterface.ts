@@ -96,13 +96,11 @@ export class ControllerInterface {
     async moveFileToFolder(
         sourceFolderTagPath: string,
         destinationFolderTagPath: string,
-        fileName: string,
         filePath: string
     ): Promise<{ success: boolean; error?: any }> {
         return await this.orchestrator.moveFileToFolder(
             sourceFolderTagPath,
             destinationFolderTagPath,
-            fileName,
             filePath
         );
     }
