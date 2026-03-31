@@ -290,6 +290,44 @@
 
 
 
+  async function onItemDrop(
+    sourceType: 'folder' | 'file', 
+    sourcePath: string, 
+    sourceParentPath: string, 
+    targetType: 'folder', 
+    targetPath: string, 
+    targetParentPath: string) {
+
+
+    console.log(`Item dropped: source (${sourceType}) ${sourcePath}  ${sourceParentPath} -> target (${targetType}) ${targetPath}  ${targetParentPath} `);
+    // Add additional logic here to handle the drop action
+
+    if (sourceType === "file"){
+
+      if (targetPath == ""){
+        await controller!.removeFileFromFolder(sourceParentPath, sourcePath)
+
+      } else{
+        await controller!.moveFileToFolder(sourceParentPath, targetPath, sourcePath)
+        // probably display a notice that somethign moved from somewhere to somewhere
+
+      }
+
+      
+    } else if (sourceType === "folder"){
+      
+
+      await controller!.moveFolderToFolder(sourceParentPath, targetPath, sourcePath)
+      // probably display a notice that somethign moved from somewhere to somewhere
+
+    }
+
+
+
+
+  }
+
+
 
 </script>
 
@@ -331,6 +369,8 @@
         initialVersion={initialVersion}
         controller={controller}
         model={model}
+        onItemDrop = {onItemDrop}
+
       />
     </div>
   </div>
@@ -438,6 +478,8 @@
       model={model}
       colorDictionary = {colorDictionary}
       getColorForName = {getColorForName}
+      onItemDrop = {onItemDrop}
+
     />
 
     <BottomStatusBar

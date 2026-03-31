@@ -484,13 +484,15 @@ export class TreeRoot implements ITreeRoot {
                 // Get children with names and paths
                 const childrenData = Object.values(rootNode.getChildren()).map(child => ({
                     name: child.getName(),
-                    path: child.getPath()
+                    path: child.getPath(),
+                    parentPath: ""
                 }));
                 
                 // Get files with names and paths
                 const filesData = Array.from(rootNode.getFiles()).map(file => ({
                     name: file.getName(),
-                    path: file.getPath()
+                    path: file.getPath(),
+                    parentPath: ""
                 }));
                 
                 return {

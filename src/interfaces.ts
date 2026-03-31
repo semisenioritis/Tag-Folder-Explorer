@@ -726,12 +726,12 @@ export interface ISerializedTagNode {
     /**
      * Array of child tags with their names and paths
      */
-    children: { name: string; path: string }[];
+    children: { name: string; path: string, parentPath: string }[];
     
     /**
      * Array of files with their names and paths
      */
-    files: { name: string; path: string }[];
+    files: { name: string; path: string, parentPath: string}[];
 }
 
 

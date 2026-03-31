@@ -650,13 +650,17 @@ export class TagNode implements ITagNode {
         // Get children with names and paths
         const childrenData = Object.values(this.getChildren()).map(child => ({
             name: child.getName(),
-            path: child.getPath()
+            path: child.getPath(),
+            parentPath: child.getParent()?.getPath() ?? ""
         }));
         
         // Get files with names and paths
         const filesData = Array.from(this.getFiles()).map(file => ({
             name: file.getName(),
-            path: file.getPath()
+            path: file.getPath(),
+            parentPath: this.getPath() ?? ""
+
+
         }));
         
         return {

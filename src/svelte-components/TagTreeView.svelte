@@ -14,6 +14,7 @@
     initialVersion?: number;
     controller: ControllerInterface | null | undefined;
     model: ModelInterface | null | undefined;
+    onItemDrop: (sourceType: 'folder' | 'file', sourcePath: string, sourceParentPath: string, targetType: 'folder', targetPath: string, targetParentPath: string) => void;
   }
   
   // Type definitions
@@ -37,7 +38,7 @@
     untaggedFiles: FileData[];
   }
 
-  let { currentPath, onUpdate, onFocusChange, initialTreeData, initialVersion = 0, controller, model }:Props = $props();
+  let { currentPath, onUpdate, onFocusChange, initialTreeData, initialVersion = 0, controller, model, onItemDrop }:Props = $props();
   
   if (!model) {
       throw new Error("model is not initialized");
@@ -217,42 +218,6 @@
     }
   }
 
-
-  async function onItemDrop(
-    sourceType: 'folder' | 'file', 
-    sourcePath: string, 
-    sourceParentPath: string, 
-    targetType: 'folder', 
-    targetPath: string, 
-    targetParentPath: string) {
-
-
-    console.log(`Item dropped: source (${sourceType}) ${sourcePath}  ${sourceParentPath} -> target (${targetType}) ${targetPath}  ${targetParentPath} `);
-    // Add additional logic here to handle the drop action
-
-    if (sourceType === "file"){
-
-      if (targetPath == ""){
-        await controller!.removeFileFromFolder(sourceParentPath, sourcePath)
-
-      } else{
-        await controller!.moveFileToFolder(sourceParentPath, targetPath, sourcePath)
-        // probably display a notice that somethign moved from somewhere to somewhere
-
-      }
-
-      
-    } else if (sourceType === "folder"){
-      
-      await controller!.moveFolderToFolder(sourceParentPath, targetPath, sourcePath)
-      // probably display a notice that somethign moved from somewhere to somewhere
-
-    }
-
-
-
-
-  }
 
 
 

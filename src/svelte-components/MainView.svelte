@@ -15,10 +15,12 @@
     model: ModelInterface | null | undefined;
     colorDictionary:Record<string, string>
     getColorForName: (name: string) => string;
+    onItemDrop: (sourceType: 'folder' | 'file', sourcePath: string, sourceParentPath: string, targetType: 'folder', targetPath: string, targetParentPath: string) => void;
+
   }
 
 
-  let { currentPath, onUpdate, onFocusChange, refreshKey = 0, controller, model, colorDictionary, getColorForName }:Props = $props();
+  let { currentPath, onUpdate, onFocusChange, refreshKey = 0, controller, model, colorDictionary, getColorForName, onItemDrop}:Props = $props();
   // let { currentPath }: Props = $props();
 
 
@@ -331,13 +333,129 @@
   });
 
 
+  function handleDragOverDisabled(event: DragEvent){
+    event.preventDefault(); // Necessary to allow dropping
+    if (event.dataTransfer) {
+
+      event.dataTransfer.dropEffect = 'none';
+    }
+  }
+
+  function handleDropDisabled(event: DragEvent, targetType: 'folder' | 'file', targetPath: string, parentPath:string) {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      try {
+        event.dataTransfer.dropEffect = 'none';
+      } catch (e) {
+        console.error("Failed to parse drag data:", e);
+      }
+    }
+  }
+
+
+  function handleDragStart(event: DragEvent, type: 'folder' | 'file', path: string, parentPath: string) {
+    if (event.dataTransfer) {
+      event.dataTransfer.setData('application/json', JSON.stringify({ type, path, parentPath }));
+      event.dataTransfer.effectAllowed = 'move';
+    }
+  }
+
+
+  function handleDragOver(event: DragEvent) {
+    event.preventDefault(); // Necessary to allow dropping
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+
+    }
+  }
+
+
+  // function handleDrop(event: DragEvent) {
+  //   event.preventDefault();
+  //   if (event.dataTransfer) {
+  //     try {
+  //       const dataStr = event.dataTransfer.getData('application/json');
+  //       if (!dataStr) return;
+        
+  //       const data = JSON.parse(dataStr);
+
+  //       console.log(data)
+  //       // Trigger the requested function
+  //       // onItemDrop(sourceType, sourcePath, sourceParentPath, targetType, targetPath, targetParentPath);
+  //     } catch (e) {
+  //       console.error("Failed to parse drag data:", e);
+  //     }
+  //   }
+  // }
+
+
+
+  function handleDrop(event: DragEvent, targetType: 'folder', targetPath: string, targetParentPath: string) {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      try {
+        const dataStr = event.dataTransfer.getData('application/json');
+        if (!dataStr) return;
+        
+        const data = JSON.parse(dataStr);
+        const sourcePath = data.path;
+        const sourceType = data.type;
+        const sourceParentPath = data.parentPath;
+        
+        // Trigger the requested function
+        onItemDrop(sourceType, sourcePath, sourceParentPath, targetType, targetPath, targetParentPath);
+      } catch (e) {
+        console.error("Failed to parse drag data:", e);
+      }
+    }
+  }
+
+
+
+  function handleBgDrop(event: DragEvent, targetType: 'folder', targetPath: string, targetParentPath: string) {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      try {
+        const dataStr = event.dataTransfer.getData('application/json');
+        if (!dataStr) return;
+        
+        const data = JSON.parse(dataStr);
+        const sourcePath = data.path;
+        const sourceType = data.type;
+        const sourceParentPath = data.parentPath;
+        
+        if(sourceType == "folder"){
+          // Trigger the requested function
+          onItemDrop(sourceType, sourcePath, sourceParentPath, targetType, targetPath, "");
+        }
+        if(sourceType == "file"){
+          if(targetPath != ""){
+            // Trigger the requested function
+            onItemDrop(sourceType, sourcePath, sourceParentPath, targetType, targetPath, targetParentPath);
+          }
+        }
+
+      } catch (e) {
+        console.error("Failed to parse drag data:", e);
+      }
+    }
+  }
+
 
 
 </script>
 
+{#if mainViewData}
 
 <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
-<div class="main-view-container" onclick={handleMainViewClick}>
+<div 
+class="main-view-container" 
+onclick={handleMainViewClick}
+draggable="false"
+ondragover={handleDragOver}
+ondrop={(e) => handleBgDrop(e, "folder", mainViewData.path, mainViewData.parent ?? "")}
+
+>
 
 
   <div class="main-content-area">
@@ -348,47 +466,72 @@
     {/if}
 
 
-<div class="main-view" >
-  {#if mainViewData}
-    <div class="file-grid">
-      <!-- Render child folders/tags -->
-      {#each mainViewData.children as child}
-        <div class="item folder" role="button" tabindex="0" title="{child.path}" onclick={(e) => handleItemClick(e, handleFolderClick, child)}  ondblclick={(e) => { e.stopPropagation(); handleFolderDblClick(child); }} onkeydown={(e) => handleKeyDown(e, handleFolderDblClick, child)}>
-          <div class="icon">📁</div>
-          <div class="label">{child.name}</div>
-          {#if currentPath !== ""}
-            <button class="legend-button circle" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleLegendActionButtonClickFolder(e, getFolderButtonColor(child) ,child.path)} ondblclick={(e) => e.stopPropagation()} title="Legend: {getFolderButtonColor(child)}"></button>
-          {/if}
-            
-          <button class="top-left square"   class:pinned={getFolderPinnedStatus(child) == true} onclick={(e) => handlePinnedActionButtonClickFolder(e, child.path)} ondblclick={(e) => e.stopPropagation()} title="Pinned">
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" style="opacity: 70%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
-          </button>
+    <div class="main-view" >
+      {#if mainViewData}
+        <div class="file-grid">
+          <!-- Render child folders/tags -->
+          {#each mainViewData.children as child}
+            <div 
+            class="item folder" 
+            role="button" 
+            tabindex="0" 
+            title="{child.path}" 
+            onclick={(e) => handleItemClick(e, handleFolderClick, child)}  
+            ondblclick={(e) => { e.stopPropagation(); handleFolderDblClick(child); }} 
+            onkeydown={(e) => handleKeyDown(e, handleFolderDblClick, child)}
+            draggable="true"
+            ondragstart={(e) => handleDragStart(e, 'folder', child.path, child.parentPath)}
+            ondragover={handleDragOver}
+            ondrop={(e) => handleDrop(e, "folder", child.path, child.parentPath)}
+
+            >
+              <div class="icon">📁</div>
+              <div class="label">{child.name}</div>
+              {#if currentPath !== ""}
+                <button class="legend-button circle" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleLegendActionButtonClickFolder(e, getFolderButtonColor(child) ,child.path)} ondblclick={(e) => e.stopPropagation()} title="Legend: {getFolderButtonColor(child)}"></button>
+              {/if}
+                
+              <button class="top-left square"   class:pinned={getFolderPinnedStatus(child) == true} onclick={(e) => handlePinnedActionButtonClickFolder(e, child.path)} ondblclick={(e) => e.stopPropagation()} title="Pinned">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" style="opacity: 70%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
+              </button>
+            </div>
+          {/each}
+
+          <!-- Render files -->
+          {#each mainViewData.files as file}
+            <div 
+            class="item file" 
+            role="button" 
+            tabindex="0" 
+            title="{file.path}" 
+            onclick={(e) => handleItemClick(e, handleFileClick, file)} 
+            ondblclick={(e) => { e.stopPropagation(); handleFileDblClick(file); }} 
+            onkeydown={(e) => handleKeyDown(e, handleFileDblClick, file)}
+            draggable="true"
+            ondragstart={(e) => handleDragStart(e, 'file', file.path, file.parentPath)}
+            ondragover={handleDragOverDisabled}
+            ondrop={(e) => handleDropDisabled(e, "file", file.path, file.parentPath)}
+            >
+              <div class="icon">📄</div>
+              <div class="label">{file.name}</div>
+              {#if currentPath !== ""}
+                <!-- <button class="legend-button circle" class:hidden={await getFileButtonColor(file) === ""} style="background-color: {getColorForName( await getFileButtonColor(file))}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button> -->
+                <button class="legend-button circle" class:hidden={!fileButtonColors[file.path]}  style="background-color: {fileButtonColors[file.path] ?? ''}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Legend: {fileButtonColors[file.path]}"></button>
+              {/if} 
+
+              <button class="top-left square" class:pinned={filePinnedStatuses[file.path] === true} onclick={(e) => handlePinnedActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Pinned">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" style="opacity: 70%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
+              </button>
+
+            </div>
+          {/each}
         </div>
-      {/each}
-
-      <!-- Render files -->
-      {#each mainViewData.files as file}
-        <div class="item file" role="button" tabindex="0" title="{file.path}" onclick={(e) => handleItemClick(e, handleFileClick, file)} ondblclick={(e) => { e.stopPropagation(); handleFileDblClick(file); }} onkeydown={(e) => handleKeyDown(e, handleFileDblClick, file)}>
-          <div class="icon">📄</div>
-          <div class="label">{file.name}</div>
-          {#if currentPath !== ""}
-            <!-- <button class="legend-button circle" class:hidden={await getFileButtonColor(file) === ""} style="background-color: {getColorForName( await getFileButtonColor(file))}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button> -->
-            <button class="legend-button circle" class:hidden={!fileButtonColors[file.path]}  style="background-color: {fileButtonColors[file.path] ?? ''}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Legend: {fileButtonColors[file.path]}"></button>
-          {/if} 
-
-          <button class="top-left square" class:pinned={filePinnedStatuses[file.path] === true} onclick={(e) => handlePinnedActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Pinned">
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" style="opacity: 70%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
-          </button>
-
+      {:else}
+        <div class="empty-state">
+          <p>No data available for this path</p>
         </div>
-      {/each}
-    </div>
-  {:else}
-    <div class="empty-state">
-      <p>No data available for this path</p>
-    </div>
-  {/if}
-</div>  
+      {/if}
+    </div>  
 
 
 
@@ -402,6 +545,9 @@
 
   </div>
 </div>
+
+{/if}
+
 
 <style>
   .main-view-container {
