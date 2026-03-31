@@ -194,6 +194,28 @@
     }
   }
 
+  function handleUntaggedDrop(event: DragEvent, targetType: 'folder', targetPath: string) {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      try {
+        const dataStr = event.dataTransfer.getData('application/json');
+        if (!dataStr) return;
+        
+        const data = JSON.parse(dataStr);
+        const sourcePath = data.path;
+        const sourceType = data.type;
+        const sourceParentPath = data.parentPath;
+        
+        if(sourceType == "file"){
+          // Trigger the requested function
+          onItemDrop(sourceType, sourcePath, sourceParentPath, targetType, targetPath, "");
+        }
+
+      } catch (e) {
+        console.error("Failed to parse drag data:", e);
+      }
+    }
+  }
 
 
   async function onItemDrop(
@@ -210,8 +232,15 @@
 
     if (sourceType === "file"){
 
-      await controller!.moveFileToFolder(sourceParentPath, targetPath, sourcePath)
-      // probably display a notice that somethign moved from somewhere to somewhere
+      if (targetPath == ""){
+        await controller!.removeFileFromFolder(sourceParentPath, sourcePath)
+
+      } else{
+        await controller!.moveFileToFolder(sourceParentPath, targetPath, sourcePath)
+        // probably display a notice that somethign moved from somewhere to somewhere
+
+      }
+
       
     } else if (sourceType === "folder"){
       
@@ -322,7 +351,7 @@
             <path d="M3 8L12 17L21 8"></path>
           </svg>
         </div>
-        <div class="tree-item-inner nav-folder-title-content">Tags</div>
+        <div class="tree-item-inner nav-folder-title-content main-folder-title">Tags</div>
         <div class="tree-item-flair-outer">
           <span class="tree-item-flair">{treeData.rootTags.length}</span>
         </div>
@@ -345,6 +374,8 @@
           data-path="__untagged__"
           role="button"
           tabindex="0"
+          ondragover={handleDragOver}
+          ondrop={(e) => handleUntaggedDrop(e, 'folder', "")}
           onclick={() => toggleTag('__untagged__')}
           onkeydown={(e) => e.key === 'Enter' && toggleTag('__untagged__')}
         >
@@ -353,7 +384,7 @@
               <path d="M3 8L12 17L21 8"></path>
             </svg>
           </div>
-          <div class="tree-item-inner nav-folder-title-content">Untagged Files</div>
+          <div class="tree-item-inner nav-folder-title-content main-folder-title">Untagged Files</div>
           <div class="tree-item-flair-outer">
             <span class="tree-item-flair">{treeData.untaggedFiles.length}</span>
           </div>
@@ -371,8 +402,8 @@
                   tabindex="0"
                   draggable="true"
                   ondragstart={(e) => handleDragStart(e, 'file', file.path, "")}
-                  ondragover={handleDragOverDisabled}
-                  ondrop={(e) => handleDropDisabled(e, 'file', file.path, "")}
+                  ondragover={handleDragOver}
+                  ondrop={(e) => handleUntaggedDrop(e, 'folder', "")}
                   ondblclick={() => handleFileClick(file.path, '')}
                   onkeydown={(e) => e.key === 'Enter' && handleFileClick(file.path, '__untagged__')}
                 >
@@ -423,4 +454,7 @@
   }
 
   
+  .main-folder-title{
+    color: var(--interactive-accent)
+  }
 </style>

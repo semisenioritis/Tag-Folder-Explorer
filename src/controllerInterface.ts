@@ -62,10 +62,9 @@ export class ControllerInterface {
      */
     async removeFileFromFolder(
         folderTagPath: string,
-        fileName: string,
         filePath: string
     ): Promise<{ success: boolean; error?: any }> {
-        return await this.orchestrator.removeFileFromFolder(folderTagPath, fileName, filePath);
+        return await this.orchestrator.removeFileFromFolder(folderTagPath, filePath);
     }
 
     /**

@@ -617,7 +617,6 @@ export class Orchestrator {
      */ 
     async removeFileFromFolder(
         folderTagPath: string,
-        fileName: string,
         filePath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
@@ -710,6 +709,13 @@ export class Orchestrator {
                     if (!deleteSuccess) {
                         if (owner){this.setInconsistencyFlag(false)}
                         return { success: false, error: `Failed to remove file from tag node: ${folderTagPath}` };
+                    }
+
+
+                    // if the file contains no more tags then add it to the root node untagged files
+                    const tagsOfFile = await fileLeaf.retrieveAllTagPaths()
+                    if (tagsOfFile.length == 0){
+                        this.treeRoot.getRootNode().addFileLeaftoFiles(fileLeaf)
                     }
 
                     // Invalidate cache
