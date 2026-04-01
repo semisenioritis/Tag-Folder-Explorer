@@ -331,6 +331,24 @@
   }
 
 
+let mainViewSortFlag = $state(true)
+let treeViewSortFlag = $state(true)
+
+function flipMainViewSortFlag(){
+  mainViewSortFlag = !mainViewSortFlag;
+
+  console.log(mainViewRefreshKey)
+  mainViewRefreshKey += 1
+  console.log(mainViewRefreshKey)
+}
+
+function flipLeftSidebarViewSortFlag(){
+  treeViewSortFlag = !treeViewSortFlag
+
+  console.log(mainViewRefreshKey)
+  mainViewRefreshKey += 1
+  console.log(mainViewRefreshKey)
+}
 
 </script>
 
@@ -359,6 +377,20 @@
       
       <span class="sidebar-title left-title"  class:hidden={leftCollapsed}>Left Sidebar</span>
 
+      <div 
+      class="header-button"
+      role="button"
+      tabindex="0"
+      onclick={() => flipLeftSidebarViewSortFlag()}
+      onkeydown={(e) => e.key === 'Enter' && flipLeftSidebarViewSortFlag()}
+      title="Sort Order: Tree View"
+      >
+        {#if !treeViewSortFlag}
+          <svg style="padding:2px" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-wide-narrow-icon lucide-arrow-down-wide-narrow"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M11 4h10"/><path d="M11 8h7"/><path d="M11 12h4"/></svg>
+        {:else}
+          <svg style="padding:2px" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-narrow-wide-icon lucide-arrow-down-narrow-wide"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M11 4h4"/><path d="M11 8h7"/><path d="M11 12h10"/></svg>
+        {/if}
+      </div>
 
     </div>
     <div class="sidebar-content" class:hidden={leftCollapsed}>
@@ -368,6 +400,8 @@
         currentPath={currentPath}  
         onUpdate={handleUpdate} 
         onFocusChange={handleFocusChange}
+        refreshKey={mainViewRefreshKey}
+        treeViewSortFlag={treeViewSortFlag}
         initialTreeData={initialTreeData}
         initialVersion={initialVersion}
         controller={controller}
@@ -464,11 +498,25 @@
 
     </div>
 
-        <div class="main-subheader">
+    <div class="main-subheader">
 
-      <span class="main-subtitle">Main Section Sub</span>
+      <span class="main-subtitle">Options: 
+      </span>
 
-
+      <div 
+      class="subheader-button"
+      role="button"
+      tabindex="0"
+      onclick={() => flipMainViewSortFlag()}
+      onkeydown={(e) => e.key === 'Enter' && flipMainViewSortFlag()}
+      title="Sort Order: Main View"
+      >
+        {#if !mainViewSortFlag}
+          <svg style="padding:2px" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-wide-narrow-icon lucide-arrow-down-wide-narrow"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M11 4h10"/><path d="M11 8h7"/><path d="M11 12h4"/></svg>
+        {:else}
+          <svg style="padding:2px" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-narrow-wide-icon lucide-arrow-down-narrow-wide"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M11 4h4"/><path d="M11 8h7"/><path d="M11 12h10"/></svg>
+        {/if}
+      </div>
     </div>
 
     <MainView 
@@ -482,6 +530,7 @@
       colorDictionary = {colorDictionary}
       getColorForName = {getColorForName}
       onItemDrop = {onItemDrop}
+      mainViewSortFlag = {mainViewSortFlag}
 
     />
 
@@ -686,6 +735,7 @@
     color: var(--text-normal);
     white-space: nowrap;
     overflow: hidden;
+    height: 20px;
   }
 
 
@@ -709,7 +759,7 @@
     display: flex;
     align-items: center;
     
-    padding: 8px;
+    padding: 4px;
     border-bottom: 1px solid var(--background-modifier-border);
     background-color: var(--background-primary-alt);
     min-height: 40px;
@@ -760,6 +810,45 @@
   cursor: not-allowed;
   pointer-events: none;
 }
+
+
+.subheader-button{
+  height: 100%;
+  aspect-ratio: 1 / 1; 
+  background-color: var(--background-secondary-alt); /* your hex color */
+  border-radius: 10px;
+  padding:4px;
+  margin-left:3px;
+  margin-right:3px; 
+
+  display: grid ;
+  align-items: center; /* vertical centering */
+  place-items: center;
+
+  cursor: pointer;
+  transition: background-color 0.2s ease; /* smooth hover */
+  /* border: 2px solid var(--background-modifier-border); */
+  box-sizing: border-box;
+
+}
+
+
+.subheader-button:hover {
+  background-color: var(--background-primary);
+  /* or a hex value like #e2e2e2 */
+}
+
+.subheader-button:active {
+  transform: scale(0.96);
+}
+
+
+
+
+
+
+
+
 
 .path-holder{
   flex:1;

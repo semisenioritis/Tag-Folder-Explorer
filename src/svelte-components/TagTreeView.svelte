@@ -10,6 +10,8 @@
     currentPath: string;
     onUpdate: (newPath: string) => void;  // Add function signature
     onFocusChange?: (type: 'folder' | 'file', path: string, parentpath: string) => void;  // Handler for focus changes
+    refreshKey?: number;  
+    treeViewSortFlag: boolean;
     initialTreeData?: unknown;
     initialVersion?: number;
     controller: ControllerInterface | null | undefined;
@@ -38,7 +40,7 @@
     untaggedFiles: FileData[];
   }
 
-  let { currentPath, onUpdate, onFocusChange, initialTreeData, initialVersion = 0, controller, model, onItemDrop }:Props = $props();
+  let { currentPath, onUpdate, onFocusChange, refreshKey, treeViewSortFlag, initialTreeData, initialVersion = 0, controller, model, onItemDrop }:Props = $props();
   
   if (!model) {
       throw new Error("model is not initialized");
@@ -48,7 +50,7 @@
   let treeData = $state<TreeData>(
     initialTreeData 
       ? (initialTreeData as TreeData) 
-      : (model.getleftSidebarTree().tree as TreeData)
+      : (model!.getleftSidebarTree(treeViewSortFlag).tree as TreeData)
   );
   // console.log("test")
   // console.log(treeData) 
@@ -62,10 +64,15 @@
    * Update tree data - called when the backend broadcasts an update
    */
   export function updateTreeData(newTreeData: unknown, newVersion: number): void {
-    treeData = newTreeData as TreeData;
+    treeData = model!.getleftSidebarTree(treeViewSortFlag).tree as TreeData;
     treeVersion = newVersion;
     console.log("TagTreeView updated to version:", newVersion);
   }
+
+  $effect(() => {
+    void refreshKey;
+    treeData = model!.getleftSidebarTree(treeViewSortFlag).tree as TreeData;
+  });
 
 
   function toggleTag(path: string) {

@@ -643,7 +643,7 @@ export class TagNode implements ITagNode {
      * @returns ISerializedTagNode - Static representation of the tag node
      * 
      */
-    serializeTagNode(): ISerializedTagNode {
+    serializeTagNode(sortFlag:boolean): ISerializedTagNode {
         // Get parent name (null if root node)
         const parentName = this.getParent() ? this.getParent()!.getName() : null;
         
@@ -652,7 +652,8 @@ export class TagNode implements ITagNode {
             name: child.getName(),
             path: child.getPath(),
             parentPath: child.getParent()?.getPath() ?? ""
-        }));
+        }))
+        .sort((a, b) => sortFlag ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
         
         // Get files with names and paths
         const filesData = Array.from(this.getFiles()).map(file => ({
@@ -661,7 +662,8 @@ export class TagNode implements ITagNode {
             parentPath: this.getPath() ?? ""
 
 
-        }));
+        }))
+        .sort((a, b) => sortFlag ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
         
         return {
             name: this.getName(),

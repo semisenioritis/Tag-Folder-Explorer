@@ -55,7 +55,10 @@ export class TreeRoot implements ITreeRoot {
      * Cache of the last serialized tree to avoid recomputation.
      * Invalidated whenever tree structure changes.
      */
-    private cachedSerializedTree: unknown = null 
+    private cachedSerializedTree: Record<'asc' | 'desc', unknown | null> = {
+        asc: null,
+        desc: null,
+    }
 
     /**
      * Dictionary mapping file paths to their corresponding FileLeaf objects.
@@ -167,15 +170,17 @@ export class TreeRoot implements ITreeRoot {
      * 
      * Used when: Frontend rendering, static tree snapshots, tree serialization
      */
-    public getSortedTree(): unknown {
+    public getSortedTree(sortFlag: boolean = true): unknown {
+        const cacheKey: 'asc' | 'desc' = sortFlag ? 'asc' : 'desc';
+
         // Return cached version if available
-        if (this.cachedSerializedTree !== null) {
-            return this.cachedSerializedTree;
+        if (this.cachedSerializedTree[cacheKey] !== null) {
+            return this.cachedSerializedTree[cacheKey];
         }
         
         // Serialize and cache the tree
-        this.cachedSerializedTree = this.serializeTree();
-        return this.cachedSerializedTree;
+        this.cachedSerializedTree[cacheKey] = this.serializeTree(sortFlag);
+        return this.cachedSerializedTree[cacheKey];
     }
     
     /**
@@ -273,7 +278,8 @@ export class TreeRoot implements ITreeRoot {
      * Should be called whenever the tree structure is modified without full recomputation.
      */
     public invalidateCache(): void {
-        this.cachedSerializedTree = null;
+        this.cachedSerializedTree.asc = null;
+        this.cachedSerializedTree.desc = null;
         this.treeVersion++;
     }
     
@@ -479,21 +485,24 @@ export class TreeRoot implements ITreeRoot {
                 }
             },
             deleteMeta: () => false,
-            serializeTagNode: (): ISerializedTagNode => {
+            serializeTagNode: (sortFlag: boolean = true): ISerializedTagNode => {
                
                 // Get children with names and paths
                 const childrenData = Object.values(rootNode.getChildren()).map(child => ({
                     name: child.getName(),
                     path: child.getPath(),
                     parentPath: ""
-                }));
+                }))
+                .sort((a, b) => sortFlag ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
                 
                 // Get files with names and paths
                 const filesData = Array.from(rootNode.getFiles()).map(file => ({
                     name: file.getName(),
                     path: file.getPath(),
                     parentPath: ""
-                }));
+                }))
+                .sort((a, b) => sortFlag ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
+
                 
                 return {
                     name: rootNode.getName(),
@@ -670,7 +679,8 @@ export class TreeRoot implements ITreeRoot {
         
         // Increment version counter and invalidate cache after tree recomputation
         this.treeVersion++;
-        this.cachedSerializedTree = null;
+        this.cachedSerializedTree.asc = null;
+        this.cachedSerializedTree.desc = null;
 
         // console.log("test map")
         // console.log(this.filePathToLeafMap)
@@ -867,6 +877,9 @@ export class TreeRoot implements ITreeRoot {
             // Retriveing the file from the file map
             const fileLeaf = this.fileLeafRetriever(file.path.trim())
 
+            if(!fileLeaf?.getPath?.().endsWith(".md")){
+                return
+            }
 
 
             if (fileLeaf){
@@ -1133,7 +1146,7 @@ export class TreeRoot implements ITreeRoot {
      * 
      * @returns unknown - JSON representation of the tree
      */
-    private serializeTree(): unknown {
+    private serializeTree(sortFlag: boolean = true): unknown {
         const serializeNode = (node: ITagNode): any => {
             const serializedChildren = Object.values(node.getChildren()).map(serializeNode);
             
@@ -1145,24 +1158,24 @@ export class TreeRoot implements ITreeRoot {
             return {
                 name: node.getName(),
                 path: node.getPath(),
-                children: serializedChildren,
+                children: serializedChildren.sort((a, b) => sortFlag ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)),
                 parentPath: node.getParent()?.getPath() ?? "",
                 files: Array.from(node.getFiles()).map(file => ({
                     name: file.getName(),
                     path: file.getPath()
             
-                })),
+                })).sort((a, b) => sortFlag ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)),
                 totalFileCount: totalFileCount,
             };
         };
     
         return {
-            rootTags: Array.from(this.rootTags).map(serializeNode),
+            rootTags: Array.from(this.rootTags).map(serializeNode).sort((a, b) => sortFlag ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)),
             untaggedFiles: Array.from(this.untaggedFiles).map(file => ({
                 name: file.getName(),
                 path: file.getPath()
                 
-            })),
+            })).sort((a, b) => sortFlag ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)),
         };
     }
  

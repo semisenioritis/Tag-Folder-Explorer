@@ -436,7 +436,7 @@ export interface ITagNode {
      * Returns the serialized version of the current node. Easy way to get the node to render in the frontend
      * 
      */
-    serializeTagNode(): ISerializedTagNode; 
+    serializeTagNode(sortFlag: boolean): ISerializedTagNode; 
 
     
 
@@ -608,7 +608,7 @@ export interface ITreeRoot {
      * 
      * 
      */
-    getSortedTree(): unknown;
+    getSortedTree(sortFlag?: boolean): unknown;
     
     /**
      * Retruns the list of paths that are supposed to be skipped during computation

@@ -16,11 +16,12 @@
     colorDictionary:Record<string, string>
     getColorForName: (name: string) => string;
     onItemDrop: (sourceType: 'folder' | 'file', sourcePath: string, sourceParentPath: string, targetType: 'folder', targetPath: string, targetParentPath: string, source: 'internal' | 'external') => void;
+    mainViewSortFlag: boolean;
 
   }
 
 
-  let { currentPath, onUpdate, onFocusChange, refreshKey = 0, controller, model, colorDictionary, getColorForName, onItemDrop}:Props = $props();
+  let { currentPath, onUpdate, onFocusChange, refreshKey = 0, controller, model, colorDictionary, getColorForName, onItemDrop, mainViewSortFlag}:Props = $props();
   // let { currentPath }: Props = $props();
 
 
@@ -32,7 +33,7 @@
   let mainViewData: ISerializedTagNode | null = $derived.by(() => {
     // Include refreshKey in the derivation to force recalculation when it changes
     void refreshKey;
-    return model.getmainViewData(currentPath);
+    return model.getmainViewData(currentPath, mainViewSortFlag);
   });
 
 

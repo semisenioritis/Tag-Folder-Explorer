@@ -21,7 +21,7 @@ export class ModelInterface {
      * Get the serialized tree structure for the left sidebar
      * Returns the complete tag tree with root tags and untagged files along with version
      */
-    getleftSidebarTree() {
+    getleftSidebarTree(sortFlag: boolean = true) {
         if (!this.treeObj) {
             return { 
                 tree: { rootTags: [], untaggedFiles: [] },
@@ -29,7 +29,7 @@ export class ModelInterface {
             };
         }
         return {
-            tree: this.treeObj.getSortedTree(),
+            tree: this.treeObj.getSortedTree(sortFlag),
             version: this.treeObj.getTreeVersion()
         };
     }
@@ -88,10 +88,10 @@ export class ModelInterface {
     /**
      * Get data for the main view (placeholder)
      */
-    getmainViewData(currpath: string): ISerializedTagNode | null {
+    getmainViewData(currpath: string, sortFlag: boolean): ISerializedTagNode | null {
     
         const node = this.treeObj?.getNode(currpath);
-        return node ? node.serializeTagNode() : null;
+        return node ? node.serializeTagNode(sortFlag) : null;
         
 
     }

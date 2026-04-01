@@ -354,8 +354,6 @@ export default class TagFolderPlugin extends Plugin {
 
     this.model = new ModelInterface(this.treeRoot, this.app)
 
-		const temp = this.treeRoot.getSortedTree();
-		console.log(temp);
 
     
 		
