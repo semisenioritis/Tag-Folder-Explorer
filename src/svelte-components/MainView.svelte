@@ -468,6 +468,8 @@
 
   function handleDrop(event: DragEvent, targetType: 'folder', targetPath: string, targetParentPath: string) {
     event.preventDefault();
+    activeIndex = null;
+    isBackgroundActive = false
     try {
       const payload = getDragPayload(event);
       if (!payload) return;
@@ -483,6 +485,8 @@
 
   function handleBgDrop(event: DragEvent, targetType: 'folder', targetPath: string, targetParentPath: string) {
     event.preventDefault();
+    activeIndex = null;
+    isBackgroundActive = false
     try {
       const payload = getDragPayload(event);
       if (!payload) return;
@@ -503,8 +507,41 @@
   }
 
 
+let activeIndex: number | null = $state(null);
+let isBackgroundActive: boolean = $state(false);
 
 
+function handleDragEnter(index: number) {
+  activeIndex = index;
+}
+
+function handleDragLeave(event: DragEvent, index: number) {
+  const target = event.currentTarget as HTMLElement;
+  const related = event.relatedTarget as Node | null;
+  if (target && related && !target.contains(related)) {
+    activeIndex = null;
+  }
+}
+
+
+function handleBackgroundDragOver(event: DragEvent) {
+  event.preventDefault();
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move';
+
+  }
+
+  isBackgroundActive = activeIndex === null;
+}
+
+function handleBackgroundDragLeave(event: DragEvent) {
+  const target = event.currentTarget as HTMLElement;
+  const related = event.relatedTarget as Node | null;
+  if (!target.contains(related)) {
+    isBackgroundActive = false;
+    activeIndex = null; 
+  }
+}
 
 
 
@@ -517,9 +554,13 @@
 class="main-view-container" 
 onclick={handleMainViewClick}
 draggable="false"
-ondragover={handleDragOver}
+
 ondrop={(e) => handleBgDrop(e, "folder", mainViewData.path, mainViewData.parent ?? "")}
 
+
+class:active={isBackgroundActive}
+ondragover={(e) => handleBackgroundDragOver(e)}
+ondragleave={handleBackgroundDragLeave}
 >
 
 
@@ -535,7 +576,7 @@ ondrop={(e) => handleBgDrop(e, "folder", mainViewData.path, mainViewData.parent 
       {#if mainViewData}
         <div class="file-grid">
           <!-- Render child folders/tags -->
-          {#each mainViewData.children as child}
+          {#each mainViewData.children as child, index}
             <div 
             class="item folder" 
             role="button" 
@@ -548,6 +589,10 @@ ondrop={(e) => handleBgDrop(e, "folder", mainViewData.path, mainViewData.parent 
             ondragstart={(e) => handleDragStart(e, 'folder', child.path, child.parentPath)}
             ondragover={handleDragOver}
             ondrop={(e) => handleDrop(e, "folder", child.path, child.parentPath)}
+
+            class:active={activeIndex === index}
+            ondragenter={() => handleDragEnter(index)}
+            ondragleave={(e) => handleDragLeave(e, index)}
 
             >
               <div class="icon">📁</div>
@@ -761,4 +806,11 @@ ondrop={(e) => handleBgDrop(e, "folder", mainViewData.path, mainViewData.parent 
 .pinned svg {
   stroke: var(--color-accent);
 }
+
+
+.active {
+  background-color: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--interactive-accent) 60%, transparent);
+}
+
 </style>

@@ -231,6 +231,10 @@
 
   function handleDrop(event: DragEvent, targetType: 'folder', targetPath: string, targetParentPath: string) {
     event.preventDefault();
+    activeIndex = null;
+    isRootActive = false;
+    isUntaggedActive = false;
+
     try {
       const payload = getDragPayload(event);
       if (!payload) return;
@@ -244,6 +248,11 @@
 
   function handleRootDrop(event: DragEvent, targetType: 'folder', targetPath: string) {
     event.preventDefault();
+    activeIndex = null;
+    isRootActive = false;
+    isUntaggedActive = false;
+
+
     if (event.dataTransfer) {
       try {
         const dataStr = event.dataTransfer.getData('application/json');
@@ -267,6 +276,10 @@
 
   function handleUntaggedDrop(event: DragEvent, targetType: 'folder', targetPath: string) {
     event.preventDefault();
+    activeIndex = null;
+    isRootActive = false;
+    isUntaggedActive = false;
+
     if (event.dataTransfer) {
       try {
         const dataStr = event.dataTransfer.getData('application/json');
@@ -289,13 +302,54 @@
   }
 
 
+let activeIndex: string | null = $state(null);
+let isRootActive: boolean = $state(false);
+let isUntaggedActive: boolean = $state(false);
+
+function handleDragEnter(index: number, level: number) {
+  activeIndex = level.toString() + "_" + index.toString()
+  // activeIndex = index;
+}
+
+function handleDragLeave(event: DragEvent, index: number) {
+  const target = event.currentTarget as HTMLElement;
+  const related = event.relatedTarget as Node | null;
+  if (target && related && !target.contains(related)) {
+    activeIndex = null;
+  }
+}
+
+function handleDragEnterRoot() {
+  isRootActive = true;
+}
 
 
+function handleDragLeaveRoot(event: DragEvent) {
+  const target = event.currentTarget as HTMLElement;
+  const related = event.relatedTarget as Node | null;
+  if (target && related && !target.contains(related)) {
+    isRootActive = false;
 
+  }
+}
+
+function handleDragEnterUntagged() {
+  isUntaggedActive = true;
+}
+
+
+function handleDragLeaveUntagged(event: DragEvent) {
+  const target = event.currentTarget as HTMLElement;
+  const related = event.relatedTarget as Node | null;
+  if (target && related && !target.contains(related)) {
+    isUntaggedActive = false;
+
+  }
+}
 
 </script>
 
-{#snippet renderTagNode(node: TagNodeData, parentPath: string = '')}
+{#snippet renderTagNode(node: TagNodeData, parentPath: string = '', index: number, level: number)}
   <!-- Tag/Folder Item using Obsidian's native classes -->
   <div class="tree-item nav-folder" class:is-collapsed={!isExpanded(node.path)}>
     <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -306,9 +360,13 @@
       ondragstart={(e) => handleDragStart(e, 'folder', node.path, parentPath)}
       ondragover={handleDragOver}
       ondrop={(e) => handleDrop(e, 'folder', node.path, parentPath)}
+
+      class:active={activeIndex === `${level}_${index}`}
+      ondragenter={() => handleDragEnter(index, level)}
+      ondragleave={(e) => handleDragLeave(e, index)}
     >
       <div 
-        class="tree-item-icon collapse-icon is-clickable" 
+        class="tree-item-icon collapse-icon is-clickable " 
         class:is-collapsed={!isExpanded(node.path)}
         role="button"
         tabindex="0"
@@ -332,7 +390,11 @@
     </div>
     
     {#if isExpanded(node.path)}
-      <div class="tree-item-children nav-folder-children">
+      <div 
+      class="tree-item-children nav-folder-children"
+      class:active={activeIndex === `${level}_${index}`}
+
+      >
         <!-- Render files in this tag -->
         {#if node.files && node.files.length > 0}
           {#each node.files as file}
@@ -349,6 +411,9 @@
                 ondrop={(e) => handleDrop(e, 'folder', node.path, node.parentPath)}
                 ondblclick={() => handleFileClick(file.path, node.path)}
                 onkeydown={(e) => e.key === 'Enter' && handleFileClick(file.path, node.path)}
+
+                ondragenter={() => handleDragEnter(index, level)}
+                ondragleave={(e) => handleDragLeave(e, index)}
               >
                 <div class="tree-item-inner nav-file-title-content">{file.name}</div>
               </div>
@@ -358,8 +423,8 @@
         
         <!-- Render child tags -->
         {#if node.children && node.children.length > 0}
-          {#each node.children as child}
-            {@render renderTagNode(child, node.path)}
+          {#each node.children as child, index}
+            {@render renderTagNode(child, node.path, index, level+1)}
           {/each}
         {/if}
       </div>
@@ -380,6 +445,10 @@
         ondrop={(e) => handleRootDrop(e, 'folder', "")}
         onclick={() => toggleTag(ROOT_TAGS_NODE_PATH)}
         onkeydown={(e) => e.key === 'Enter' && toggleTag(ROOT_TAGS_NODE_PATH)}
+
+        class:active={isRootActive === true}
+        ondragenter={() => handleDragEnterRoot()}
+        ondragleave={(e) => handleDragLeaveRoot(e)}
       >
         <div class="tree-item-icon collapse-icon" class:is-collapsed={!isExpanded(ROOT_TAGS_NODE_PATH)}>
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle">
@@ -394,8 +463,9 @@
 
       {#if isExpanded(ROOT_TAGS_NODE_PATH)}
         <div class="tree-item-children nav-folder-children">
-          {#each treeData.rootTags as tagNode}
-            {@render renderTagNode(tagNode)}
+          
+          {#each treeData.rootTags as tagNode, index}
+            {@render renderTagNode(tagNode, "", index, 1)}
           {/each}
         </div>
       {/if}
@@ -413,6 +483,10 @@
           ondrop={(e) => handleUntaggedDrop(e, 'folder', "")}
           onclick={() => toggleTag('__untagged__')}
           onkeydown={(e) => e.key === 'Enter' && toggleTag('__untagged__')}
+
+          class:active={isUntaggedActive === true}
+          ondragenter={() => handleDragEnterUntagged()}
+          ondragleave={(e) => handleDragLeaveUntagged(e)}
         >
           <div class="tree-item-icon collapse-icon" class:is-collapsed={!isExpanded('__untagged__')}>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle">
@@ -426,7 +500,10 @@
         </div>
         
         {#if isExpanded('__untagged__')}
-          <div class="tree-item-children nav-folder-children">
+          <div 
+          class="tree-item-children nav-folder-children"
+          class:active={isUntaggedActive === true}
+          >
             {#each treeData.untaggedFiles as file}
               <div class="tree-item nav-file">
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -441,6 +518,10 @@
                   ondrop={(e) => handleUntaggedDrop(e, 'folder', "")}
                   ondblclick={() => handleFileClick(file.path, '')}
                   onkeydown={(e) => e.key === 'Enter' && handleFileClick(file.path, '__untagged__')}
+
+
+                  ondragenter={() => handleDragEnterUntagged()}
+                  ondragleave={(e) => handleDragLeaveUntagged(e)}
                 >
                   <div class="tree-item-inner nav-file-title-content">{file.name}</div>
                 </div>
@@ -492,4 +573,9 @@
   .main-folder-title{
     color: var(--interactive-accent)
   }
+
+.active {
+  background-color: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--interactive-accent) 60%, transparent);
+}
 </style>
