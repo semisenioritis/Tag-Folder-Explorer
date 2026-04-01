@@ -70,7 +70,7 @@ export class ModelInterface {
             let filenamestring = file?.getName()
             let filepathstring = file?.getPath()
             let filemetadata = await file?.fileMetadata()
-            let fileinitial = file?.readInitial()
+            let fileinitial = await file?.readInitial()
             let fileobsdata = file?.fileObsCreateModDate()
 
 

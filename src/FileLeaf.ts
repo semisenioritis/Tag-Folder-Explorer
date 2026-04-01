@@ -201,11 +201,11 @@ export class FileLeaf implements IFileLeaf {
      * Reads the file contents (after metadata) and strips away all initial spaces
      * and then returns the first "k" characters. "k" is yet to be decided.
      * 
-     * @returns string - String of the first k characters of the file content
+    * @returns Promise<string> - String of the first k characters of the file content
      * 
      * Used when: File preview in UI, quick content display, search result previews
      */
-    public readInitial(): string {
+    public async readInitial(): Promise<string> {
         try {
             // For now, setting k = 200 characters as a reasonable preview length
             const k = 200;
@@ -213,23 +213,14 @@ export class FileLeaf implements IFileLeaf {
             // Get the cached metadata to find where content starts
             const metadata = this.app.metadataCache.getFileCache(this.file);
             
-            // Read the file synchronously (if possible) or return empty string
-            // Note: In a real implementation, this might need to be async
-            const cachedRead = this.app.vault.cachedRead(this.file);
-            
-            if (cachedRead instanceof Promise) {
-                // If it's a promise, we can't handle it synchronously
-                console.warn('File content not cached, returning empty preview');
-                return '';
-            }
-            
-            let content = cachedRead as string;
+            // Read file content from Obsidian's cache-aware API
+            let content = await this.app.vault.cachedRead(this.file);
             
             // Remove frontmatter if present
-            if (metadata?.frontmatter && content.startsWith('---')) {
-                const frontmatterEnd = content.indexOf('---', 3);
-                if (frontmatterEnd !== -1) {
-                    content = content.substring(frontmatterEnd + 3);
+            if (content.startsWith('---')) {
+                const frontmatterMatch = content.match(/^---\n[\s\S]*?\n---\n/);
+                if (frontmatterMatch) {
+                    content = content.substring(frontmatterMatch[0].length);
                 }
             }
             

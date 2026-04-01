@@ -147,11 +147,11 @@ export interface IFileLeaf {
      * Reads the file contents (after metadata) and strips away all initial spaces
      * and then returns the first "k" characters. "k" is yet to be decided.
      * 
-     * @returns string - String of the first k characters of the file content
+    * @returns Promise<string> - String of the first k characters of the file content
      * 
      * Used when: File preview in UI, quick content display, search result previews
      */
-    readInitial(): string;
+    readInitial(): Promise<string>;
 }
 
 /**

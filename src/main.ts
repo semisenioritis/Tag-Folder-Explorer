@@ -212,7 +212,7 @@ class TagExplorerView extends ItemView {
       this.component.refreshCurrentNode?.();
     }
   }
-  
+
 
   private renderView() {
     const c = this.contentEl

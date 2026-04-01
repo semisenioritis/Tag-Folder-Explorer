@@ -377,20 +377,24 @@ function flipLeftSidebarViewSortFlag(){
       
       <span class="sidebar-title left-title"  class:hidden={leftCollapsed}>Left Sidebar</span>
 
-      <div 
-      class="header-button"
-      role="button"
-      tabindex="0"
-      onclick={() => flipLeftSidebarViewSortFlag()}
-      onkeydown={(e) => e.key === 'Enter' && flipLeftSidebarViewSortFlag()}
-      title="Sort Order: Tree View"
-      >
-        {#if !treeViewSortFlag}
-          <svg style="padding:2px" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-wide-narrow-icon lucide-arrow-down-wide-narrow"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M11 4h10"/><path d="M11 8h7"/><path d="M11 12h4"/></svg>
-        {:else}
-          <svg style="padding:2px" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-narrow-wide-icon lucide-arrow-down-narrow-wide"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M11 4h4"/><path d="M11 8h7"/><path d="M11 12h10"/></svg>
-        {/if}
+      <div class="sidebar-button-holder" class:hidden={leftCollapsed}>
+        <div 
+        class="header-button"
+        role="button"
+        tabindex="0"
+        onclick={() => flipLeftSidebarViewSortFlag()}
+        onkeydown={(e) => e.key === 'Enter' && flipLeftSidebarViewSortFlag()}
+        title="Sort Order: Tree View"
+        >
+          {#if !treeViewSortFlag}
+            <svg style="padding:2px" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-wide-narrow-icon lucide-arrow-down-wide-narrow"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M11 4h10"/><path d="M11 8h7"/><path d="M11 12h4"/></svg>
+          {:else}
+            <svg style="padding:2px" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-narrow-wide-icon lucide-arrow-down-narrow-wide"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M11 4h4"/><path d="M11 8h7"/><path d="M11 12h10"/></svg>
+          {/if}
+        </div>
+
       </div>
+
 
     </div>
     <div class="sidebar-content" class:hidden={leftCollapsed}>
