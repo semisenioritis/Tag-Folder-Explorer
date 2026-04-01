@@ -296,29 +296,32 @@
     sourceParentPath: string, 
     targetType: 'folder', 
     targetPath: string, 
-    targetParentPath: string) {
+    targetParentPath: string, 
+    source: 'internal' | 'external') {
 
+    if (source == "external"){
+      if (sourceType === "file"){
+        sourcePath = sourcePath + ".md"
 
-    console.log(`Item dropped: source (${sourceType}) ${sourcePath}  ${sourceParentPath} -> target (${targetType}) ${targetPath}  ${targetParentPath} `);
-    // Add additional logic here to handle the drop action
-
-    if (sourceType === "file"){
-
-      if (targetPath == ""){
-        await controller!.removeFileFromFolder(sourceParentPath, sourcePath)
-
-      } else{
-        await controller!.moveFileToFolder(sourceParentPath, targetPath, sourcePath)
-        // probably display a notice that somethign moved from somewhere to somewhere
-
+        await controller!.addFileToTagpath(targetPath, sourcePath)
       }
+    } else {
+      console.log(`Item dropped: source (${sourceType}) ${sourcePath}  ${sourceParentPath} -> target (${targetType}) ${targetPath}  ${targetParentPath} `);
 
-      
-    } else if (sourceType === "folder"){
-      
-
-      await controller!.moveFolderToFolder(sourceParentPath, targetPath, sourcePath)
-      // probably display a notice that somethign moved from somewhere to somewhere
+      if (sourceType === "file"){
+  
+        if (targetPath == ""){
+          await controller!.removeFileFromFolder(sourceParentPath, sourcePath)
+  
+        } else{
+          await controller!.moveFileToFolder(sourceParentPath, targetPath, sourcePath)
+          // probably display a notice that somethign moved from somewhere to somewhere
+        }
+        
+      } else if (sourceType === "folder"){
+        await controller!.moveFolderToFolder(sourceParentPath, targetPath, sourcePath)
+        // probably display a notice that somethign moved from somewhere to somewhere
+      }
 
     }
 

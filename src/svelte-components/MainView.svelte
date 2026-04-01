@@ -15,7 +15,7 @@
     model: ModelInterface | null | undefined;
     colorDictionary:Record<string, string>
     getColorForName: (name: string) => string;
-    onItemDrop: (sourceType: 'folder' | 'file', sourcePath: string, sourceParentPath: string, targetType: 'folder', targetPath: string, targetParentPath: string) => void;
+    onItemDrop: (sourceType: 'folder' | 'file', sourcePath: string, sourceParentPath: string, targetType: 'folder', targetPath: string, targetParentPath: string, source: 'internal' | 'external') => void;
 
   }
 
@@ -360,6 +360,82 @@
     }
   }
 
+  interface DragPayload {
+    type: 'folder' | 'file';
+    path: string;
+    parentPath: string;
+    source: 'internal' | 'external';
+  }
+
+  function parseObsidianOpenUri(raw: string): string | null {
+    try {
+      const url = new URL(raw);
+      if (url.protocol !== 'obsidian:') return null;
+
+      const fileParam = url.searchParams.get('file');
+      if (!fileParam) return null;
+
+      return decodeURIComponent(fileParam).trim() || null;
+    } catch {
+      return null;
+    }
+  }
+
+  function parseExternalFilePath(raw: string): string | null {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+
+    const firstLine = trimmed
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .find((line) => line.length > 0 && !line.startsWith('#'));
+
+    if (!firstLine) return null;
+
+    const obsidianPath = parseObsidianOpenUri(firstLine);
+    if (obsidianPath) return obsidianPath;
+
+    const wikiMatch = firstLine.match(/^\[\[([^\]|]+)(?:\|[^\]]+)?\]\]$/);
+    if (wikiMatch?.[1]) {
+      return wikiMatch[1].trim() || null;
+    }
+
+    return firstLine;
+  }
+
+  function getDragPayload(event: DragEvent): DragPayload | null {
+    const dataTransfer = event.dataTransfer;
+    if (!dataTransfer) return null;
+
+    // Internal plugin drag payload
+    const internalJson = dataTransfer.getData('application/json');
+    if (internalJson) {
+      try {
+        const data = JSON.parse(internalJson) as Partial<DragPayload>;
+        if ((data.type === 'folder' || data.type === 'file') && typeof data.path === 'string') {
+          return {
+            type: data.type,
+            path: data.path,
+            parentPath: typeof data.parentPath === 'string' ? data.parentPath : '',
+            source: "internal"
+          };
+        }
+      } catch {
+
+      }
+    }
+
+    // External drag payload from Obsidian file explorer
+    const textUriList = dataTransfer.getData('text/uri-list');
+    const uriPath = parseExternalFilePath(textUriList);
+    if (uriPath) {
+      return { type: 'file', path: uriPath, parentPath: '', source: "external" };
+    }
+
+
+    return null;
+  }
+
 
   function handleDragOver(event: DragEvent) {
     event.preventDefault(); // Necessary to allow dropping
@@ -370,16 +446,16 @@
   }
 
 
-  // function handleDrop(event: DragEvent) {
+  // function handleDroptest(event: DragEvent) {
   //   event.preventDefault();
   //   if (event.dataTransfer) {
   //     try {
-  //       const dataStr = event.dataTransfer.getData('application/json');
+  //       const dataStr = event.dataTransfer
   //       if (!dataStr) return;
         
-  //       const data = JSON.parse(dataStr);
+  //       // const data = JSON.parse(dataStr);
 
-  //       console.log(data)
+  //       console.log(dataStr)
   //       // Trigger the requested function
   //       // onItemDrop(sourceType, sourcePath, sourceParentPath, targetType, targetPath, targetParentPath);
   //     } catch (e) {
@@ -392,21 +468,14 @@
 
   function handleDrop(event: DragEvent, targetType: 'folder', targetPath: string, targetParentPath: string) {
     event.preventDefault();
-    if (event.dataTransfer) {
-      try {
-        const dataStr = event.dataTransfer.getData('application/json');
-        if (!dataStr) return;
-        
-        const data = JSON.parse(dataStr);
-        const sourcePath = data.path;
-        const sourceType = data.type;
-        const sourceParentPath = data.parentPath;
-        
-        // Trigger the requested function
-        onItemDrop(sourceType, sourcePath, sourceParentPath, targetType, targetPath, targetParentPath);
-      } catch (e) {
-        console.error("Failed to parse drag data:", e);
-      }
+    try {
+      const payload = getDragPayload(event);
+      if (!payload) return;
+
+      onItemDrop(payload.type, payload.path, payload.parentPath, targetType, targetPath, targetParentPath, payload.source);
+
+    } catch (e) {
+      console.error("Failed to parse drag data:", e);
     }
   }
 
@@ -414,32 +483,28 @@
 
   function handleBgDrop(event: DragEvent, targetType: 'folder', targetPath: string, targetParentPath: string) {
     event.preventDefault();
-    if (event.dataTransfer) {
-      try {
-        const dataStr = event.dataTransfer.getData('application/json');
-        if (!dataStr) return;
-        
-        const data = JSON.parse(dataStr);
-        const sourcePath = data.path;
-        const sourceType = data.type;
-        const sourceParentPath = data.parentPath;
-        
-        if(sourceType == "folder"){
-          // Trigger the requested function
-          onItemDrop(sourceType, sourcePath, sourceParentPath, targetType, targetPath, "");
-        }
-        if(sourceType == "file"){
-          if(targetPath != ""){
-            // Trigger the requested function
-            onItemDrop(sourceType, sourcePath, sourceParentPath, targetType, targetPath, targetParentPath);
-          }
-        }
+    try {
+      const payload = getDragPayload(event);
+      if (!payload) return;
 
-      } catch (e) {
-        console.error("Failed to parse drag data:", e);
+      if(payload.type == "folder"){
+        // Trigger the requested function
+        onItemDrop(payload.type, payload.path, payload.parentPath, targetType, targetPath, "", "internal");
       }
+      if(payload.type == "file"){
+        if(targetPath != ""){
+
+          onItemDrop(payload.type, payload.path, payload.parentPath, targetType, targetPath, targetParentPath, payload.source);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to parse drag data:", e);
     }
   }
+
+
+
+
 
 
 

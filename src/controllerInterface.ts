@@ -811,4 +811,21 @@ export class ControllerInterface {
         return this.orchestrator.readBookmarkStatusOfFolder(tagPath, owner);
     }
 
+    /**
+     * Add a file directly to a folder given the tagpath
+     * 
+     * @param tagPath - The tag path of the destination folder
+     * @param filePath - The file path used to retrieve the FileLeaf
+     * @returns Object with success status and error if failed
+     */
+    async addFileToTagpath(
+        tagPath: string,
+        filePath: string
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.addFileToTagpath(
+            tagPath,
+            filePath
+        );
+    }
+
 }

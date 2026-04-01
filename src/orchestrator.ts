@@ -5879,6 +5879,103 @@ export class Orchestrator {
 
 
 
+    /**
+     * Add a file directly to a folder given the tagpath
+     * 
+     * @param tagPath - The tag path of the destination folder
+     * @param filePath - The file path used to retrieve the FileLeaf
+     * @returns Object with success status and error if failed
+     */
+    async addFileToTagpath(
+        tagPath: string,
+        filePath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            if ((!this.getInconsistencyFlag() && owner) || !owner){
+                if (owner){this.setInconsistencyFlag(true)}
+
+                // Extract fileleaf object from the file leaf map using filepath
+                const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
+                if (!fileLeaf) {
+                    if (owner){this.setInconsistencyFlag(false)}
+                    console.log("here?")
+                    return { success: false, error: `FileLeaf not found for path: ${filePath}` };
+                }
+
+
+                console.log("fileleaf found and tagnode found")
+
+                // Extract destinationtagnode object from the tree using tagPath
+                const destinationTagNode = this.treeRoot.getNode(tagPath);
+                if (!destinationTagNode) {
+                    if (owner){this.setInconsistencyFlag(false)}
+                    return { success: false, error: `Destination tag node not found for path: ${tagPath}` };
+                }
+
+
+
+                // ---(Physical File Edits)---
+                    const tFile = fileLeaf.getTFile();
+                    if (!(tFile instanceof TFile)) {
+                        if (owner){this.setInconsistencyFlag(false)}
+                        return { success: false, error: `TFile not found at path: ${filePath}` };
+                    }
+
+
+                    // Add destination tag to physical file
+                    const addSuccess = await fileEditor.addTagToFileYaml(
+                        this.app,
+                        tFile,
+                        tagPath
+                    );
+                    if (!addSuccess) {
+                        if (owner){this.setInconsistencyFlag(false)}
+                        return { success: false, error: `Failed to add destination tag to file: ${filePath}` };
+                    }
+
+
+                    const jsonObject: Record<string, any> = {}
+                    const newModifiedDate = new Date().toISOString()
+                    jsonObject["modified"] = newModifiedDate
+                    
+
+                    // Call updateMeta function with jsonobject and replace
+                    const updateSuccessDestination = destinationTagNode.updateMeta(jsonObject, 'replace');
+                    if (!updateSuccessDestination) {
+                        if (owner){this.setInconsistencyFlag(false)}
+                        return { success: false, error: "Failed to update folder metadata" };
+                    }
+
+                // ---(Physical File Edits End)---
+
+                // ---(Virtual Edits)---
+
+                    // Append fileleaf reference to destinationtagnode
+                    const addToDestSuccess = destinationTagNode.addFileLeaftoFiles(fileLeaf);
+                    if (!addToDestSuccess) {
+                        if (owner){this.setInconsistencyFlag(false)}
+                        return { success: false, error: `Failed to add file to destination tag node: ${tagPath}` };
+                    }
+
+                    // Invalidate cache
+                    this.treeRoot.invalidateCache();
+                    // ---(Virtual Edits End)---
+                    // ---(Frontend Refresh)---
+                    this.plugin.broadcastTreeUpdate();
+                // ---(Frontend Refresh End)---
+                
+                if (owner){this.setInconsistencyFlag(false)}
+                return { success: true };
+            }else {
+                return { success: false, error: "Inconsistency flag is true" }
+            }
+        } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
+            console.error("Error in addFileToTagpath:", error);
+            return { success: false, error };
+        }
+    }
 
 
 
