@@ -102,19 +102,25 @@ export async function renameFile(
 ): Promise<{ success: boolean; file: TFile }> {
 	try {
 		const extension = file.extension;
-		const folderPath = file.parent ? `${file.parent.path}/` : "";
+		const folderPath = file.parent ? `${file.parent.path}` : "";
 		
 		// Find a unique file name
 		let finalName = `${newName}.${extension}`;
 		let counter = 1;
 		
-		while (app.vault.getAbstractFileByPath(`${folderPath}${finalName}`)) {
-			// Skip if it's the same file
-			if (`${folderPath}${finalName}` === file.path) {
-				return { success: true, file };
+
+		let normalizedPath = `${folderPath}${finalName}`.replace(/^\/+/, '');
+
+		while (true) {
+
+
+			const existingFile = app.vault.getAbstractFileByPath(normalizedPath);
+			if (!existingFile || existingFile === file) {
+				break;
 			}
 			finalName = `${newName} ${counter}.${extension}`;
 			counter++;
+			normalizedPath = `${folderPath}${finalName}`.replace(/^\/+/, '');
 		}
 		
 		const newPath = `${folderPath}${finalName}`;

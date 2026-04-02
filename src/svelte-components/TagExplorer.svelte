@@ -350,6 +350,17 @@ function flipLeftSidebarViewSortFlag(){
   console.log(mainViewRefreshKey)
 }
 
+
+async function renameSelectedItem(type: 'folder' | 'file', path: string, parentpath: string){
+  console.log("renameSelectedItem")
+
+    console.log(type)
+    console.log(path)
+    console.log(parentpath)
+    await controller!.triggerRenameModal(type, path, parentpath)
+
+}
+
 </script>
 
 
@@ -367,7 +378,7 @@ function flipLeftSidebarViewSortFlag(){
   style:max-width="450px">
     <div class="sidebar-header">
 
-      <button class="collapse-btn left-btn" onclick={toggleLeft} aria-label="Toggle left sidebar">
+      <button class="collapse-btn" onclick={toggleLeft} aria-label="Toggle left sidebar">
         {#if leftCollapsed}
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
         {:else}
@@ -375,7 +386,7 @@ function flipLeftSidebarViewSortFlag(){
         {/if}
       </button>           
       
-      <span class="sidebar-title left-title"  class:hidden={leftCollapsed}>Left Sidebar</span>
+      <span class="sidebar-title left-title"  class:hidden={leftCollapsed} >Tag Tree</span>
 
       <div class="sidebar-button-holder" class:hidden={leftCollapsed}>
         <div 
@@ -521,6 +532,18 @@ function flipLeftSidebarViewSortFlag(){
           <svg style="padding:2px" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-narrow-wide-icon lucide-arrow-down-narrow-wide"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M11 4h4"/><path d="M11 8h7"/><path d="M11 12h10"/></svg>
         {/if}
       </div>
+
+      <div 
+      class="subheader-button"
+      role="button"
+      tabindex="0"
+      onclick={() => renameSelectedItem(focusedObjectType, focusedObjectPath, focusedObjectParent)}
+      onkeydown={(e) => e.key === 'Enter' && renameSelectedItem(focusedObjectType, focusedObjectPath, focusedObjectParent)}
+      title="Rename File/Folder!"
+      >
+
+        <svg style="padding:2px" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-pen-icon lucide-square-pen"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></svg>
+      </div>
     </div>
 
     <MainView 
@@ -567,7 +590,7 @@ function flipLeftSidebarViewSortFlag(){
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
         {/if}
       </button>
-      <span class="sidebar-title right-title"  class:hidden={rightCollapsed}>Right Sidebar</span>
+      <span class="sidebar-title right-title"  class:hidden={rightCollapsed}>Metadata</span>
     </div>
     {#if !rightCollapsed}
       <div class="sidebar-content">
@@ -660,6 +683,11 @@ function flipLeftSidebarViewSortFlag(){
     white-space: nowrap;
     overflow: hidden;
   }
+  
+  .left-title{
+    margin-left: 10px;
+    margin-right: auto;
+  }
 
   .collapsed .sidebar-title {
     display: none;
@@ -706,9 +734,6 @@ function flipLeftSidebarViewSortFlag(){
   .left-btn{
     margin-right: auto;
   }
-  .left-title{
-    margin-left: auto;
-  }  
 
 
 

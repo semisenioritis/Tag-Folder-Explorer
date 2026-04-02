@@ -110,8 +110,8 @@ export class TreeRoot implements ITreeRoot {
 
     public static async create(app: App, settings: TagFolderPluginSettings): Promise<TreeRoot> {
         const instance = new TreeRoot(app, settings);
-        await instance.recomputeTree(settings);
         instance.rootTagNode = instance.constructRootNode();
+        await instance.recomputeTree(settings);
         return instance;
     }
 
@@ -362,7 +362,7 @@ export class TreeRoot implements ITreeRoot {
                     }
                     
                     // Create new root tag node
-                    const childNode = new TagNode(childName, childName, null, this.app, this.filePathToLeafMap);
+                    const childNode = new TagNode(childName, childName, this.rootTagNode, this.app, this.filePathToLeafMap);
                     this.rootTags.add(childNode);
                     
                     return true;
@@ -939,7 +939,7 @@ export class TreeRoot implements ITreeRoot {
                 
                 if (!rootTag) {
                     // Create new root tag
-                    rootTag = new TagNode(segmentName, currentPath, null, this.app, this.filePathToLeafMap);
+                    rootTag = new TagNode(segmentName, currentPath, this.rootTagNode, this.app, this.filePathToLeafMap);
                     this.rootTags.add(rootTag);
                 }
                 
@@ -1117,7 +1117,7 @@ export class TreeRoot implements ITreeRoot {
                 
                 if (!rootTag) {
                     // Create new root tag
-                    rootTag = new TagNode(segmentName, currentPath, null, this.app, this.filePathToLeafMap);
+                    rootTag = new TagNode(segmentName, currentPath, this.rootTagNode, this.app, this.filePathToLeafMap);
                     this.rootTags.add(rootTag);
                 }
                 

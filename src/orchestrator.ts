@@ -8,6 +8,8 @@ import TagFolderPlugin from "./main";
 
 import { inconsistencyFlag } from './store';
 
+import  {ModalTemplate}  from "./modals";
+
 /**
  * Orchestrator class - coordinates all write operations between file system and tree structure
  * 
@@ -166,7 +168,7 @@ export class Orchestrator {
                 // ---(Virtual Edits)---
                     // Create corresponding FileLeaf object
                     const fileLeaf = new FileLeaf(
-                        createdFile.name,
+                        createdFile.name.replace(/\.md$/, ''),
                         createdFile.path,
                         this.app
                     );
@@ -245,7 +247,7 @@ export class Orchestrator {
                     const children = parentNode.getChildren();
                     
                     while (children[finalFolderName]) {
-                        finalFolderName = `${folderName} ${counter}`;
+                        finalFolderName = `${folderName}_${counter}`;
                         counter++;
                     }
 
@@ -306,15 +308,11 @@ export class Orchestrator {
      * 2. Update FileLeaf object name and path
      * 3. Update fileLeafMap - remove old key and add new key
      * 
-     * @param folderTagPath - The tag path where the file exists (not used currently but kept for future use)
-     * @param oldFileName - The old file name (not used currently but kept for reference)
      * @param newFileName - The new file name (without extension)
      * @param filePath - The current file path used to retrieve the FileLeaf
      * @returns Object with success status, new file path, and error if failed
      */
     async renameFile(
-        folderTagPath: string,
-        oldFileName: string,
         newFileName: string,
         filePath: string,
         owner: boolean = true
@@ -349,7 +347,7 @@ export class Orchestrator {
 
                     // Get the new path after rename (file object is updated in place)
                     const newPath = tFile.path;
-                    const newName = tFile.name;
+                    const newName = tFile.name.replace(/\.md$/, '');
                 // ---(Physical File Edits End)---
 
                 // ---(Virtual Edits)---
@@ -411,6 +409,8 @@ export class Orchestrator {
                     return { success: false, error: `Tag node not found for path: ${folderTagPath}` };
                 }
 
+                let oldTagName = targetNode.getName()
+
                 // Retrieve parent tagnode
                 const parentNode = targetNode.getParent();
                 if (!parentNode) {
@@ -418,12 +418,18 @@ export class Orchestrator {
                     return { success: false, error: "Cannot rename root node" };
                 }
 
-                // Check if parent tagnode has a child with the name as newtagname
+
+                // Check if tagfolder with same name exists and find unique name
+                let finalFolderName = newTagName;
+                let counter = 1;
                 const parentChildren = parentNode.getChildren();
-                if (parentChildren[newTagName]) {
-                    if (owner){this.setInconsistencyFlag(false)}
-                    return { success: false, error: `A folder with name "${newTagName}" already exists in parent` };
+                
+                while (parentChildren[finalFolderName]) {
+                    finalFolderName = `${newTagName}_${counter}`;
+                    counter++;
                 }
+
+                newTagName = finalFolderName
 
                 // Calculate the new path
                 const parentPath = parentNode.getPath();
@@ -485,10 +491,13 @@ export class Orchestrator {
                     jsonObject["modified"] = newModifiedDate
                     
                     // Call updateMeta function with jsonobject and replace
-                    const updateSuccess = parentNode.updateMeta(jsonObject, 'replace');
-                    if (!updateSuccess) {
-                        if (owner){this.setInconsistencyFlag(false)}
-                        return { success: false, error: "Failed to update folder metadata" };
+                    if (parentPath != ""){
+
+                        const updateSuccess = parentNode.updateMeta(jsonObject, 'replace');
+                        if (!updateSuccess) {
+                            if (owner){this.setInconsistencyFlag(false)}
+                            return { success: false, error: "Failed to update folder metadata" };
+                        }
                     }
 
                     const jsonObjectTarget: Record<string, any> = {}
@@ -578,7 +587,7 @@ export class Orchestrator {
                     }
 
                     // Update parent's children dictionary - remove old key and add new key
-                    delete parentChildren[targetNode.getName()];
+                    delete parentChildren[oldTagName];
                     parentChildren[newTagName] = targetNode;
 
                     // Invalidate cache
@@ -1080,7 +1089,7 @@ export class Orchestrator {
                 let counter = 1;
                 
                 while (destinationChildren[finalMainName]) {
-                    finalMainName = `${mainName} ${counter}`;
+                    finalMainName = `${mainName}_${counter}`;
                     counter++;
                 }
 
@@ -1885,7 +1894,7 @@ export class Orchestrator {
                 let counter = 2;
                 
                 while (parentChildren[newTagNodeName]) {
-                    newTagNodeName = `${mainName} ${counter}`;
+                    newTagNodeName = `${mainName}_${counter}`;
                     counter++;
                 }
 
@@ -2237,7 +2246,7 @@ export class Orchestrator {
                 let counter = 1;
                 
                 while (destinationChildren[newTagNodeName]) {
-                    newTagNodeName = `${mainName} ${counter}`;
+                    newTagNodeName = `${mainName}_${counter}`;
                     counter++;
                 }
 
@@ -5978,5 +5987,91 @@ export class Orchestrator {
     }
 
 
+
+    /**
+     * Rename a file/folder given the tagpath, by triggering the Rename modal.
+     * 
+     * @param tagPath - The tag path of the destination folder
+     * @param filePath - The file path used to retrieve the FileLeaf
+     * @returns Object with success status and error if failed
+     */
+    async triggerRenameModal(
+        type: 'folder' | 'file', 
+        path: string, 
+        parentpath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            if ((!this.getInconsistencyFlag() && owner) || !owner){
+                if (owner){this.setInconsistencyFlag(true)}
+
+
+                let cleanPath = path.replace(/\/+$/, ""); 
+                let parts = cleanPath.split("/");
+
+                let currentname = parts.pop();
+                currentname = currentname?.replace(/\.md$/, "");
+
+                if(type == "file"){
+                    const modal = new ModalTemplate(this.app, {
+
+                    confirmText: "Rename File",
+                    cancelText: "Cancel",
+                    placeholder: "New File Name...",
+                    textboxText: currentname,
+
+    
+                    onOpen: () => this.setInconsistencyFlag(true),
+                    onClose: () => {},
+    
+                    onConfirm: async(inputValue) => {
+                        await this.renameFile( inputValue, path, false)
+                    },
+                    onCancel: () => {}
+                    });
+    
+                    modal.open();
+
+
+                }else if(type == "folder"){
+
+                    const modal = new ModalTemplate(this.app, {
+                    confirmText: "Rename Folder",
+                    cancelText: "Cancel",
+                    placeholder: "New Folder Name...",
+                    textboxText: currentname,
+
+    
+                    onOpen: () => this.setInconsistencyFlag(true),
+                    onClose: () => {},
+    
+                    onConfirm: async(inputValue) => await this.renameFolder(path, inputValue, false),
+                    onCancel: () => {}
+                    });
+    
+                    modal.open();
+
+                }
+
+
+
+                // Invalidate cache
+                this.treeRoot.invalidateCache();
+                // ---(Virtual Edits End)---
+                // ---(Frontend Refresh)---
+                this.plugin.broadcastTreeUpdate();
+                // ---(Frontend Refresh End)---
+                
+                if (owner){this.setInconsistencyFlag(false)}
+                return { success: true };
+            }else {
+                return { success: false, error: "Inconsistency flag is true" }
+            }
+        } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
+            console.error("Error in addFileToTagpath:", error);
+            return { success: false, error };
+        }
+    }
 
 }
