@@ -150,6 +150,13 @@ class TagExplorerView extends ItemView {
     };
     
     await super.setState(state, result);
+
+    // Re-render the view if the state changes after the component is already mounted
+    if (this.component) {
+      unmount(this.component);
+      this.component = undefined;
+      this.renderView();
+    }
   }
 
   async onOpen() {
@@ -217,6 +224,11 @@ class TagExplorerView extends ItemView {
   private renderView() {
     const c = this.contentEl
     c.empty()
+    
+    if (this.component) {
+        unmount(this.component);
+        this.component = undefined;
+    }
     
     // Get initial tree data with version
     const treeData = this.plugin.treeRoot?.getSortedTree();
@@ -378,7 +390,8 @@ export default class TagFolderPlugin extends Plugin {
     await leaf.setViewState({ type: VIEW_TYPE_TAG_EXPLORER, active: true })
     w.revealLeaf(leaf)
 
-    await this.openInRightSidebar("https://app.raindrop.io/my/68548149");
+    // this works. commented out since it was spamming my obsidian RAINDROP RAINDROPIO RAINDROP.IO
+    // await this.openInRightSidebar("https://app.raindrop.io/my/68548149");
   }
 
   /**

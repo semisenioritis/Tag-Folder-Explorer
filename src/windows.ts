@@ -39,3 +39,20 @@ export async function openFileInNewTab(pathToFile: string) {
         
     }
 }
+
+const VIEW_TYPE_TAG_EXPLORER = 'tag-explorer-view';
+
+export async function openTagExplorerInNewTab(tagPath: string) {
+    const normalizedPath = (tagPath ?? '').trim().replace(/^#/, '').replace(/^\/+|\/+$/g, '');
+
+    const leaf = app.workspace.getLeaf('tab');
+    await leaf.setViewState({
+        type: VIEW_TYPE_TAG_EXPLORER,
+        active: false,
+        state: {
+            currentPath: normalizedPath,
+            backPaths: [],
+            forwardPaths: []
+        }
+    });
+}

@@ -1,8 +1,9 @@
 <script lang="ts">
 
 //   import { getrightSidebarData } from '../modelInterface'
-  import type { ControllerInterface } from '../controllerInterface';
-  import type { ModelInterface } from '../modelInterface';
+    import type { ControllerInterface } from '../controllerInterface';
+    import type { ModelInterface } from '../modelInterface';
+    import { openTagExplorerInNewTab } from '../windows';
 
     // Props
     interface Props {
@@ -109,6 +110,35 @@
     function formatFieldName(fieldName: string): string {
         // Convert field names like "modified" to "Modified"
         return fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+    }
+
+    function isTagsField(fieldName: string): boolean {
+        return fieldName.trim().toLowerCase() === 'tags';
+    }
+
+    function normalizeTag(tag: string): string {
+        return tag.trim().replace(/^#/, '').replace(/^\/+|\/+$/g, '');
+    }
+
+    function parseTagsFromValue(value: unknown): string[] {
+        if (Array.isArray(value)) {
+            return value
+                .map((tag) => normalizeTag(String(tag)))
+                .filter((tag) => tag.length > 0);
+        }
+
+        if (typeof value === 'string') {
+            return value
+                .split(',')
+                .map((tag) => normalizeTag(tag))
+                .filter((tag) => tag.length > 0);
+        }
+
+        return [];
+    }
+
+    async function handleTagClick(tag: string): Promise<void> {
+        await openTagExplorerInNewTab(tag);
     }
 
     async function handleDescriptionUpdate() {
@@ -362,7 +392,27 @@
             {#if doesNotStartWithPluginPrefixes(key)}
               <div class="metadata-field">
                   <span class="field-label">{formatFieldName(key)}:</span>
-                  <span class="field-value">{value || 'N/A'}</span>
+                                    {#if isTagsField(key)}
+                                        {@const tags = parseTagsFromValue(value)}
+                                        {#if tags.length > 0}
+                                            <div class="field-value">
+                                                {#each tags as tag}
+                                                    <button
+                                                        class="tag-pill"
+                                                        type="button"
+                                                        onclick={() => handleTagClick(tag)}
+                                                        title={`Open Tag Explorer at ${tag}`}
+                                                    >
+                                                        #{tag}
+                                                    </button>
+                                                {/each}
+                                                </div>
+                                        {:else}
+                                            <span class="field-value">N/A</span>
+                                        {/if}
+                                    {:else}
+                                        <span class="field-value">{value || 'N/A'}</span>
+                                    {/if}
               </div>
             {/if}
           {/each}
@@ -370,12 +420,6 @@
       {/if}
       {/if}
 
-      {#if metadataViewData.fileinitial}
-      <div class="metadata-section">
-          <h5 class="metadata-title">File Content</h5>
-          <textarea readonly class="description-text" >{metadataViewData.fileinitial}</textarea>
-      </div>
-      {/if}
 
       {#if metadataViewData.fileobsdata && showObsMetaData}
       <div class="metadata-section">
@@ -399,6 +443,12 @@
 {/if}
 
 
+{#if metadataViewData.fileinitial}
+<div class="metadata-section">
+    <h5 class="metadata-title">File Content</h5>
+    <textarea readonly class="description-text" >{metadataViewData.fileinitial}</textarea>
+</div>
+{/if}
 
 
 <style>
@@ -473,6 +523,24 @@
     text-align: right;
     word-break: break-word;
   }
+
+    .tag-pill {
+        border: 1px solid var(--background-modifier-border);
+        background: var(--tag-background);
+        color: var(--text-accent);
+        border-radius: 999px;
+        padding: 2px 8px;
+        font-size: 12px;
+        cursor: pointer;
+        margin-left: 6px;
+        height: 20px;
+        margin-top: 5px;
+        box-shadow: none;
+    }
+
+    .tag-pill:hover {
+        background: var(--tag-background-hover);
+    }
 
   .field-value.path {
     font-family: var(--font-monospace);
