@@ -19,6 +19,7 @@ export async function createNewFile(
 		const extension = ".md"
 		// Build the full path
 		const folderPath = path ? `${path}/` : "";
+		fileName = fileName.replace(/[\[\]#^|\\\/:\?]/g, '').trim();
 		
 		// Find a unique file name
 		let finalName = fileName + extension;
@@ -103,6 +104,8 @@ export async function renameFile(
 	try {
 		const extension = file.extension;
 		const folderPath = file.parent ? `${file.parent.path}` : "";
+		newName = newName.replace(/[\[\]#^|\\\/:\?]/g, '').trim();
+
 		
 		// Find a unique file name
 		let finalName = `${newName}.${extension}`;

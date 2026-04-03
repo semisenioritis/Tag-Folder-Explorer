@@ -845,4 +845,26 @@ export class ControllerInterface {
             parentpath
         );
     }
+
+    /**
+     * Create a file/Folder given the tagpath, by triggering the New File modal.
+     * 
+     * @param type - The type of what is to be created
+     * @param parentpath - The tag path of the parent folder
+     * @returns Object with success status and error if failed
+     */
+    async triggerNewFileOrFolderModal(
+        type: 'folder' | 'file', 
+        parentpath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.triggerNewFileOrFolderModal(
+            type,
+            parentpath
+        );
+    }
+
+
+
+    
 }

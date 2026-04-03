@@ -30,7 +30,7 @@ export class ModalTemplate extends Modal {
     const { contentEl } = this;
 
     const modalTitle = contentEl.createEl("h2",{
-      text: this.config.confirmText ?? "Rename" ,
+      text: this.config.confirmText ?? "" ,
     });
 
     // modalTitle.style.marginBottom = "6px";

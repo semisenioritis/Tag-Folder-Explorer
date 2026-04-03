@@ -352,6 +352,8 @@ export class TreeRoot implements ITreeRoot {
                         return false;
                     }
                     
+                    newChildTagName = newChildTagName.replace(/\s+/g, '_').replace(/[^\p{L}\p{N}_\-\p{Extended_Pictographic}]/gu, '')
+            
                     const childName = newChildTagName.trim();
                     
                     // Check if child already exists in rootTags

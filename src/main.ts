@@ -1,4 +1,4 @@
-import { Plugin, ItemView, WorkspaceLeaf } from 'obsidian'
+import { Editor, MarkdownView, Plugin, ItemView, WorkspaceLeaf } from 'obsidian'
 
 
 import { TreeRoot } from './TreeRoot';
@@ -345,6 +345,56 @@ export default class TagFolderPlugin extends Plugin {
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new TagFolderSettingTab(this.app, this));
+
+
+    this.addCommand({
+        id: 'pull-tags-into-frontmatter',
+        name: 'Pull all tags from body into metadata',
+        callback: async() => {
+
+          const activeFile = this.app.workspace.getActiveFile();
+          if (!activeFile) {
+              console.log('No active file');
+              return;
+          }
+
+
+          const cache = this.app.metadataCache.getFileCache(activeFile);
+          if (!cache?.tags) {
+            return [];
+          }
+          const bodyTags = cache.tags.map(tagCache => {
+            return tagCache.tag.startsWith('#') ? tagCache.tag.slice(1) : tagCache.tag;
+          });
+
+          const bodySet = new Set(bodyTags);
+
+          const tags: string[] = [];
+          await this.app.fileManager.processFrontMatter(activeFile, (frontmatter) => {
+            if (!frontmatter) return;
+            if (frontmatter.tags) {
+              if (Array.isArray(frontmatter.tags)) {
+                tags.push(...frontmatter.tags);
+              } else if (typeof frontmatter.tags === 'string') {
+                tags.push(frontmatter.tags);
+              }
+            }
+            console.log("command")
+            console.log(tags)
+
+            tags.map(tag => tag.startsWith('#') ? tag.slice(1) : tag);
+            const result = [
+              ...tags,
+              ...[...bodySet].filter(tag => !tags.includes(tag))
+            ];
+
+            frontmatter.tags = result
+          });
+  
+
+
+        },
+    });
 
 
   }

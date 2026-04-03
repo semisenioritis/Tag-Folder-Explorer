@@ -112,6 +112,7 @@ export class Orchestrator {
                 if (owner){this.setInconsistencyFlag(true)}
 
                 let createdFile: TFile | null = null;
+                fileName = this.toSafeFileName(fileName)
         // 🔴 write action divider
         // 🔴 write action start
         // 🔴 write action plan
@@ -138,10 +139,14 @@ export class Orchestrator {
         // 🔴 write action step pre                
                     // Add tag to file metadata
                     const tagToAdd = folderTagPath;
-                    const addTagSuccess = await fileEditor.addTagToFileYaml(this.app, createdFile, tagToAdd);
-                    if (!addTagSuccess) {
-                        if (owner){this.setInconsistencyFlag(false)}
-                        return { success: false, error: "Failed to add tag to file" };
+
+                    if(tagToAdd != ""){
+                        const addTagSuccess = await fileEditor.addTagToFileYaml(this.app, createdFile, tagToAdd);
+                        if (!addTagSuccess) {
+                            if (owner){this.setInconsistencyFlag(false)}
+                            return { success: false, error: "Failed to add tag to file" };
+                        }
+
                     }
         // 🔴 write action step post
 
@@ -156,11 +161,14 @@ export class Orchestrator {
                         return { success: false, error: `Tag node not found for path: ${folderTagPath}` };
                     }
 
-                    // Call updateMeta function with jsonobject and replace
-                    const updateSuccess = targetNode.updateMeta(jsonObject, 'replace');
-                    if (!updateSuccess) {
-                        if (owner){this.setInconsistencyFlag(false)}
-                        return { success: false, error: "Failed to update folder metadata" };
+                    if(folderTagPath != ""){
+
+                        // Call updateMeta function with jsonobject and replace
+                        const updateSuccess = targetNode.updateMeta(jsonObject, 'replace');
+                        if (!updateSuccess) {
+                            if (owner){this.setInconsistencyFlag(false)}
+                            return { success: false, error: "Failed to update folder metadata" };
+                        }
                     }
 
                 // ---(Physical File Edits End)---
@@ -241,6 +249,7 @@ export class Orchestrator {
                         return { success: false, error: `Parent tag node not found for path: ${folderTagPath}` };
                     }
 
+                    folderName = this.toHashtagSafe(folderName)
                     // Check if tagfolder with same name exists and find unique name
                     let finalFolderName = folderName;
                     let counter = 1;
@@ -273,11 +282,15 @@ export class Orchestrator {
                     const newModifiedDate = new Date().toISOString()
                     jsonObject["modified"] = newModifiedDate
                     
-                    // Call updateMeta function with jsonobject and replace
-                    const updateSuccess = parentNode.updateMeta(jsonObject, 'replace');
-                    if (!updateSuccess) {
-                        if (owner){this.setInconsistencyFlag(false)}
-                        return { success: false, error: "Failed to update folder metadata" };
+
+                    if(folderTagPath != ""){
+                        // Call updateMeta function with jsonobject and replace
+                        const updateSuccess = parentNode.updateMeta(jsonObject, 'replace');
+                        if (!updateSuccess) {
+                            if (owner){this.setInconsistencyFlag(false)}
+                            return { success: false, error: "Failed to update folder metadata" };
+                        }
+
                     }
                 
                     // Invalidate cache
@@ -337,6 +350,8 @@ export class Orchestrator {
                         if (owner){this.setInconsistencyFlag(false)}
                         return { success: false, error: `TFile not found at path: ${filePath}` };
                     }
+
+                    newFileName = this.toSafeFileName(newFileName)
 
                     // Rename the physical file
                     const renameResult = await fileEditor.renameFile(this.app, tFile, newFileName);
@@ -410,6 +425,7 @@ export class Orchestrator {
                 }
 
                 let oldTagName = targetNode.getName()
+                newTagName = newTagName.replace(/\s+/g, '_').replace(/[^\p{L}\p{N}_\-\p{Extended_Pictographic}]/gu, '')
 
                 // Retrieve parent tagnode
                 const parentNode = targetNode.getParent();
@@ -6073,5 +6089,127 @@ export class Orchestrator {
             return { success: false, error };
         }
     }
+
+
+
+    /**
+     * Create a file/Folder given the tagpath, by triggering the New File modal.
+     * 
+     * @param type - The type of what is to be created
+     * @param parentpath - The tag path of the parent folder
+     * @returns Object with success status and error if failed
+     */
+    async triggerNewFileOrFolderModal(
+        type: 'folder' | 'file',  
+        parentpath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            if ((!this.getInconsistencyFlag() && owner) || !owner){
+                if (owner){this.setInconsistencyFlag(true)}
+
+
+                if(type == "file"){
+                    const modal = new ModalTemplate(this.app, {
+
+                    confirmText: "Create File",
+                    cancelText: "Cancel",
+                    placeholder: "New File Name...",
+                    
+
+                    onOpen: () => this.setInconsistencyFlag(true),
+                    onClose: () => {},
+    
+                    onConfirm: async(inputValue) => {
+
+                        let newName
+
+                        if(inputValue ==""){
+                            newName = undefined
+                        } else{
+                            newName = inputValue
+                        }
+                        await this.createFileInTagFolder( parentpath, newName, false)
+                    },
+                    onCancel: () => {}
+                    });
+    
+                    modal.open();
+
+
+                }else if(type == "folder"){
+
+                    const modal = new ModalTemplate(this.app, {
+                    confirmText: "Create Folder",
+                    cancelText: "Cancel",
+                    placeholder: "New Folder Name...",
+
+    
+                    onOpen: () => this.setInconsistencyFlag(true),
+                    onClose: () => {},
+    
+                    onConfirm: async(inputValue) => {
+
+                        let newName
+
+                        if(inputValue ==""){
+                            newName = undefined
+                        } else{
+                            newName = inputValue
+                        }
+                        await this.createFolderInFolder( parentpath, newName, false)
+                    },
+                    onCancel: () => {}
+                    });
+    
+                    modal.open();
+
+                }
+
+
+
+                // Invalidate cache
+                this.treeRoot.invalidateCache();
+                // ---(Virtual Edits End)---
+                // ---(Frontend Refresh)---
+                this.plugin.broadcastTreeUpdate();
+                // ---(Frontend Refresh End)---
+                
+                if (owner){this.setInconsistencyFlag(false)}
+                return { success: true };
+            }else {
+                return { success: false, error: "Inconsistency flag is true" }
+            }
+        } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
+            console.error("Error in addFileToTagpath:", error);
+            return { success: false, error };
+        }
+    }
+
+
+    toHashtagSafe(str: string) {
+    return str
+        // Replace spaces with underscores
+        .replace(/\s+/g, '_')
+        // Remove anything not allowed:
+        // - Letters (a-z, A-Z)
+        // - Numbers (0-9)
+        // - Underscore (_)
+        // - Hyphen (-)
+        // - Unicode characters (including emojis)
+        .replace(/[^\p{L}\p{N}_\-\p{Extended_Pictographic}]/gu, '');
+    }
+
+
+    toSafeFileName(name: string) {
+    return name
+        // Remove forbidden characters: [] # ^ | \ / : ?
+        .replace(/[\[\]#^|\\\/:\?]/g, '')
+        // Optional: trim whitespace from start/end
+        .trim();
+    }
+
+
 
 }
