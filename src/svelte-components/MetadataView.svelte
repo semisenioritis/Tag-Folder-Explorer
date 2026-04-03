@@ -222,8 +222,8 @@
         </div>
 
 
-        <div class="metadata-section">
-        
+        <details class="metadata-section" open>
+            <summary class="metadata-title">General Info</summary>
             <div class="metadata-field">
                 <span class="field-label">Name:</span>
                 <span class="field-value">Home</span>
@@ -234,7 +234,7 @@
                 <span class="field-value path">/</span>
             </div>
 
-        </div>
+        </details>
 
     </div>
     {:else}
@@ -257,7 +257,8 @@
             </div>
 
 
-            <div class="metadata-section">
+            <details class="metadata-section" open>
+                <summary class="metadata-title">General Info</summary>
             
                 <div class="metadata-field">
                     <span class="field-label">Name:</span>
@@ -280,28 +281,28 @@
                 </div>
 
 
-            </div>
+            </details>
 
 
 
 
-            <div class="metadata-section">
-                <h5 class="metadata-title">Description</h5>
+            <details class="metadata-section" open>
+                <summary class="metadata-title">Description</summary>
                 <textarea 
                     placeholder="Folder Desc..."
                     class="description-text" 
                     bind:value={descriptionValue}
                     onchange={handleDescriptionUpdate}
                 ></textarea>
-            </div>
+            </details>
 
 
 
 
             {#if currentPath != ""}
                 {#if metadataViewData.legend}
-                <div class="metadata-section">
-                    <h5 class="metadata-title">Legend</h5>
+                <details class="metadata-section">
+                    <summary class="metadata-title">Legend</summary>
                     <div class="legend-list">
                         {#each Object.entries(metadataViewData.legend) as [color, label]}
                             <div class="legend-item">
@@ -319,7 +320,7 @@
                             </div>
                         {/each}
                     </div>
-                </div>
+                </details>
                 {/if}
             {/if}
 
@@ -357,7 +358,8 @@
         
         </div>
 
-        <div class="metadata-section">
+        <details class="metadata-section" open>
+            <summary class="metadata-title">General Info</summary>
         
             <div class="metadata-field">
                 <span class="field-label">Name:</span>
@@ -370,24 +372,24 @@
             </div>
 
 
-        </div>
+        </details>
 
-      <div class="metadata-section">
-          <h5 class="metadata-title">File Description</h5>
+      <details class="metadata-section" open>
+          <summary class="metadata-title">File Description</summary>
           <textarea 
             placeholder="File Desc..."
             class="description-text" 
             bind:value={descriptionValue}
             onchange={handleDescriptionUpdate}
           ></textarea>
-      </div>
+      </details>
 
 
       {#if metadataViewData.filemetadata && Object.keys(metadataViewData.filemetadata).length > 0}
       {@const filteredMetadata = Object.entries(metadataViewData.filemetadata).filter(([key]) => shouldDisplayField(key))}
       {#if filteredMetadata.length > 0}
-      <div class="metadata-section">
-          <h5 class="metadata-title">File Metadata</h5>
+      <details class="metadata-section" open>
+          <summary class="metadata-title">File Metadata</summary>
           {#each filteredMetadata as [key, value]}
             {#if doesNotStartWithPluginPrefixes(key)}
               <div class="metadata-field">
@@ -416,14 +418,14 @@
               </div>
             {/if}
           {/each}
-      </div>
+      </details>
       {/if}
       {/if}
 
 
       {#if metadataViewData.fileobsdata && showObsMetaData}
-      <div class="metadata-section">
-          <h5 class="metadata-title">Obsidian Information</h5>
+      <details class="metadata-section">
+          <summary class="metadata-title">Obsidian Information</summary>
           <div class="metadata-field">
               <span class="field-label">Created Time:</span>
               <span class="field-value">{formatTimestamp(metadataViewData.fileobsdata.ctime)}</span>
@@ -432,7 +434,7 @@
               <span class="field-label">Modified Time:</span>
               <span class="field-value">{formatTimestamp(metadataViewData.fileobsdata.mtime)}</span>
           </div>
-      </div>
+      </details>
       {/if}
   </div>
     {:else}
@@ -444,10 +446,10 @@
 
 
 {#if metadataViewData.fileinitial}
-<div class="metadata-section">
-    <h5 class="metadata-title">File Content</h5>
+<details class="metadata-section">
+    <summary class="metadata-title">File Content</summary>
     <textarea readonly class="description-text" >{metadataViewData.fileinitial}</textarea>
-</div>
+</details>
 {/if}
 
 
@@ -500,6 +502,8 @@
     margin: 0 0 12px 0;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    cursor: pointer;
+    user-select: none;
   }
 
   .metadata-field {
@@ -618,5 +622,35 @@
     font-size: 13px;
   }
 
+
+/* Hide the default marker */
+details > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+
+details > summary::before {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgY2xhc3M9Imx1Y2lkZSBsdWNpZGUtY2hldnJvbi1yaWdodC1pY29uIGx1Y2lkZS1jaGV2cm9uLXJpZ2h0Ij48cGF0aCBkPSJtOSAxOCA2LTYtNi02Ii8+PC9zdmc+");
+  background-size: contain;
+  background-repeat: no-repeat;
+  vertical-align: middle;
+  margin-right: 8px;
+  transition: transform 0.2s ease;
+  stroke: white
+}
+
+
+details[open] > summary::before {
+  transform: rotate(90deg);
+}
 
 </style>
