@@ -754,7 +754,7 @@ async function renameSelectedItem(type: 'folder' | 'file', path: string, parentp
     font-size: 14px;
     color: var(--text-normal);
     white-space: nowrap;
-    overflow: hidden;
+    padding-right: 20px;
   }
 
 
@@ -887,8 +887,20 @@ async function renameSelectedItem(type: 'folder' | 'file', path: string, parentp
   display: grid ;
   align-items: center; /* vertical centering */
   padding-left: 10px;
+
+  overflow-x: auto;
+  white-space: nowrap; 
+
+  /* Hide scrollbar - Firefox */
+  scrollbar-width: none;
+
+  /* Hide scrollbar - IE/Edge */
+  -ms-overflow-style: none;
 }
   
+.path-holder::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
 
 
 

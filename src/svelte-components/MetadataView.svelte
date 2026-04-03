@@ -395,18 +395,18 @@
                                     {#if isTagsField(key)}
                                         {@const tags = parseTagsFromValue(value)}
                                         {#if tags.length > 0}
-                                            <div class="field-value">
+                                            <div class="field-value tags-container">
                                                 {#each tags as tag}
                                                     <button
                                                         class="tag-pill"
                                                         type="button"
                                                         onclick={() => handleTagClick(tag)}
-                                                        title={`Open Tag Explorer at ${tag}`}
+                                                        title={`#${tag}`}
                                                     >
                                                         #{tag}
                                                     </button>
                                                 {/each}
-                                                </div>
+                                            </div>
                                         {:else}
                                             <span class="field-value">N/A</span>
                                         {/if}
@@ -505,7 +505,7 @@
   .metadata-field {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
+    align-items: flex-start;
     margin-bottom: 4px;
     gap: 12px;
   }
@@ -515,6 +515,7 @@
     color: var(--text-muted);
     font-weight: 500;
     flex-shrink: 0;
+    padding-top: 2px;
   }
 
   .field-value {
@@ -522,6 +523,14 @@
     color: var(--text-normal);
     text-align: right;
     word-break: break-word;
+    min-width: 0;
+  }
+
+  .tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 4px;
   }
 
     .tag-pill {
@@ -532,10 +541,15 @@
         padding: 2px 8px;
         font-size: 12px;
         cursor: pointer;
-        margin-left: 6px;
         height: 20px;
         margin-top: 5px;
         box-shadow: none;
+        text-align: left;
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: inline;
     }
 
     .tag-pill:hover {
