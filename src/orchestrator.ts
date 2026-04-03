@@ -8,7 +8,7 @@ import TagFolderPlugin from "./main";
 
 import { inconsistencyFlag } from './store';
 
-import  {ModalTemplate}  from "./modals";
+import  {InputModal, ConfirmationModal}  from "./modals";
 
 /**
  * Orchestrator class - coordinates all write operations between file system and tree structure
@@ -326,7 +326,7 @@ export class Orchestrator {
      * @returns Object with success status, new file path, and error if failed
      */
     async renameFile(
-        newFileName: string,
+        newFileName: string = "Untitled",
         filePath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; newPath?: string; error?: any }> {
@@ -410,7 +410,7 @@ export class Orchestrator {
      */
     async renameFolder(
         folderTagPath: string,
-        newTagName: string,
+        newTagName: string = "Untitled",
         owner: boolean = true
     ): Promise<{ success: boolean; newPath?: string; error?: any }> {
         try {
@@ -681,9 +681,6 @@ export class Orchestrator {
                         return { success: false, error: `Failed to remove tag from file: ${filePath}` };
                     }
 
-                    // Construct home and locked paths
-                    const prefixedTagPath = `🏠/${folderTagPath}`;
-                    const lockedTagPath = `🔒/ ${folderTagPath}`;
 
                     // Read legend status of file
                     const legendStatus = await this.readLegendStatusOfFile(filePath, folderTagPath, false);
@@ -718,11 +715,14 @@ export class Orchestrator {
                     const newModifiedDate = new Date().toISOString()
                     jsonObject["modified"] = newModifiedDate
                     
-                    // Call updateMeta function with jsonobject and replace
-                    const updateSuccess = tagNode.updateMeta(jsonObject, 'replace');
-                    if (!updateSuccess) {
-                        if (owner){this.setInconsistencyFlag(false)}
-                        return { success: false, error: "Failed to update folder metadata" };
+                    if (folderTagPath != ""){
+                        // Call updateMeta function with jsonobject and replace
+                        const updateSuccess = tagNode.updateMeta(jsonObject, 'replace');
+                        if (!updateSuccess) {
+                            if (owner){this.setInconsistencyFlag(false)}
+                            return { success: false, error: "Failed to update folder metadata" };
+                        }
+
                     }
 
                 // ---(Physical File Edits End)---
@@ -779,7 +779,7 @@ export class Orchestrator {
     async removeFolderFromFolder(
         childFolderPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<{ success: boolean; error?: any }> { 
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -812,6 +812,7 @@ export class Orchestrator {
 
                 // ---(Physical File Edits)---
                     // BFS traversal - Remove tags from all files at each level
+                    let allFilesParsed: Set<IFileLeaf> = new Set();
                     let currentLevelNodes: ITagNode[] = [childTagNode];
                     
                     while (currentLevelNodes.length > 0) {
@@ -825,6 +826,7 @@ export class Orchestrator {
                             for (const fileLeaf of files) {
                                 const tFile = fileLeaf.getTFile();
                                 const filePath = fileLeaf.getPath();
+                                allFilesParsed.add(fileLeaf);
                                 
                                 const removeSuccess = await fileEditor.removeTagFromFileYaml(
                                     this.app,
@@ -903,22 +905,41 @@ export class Orchestrator {
                     const newModifiedDate = new Date().toISOString()
                     jsonObject["modified"] = newModifiedDate
                     
-                    // Call updateMeta function with jsonobject and replace
-                    const updateSuccess = parentTagNode.updateMeta(jsonObject, 'replace');
-                    if (!updateSuccess) {
-                        if (owner){this.setInconsistencyFlag(false)}
-                        return { success: false, error: "Failed to update folder metadata" };
+
+                    if(parentFolderTagPath != ""){
+                        // Call updateMeta function with jsonobject and replace
+                        const updateSuccess = parentTagNode.updateMeta(jsonObject, 'replace');
+                        if (!updateSuccess) {
+                            if (owner){this.setInconsistencyFlag(false)}
+                            return { success: false, error: "Failed to update folder metadata" };
+                        }
+
                     }
 
                 // ---(Physical File Edits End)---
 
                 // ---(Virtual Edits)---
 
-
                     // Delete childtagnode reference from parenttagnode's children property
-                    const parentChildren = parentTagNode.getChildren();
-                    const childName = childTagNode.getName();
-                    delete parentChildren[childName];
+
+                    if (parentTagNode === this.treeRoot.getNode("")) {
+                        this.treeRoot.getRootTags().delete(childTagNode);
+                    } else {
+                        const sourceChildren = parentTagNode.getChildren();
+                        const childName = childTagNode.getName();
+                        delete sourceChildren[childName];
+                    }
+
+
+                    for (const fileLeaf of allFilesParsed) {
+
+                        // if the file contains no more tags then add it to the root node untagged files
+                        const tagsOfFile = await fileLeaf.retrieveAllTagPaths()
+                        if (tagsOfFile.length == 0){
+                            this.treeRoot.getRootNode().addFileLeaftoFiles(fileLeaf)
+                        }
+
+                    }
 
                     // Note: We don't need to explicitly delete the parent reference from child
                     // as the child node will be garbage collected once all references are removed
@@ -6029,7 +6050,7 @@ export class Orchestrator {
                 currentname = currentname?.replace(/\.md$/, "");
 
                 if(type == "file"){
-                    const modal = new ModalTemplate(this.app, {
+                    const modal = new InputModal(this.app, {
 
                     confirmText: "Rename File",
                     cancelText: "Cancel",
@@ -6051,7 +6072,7 @@ export class Orchestrator {
 
                 }else if(type == "folder"){
 
-                    const modal = new ModalTemplate(this.app, {
+                    const modal = new InputModal(this.app, {
                     confirmText: "Rename Folder",
                     cancelText: "Cancel",
                     placeholder: "New Folder Name...",
@@ -6110,7 +6131,7 @@ export class Orchestrator {
 
 
                 if(type == "file"){
-                    const modal = new ModalTemplate(this.app, {
+                    const modal = new InputModal(this.app, {
 
                     confirmText: "Create File",
                     cancelText: "Cancel",
@@ -6139,7 +6160,7 @@ export class Orchestrator {
 
                 }else if(type == "folder"){
 
-                    const modal = new ModalTemplate(this.app, {
+                    const modal = new InputModal(this.app, {
                     confirmText: "Create Folder",
                     cancelText: "Cancel",
                     placeholder: "New Folder Name...",
@@ -6210,6 +6231,86 @@ export class Orchestrator {
         .trim();
     }
 
+    /**
+     * Create a file/Folder given the tagpath, by triggering the New File modal.
+     * 
+     * @param type - The type of what is to be created
+     * @param parentpath - The tag path of the parent folder
+     * @returns Object with success status and error if failed
+     */
+    async triggerDeleteModal(
+        type: 'folder' | 'file', 
+        path: string,
+        parentpath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            if ((!this.getInconsistencyFlag() && owner) || !owner){
+                if (owner){this.setInconsistencyFlag(true)}
 
+
+                if(type == "file"){
+                    const modal = new ConfirmationModal(this.app, {
+
+                    confirmText: "⚠️ Remove File From Current Folder?",
+                    cancelText: "Cancel",
+                    confirmButton: "Remove",
+                    
+
+                    onOpen: () => this.setInconsistencyFlag(true),
+                    onClose: () => {},
+    
+                    onConfirm: async() => {
+
+                        await this.removeFileFromFolder( parentpath, path, false)
+                    },
+                    onCancel: () => {}
+                    });
+    
+                    modal.open();
+
+
+                }else if(type == "folder"){
+
+                    const modal = new ConfirmationModal(this.app, {
+                    confirmText: "⚠️ Delete Folder?",
+                    cancelText: "Cancel",
+                    confirmButton: "Delete",
+
+    
+                    onOpen: () => this.setInconsistencyFlag(true),
+                    onClose: () => {},
+    
+                    onConfirm: async() => {
+
+                        await this.removeFolderFromFolder( path, false)
+                    },
+                    onCancel: () => {}
+                    });
+    
+                    modal.open();
+
+                }
+
+
+
+                // Invalidate cache
+                this.treeRoot.invalidateCache();
+                // ---(Virtual Edits End)---
+                // ---(Frontend Refresh)---
+                this.plugin.broadcastTreeUpdate();
+                // ---(Frontend Refresh End)---
+                
+                if (owner){this.setInconsistencyFlag(false)}
+                return { success: true };
+            }else {
+                return { success: false, error: "Inconsistency flag is true" }
+            }
+        } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
+            console.error("Error in addFileToTagpath:", error);
+            return { success: false, error };
+        }
+    }
 
 }

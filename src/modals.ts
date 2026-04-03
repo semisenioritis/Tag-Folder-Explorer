@@ -7,15 +7,16 @@ interface ModalConfig {
   cancelText?: string;
   placeholder?: string;
   textboxText?: string;
+  confirmButton?: string;
 
   onOpen?: () => void;
   onClose?: () => void;
 
-  onConfirm: (inputValue: string) => void;
+  onConfirm: (inputValue?: string) => void;
   onCancel: () => void;
 }
 
-export class ModalTemplate extends Modal {
+export class InputModal extends Modal {
   config: ModalConfig;
   inputEl!: HTMLInputElement;
 
@@ -91,4 +92,67 @@ export class ModalTemplate extends Modal {
     this.config.onClose?.();
     this.contentEl.empty();
   }
+}
+
+export class ConfirmationModal extends Modal {
+  config: ModalConfig;
+
+
+  constructor(app: App, config: ModalConfig) {
+    super(app);
+    this.config = config;
+  }
+
+  onOpen() {
+    this.config.onOpen?.();
+
+    const { contentEl } = this;
+
+    contentEl.createEl("h2", {
+      text: this.config.confirmText ?? "",
+    });
+
+
+
+
+    const buttonContainer = contentEl.createEl("div");
+    buttonContainer.style.marginTop = "4px";
+    buttonContainer.style.display = "flex";
+    buttonContainer.style.gap = "4px";
+
+    // Confirm button
+    const confirmBtn = buttonContainer.createEl("button", {
+      text: this.config.confirmButton ?? "Confirm",
+    });
+
+    confirmBtn.style.padding = "4px 8px";
+    confirmBtn.style.marginRight = "auto";
+    confirmBtn.style.marginLeft = "15%";
+
+    confirmBtn.onclick = () => {
+      this.config.onConfirm(); 
+      this.close();
+    };
+
+    // Cancel button
+    const cancelBtn = buttonContainer.createEl("button", {
+      text: this.config.cancelText ?? "Cancel",
+    });
+
+    cancelBtn.style.padding = "4px 8px";
+    cancelBtn.style.marginRight = "15%";
+    cancelBtn.style.marginLeft = "auto";
+
+    cancelBtn.onclick = () => {
+      this.config.onCancel();
+      this.close();
+    };
+  }
+
+  onClose() {
+    this.config.onClose?.();
+    this.contentEl.empty();
+  }
+
+
 }

@@ -382,6 +382,17 @@ async function createNewFolderInFolder(type: 'folder', parentpath: string){
 }
 
 
+async function deleteSelectedItem(type: 'folder' | 'file', path: string, parentpath: string){
+  console.log("delteSelectedItem")
+
+    console.log(type)
+    console.log(path)
+    console.log(parentpath)
+    await controller!.triggerDeleteModal(type, path, parentpath)
+
+}
+
+
 </script>
 
 
@@ -595,6 +606,18 @@ async function createNewFolderInFolder(type: 'folder', parentpath: string){
       >
 
         <svg style="padding:2px" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-plus-icon lucide-folder-plus"><path d="M12 10v6"/><path d="M9 13h6"/><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+      </div>
+
+      <div 
+      class="subheader-button subheader-button-left"
+      role="button"
+      tabindex="0"
+      onclick={() => deleteSelectedItem(focusedObjectType, focusedObjectPath, focusedObjectParent)}
+      onkeydown={(e) => e.key === 'Enter' && deleteSelectedItem(focusedObjectType, focusedObjectPath, focusedObjectParent)}
+      title="Delete Selected"
+      >
+
+        <svg style="padding:2px" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash2-icon lucide-trash-2"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
       </div>
 
     </div>
@@ -960,7 +983,15 @@ async function createNewFolderInFolder(type: 'folder', parentpath: string){
 }
 
 
+.subheader-button-left{
+margin-left: auto;
+}
 
+
+.subheader-button-left:hover {
+  background-color: #e84545;
+  /* or a hex value like #e2e2e2 */
+}
 
 
 

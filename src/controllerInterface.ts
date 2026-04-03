@@ -864,7 +864,25 @@ export class ControllerInterface {
         );
     }
 
-
+    /**
+     * Rename a file/folder given the tagpath, by triggering the Rename modal.
+     * 
+     * @param tagPath - The tag path of the destination folder
+     * @param filePath - The file path used to retrieve the FileLeaf
+     * @returns Object with success status and error if failed
+     */
+    async triggerDeleteModal(
+        type: 'folder' | 'file', 
+        path: string, 
+        parentpath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.triggerDeleteModal(
+            type,
+            path,
+            parentpath
+        );
+    }
 
     
 }
