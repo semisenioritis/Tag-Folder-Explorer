@@ -1,5 +1,7 @@
 <script lang="ts">
   import { writable } from 'svelte/store';
+  import { inconsistencyFlag } from '../store';
+  import { fade } from 'svelte/transition';
   import TagTreeView from './TagTreeView.svelte';
   import MainView from './MainView.svelte';
 	import MetadataView from './MetadataView.svelte';
@@ -365,6 +367,12 @@ async function renameSelectedItem(type: 'folder' | 'file', path: string, parentp
 
 
 
+{#if $inconsistencyFlag}
+  <div class="loading-overlay" transition:fade={{ duration: 300 }}>
+    <div class="spinner"></div>
+    <div class="loading-text">Rebuilding folder structure...</div>
+  </div>
+{/if}
 
 
 
@@ -624,6 +632,41 @@ async function renameSelectedItem(type: 'folder' | 'file', path: string, parentp
 
 
 <style>
+
+  .loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--background-primary);
+    opacity: 0.3;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .spinner {
+    border: 4px solid var(--background-modifier-border);
+    border-top: 4px solid var(--interactive-accent);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+  }
+
+  .loading-text {
+    margin-top: 10px;
+    color: var(--text-normal);
+    font-weight: bold;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
 
   .handle {
     width: 5px;
