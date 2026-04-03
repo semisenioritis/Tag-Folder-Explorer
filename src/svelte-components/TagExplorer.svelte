@@ -299,7 +299,8 @@
     targetType: 'folder', 
     targetPath: string, 
     targetParentPath: string, 
-    source: 'internal' | 'external') {
+    source: 'internal' | 'external',
+    ctrlPressed: boolean) {
 
     if (source == "external"){
       if (sourceType === "file"){
@@ -315,14 +316,27 @@
         if (targetPath == ""){
           await controller!.removeFileFromFolder(sourceParentPath, sourcePath)
   
-        } else{
-          await controller!.moveFileToFolder(sourceParentPath, targetPath, sourcePath)
-          // probably display a notice that somethign moved from somewhere to somewhere
+        }else{
+
+          if(ctrlPressed){
+            await controller!.copyFileToFolder(sourceParentPath, targetPath, sourcePath)
+
+          }else{
+            await controller!.moveFileToFolder(sourceParentPath, targetPath, sourcePath)
+            // probably display a notice that somethign moved from somewhere to somewhere
+          }
         }
         
       } else if (sourceType === "folder"){
-        await controller!.moveFolderToFolder(sourceParentPath, targetPath, sourcePath)
-        // probably display a notice that somethign moved from somewhere to somewhere
+
+        if (ctrlPressed){
+          await controller!.recreateFolder(sourcePath, targetPath )
+
+        }else{
+          await controller!.moveFolderToFolder(sourceParentPath, targetPath, sourcePath)
+          // probably display a notice that somethign moved from somewhere to somewhere
+
+        }
       }
 
     }

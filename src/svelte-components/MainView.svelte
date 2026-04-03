@@ -15,7 +15,7 @@
     model: ModelInterface | null | undefined;
     colorDictionary:Record<string, string>
     getColorForName: (name: string) => string;
-    onItemDrop: (sourceType: 'folder' | 'file', sourcePath: string, sourceParentPath: string, targetType: 'folder', targetPath: string, targetParentPath: string, source: 'internal' | 'external') => void;
+    onItemDrop: (sourceType: 'folder' | 'file', sourcePath: string, sourceParentPath: string, targetType: 'folder', targetPath: string, targetParentPath: string, source: 'internal' | 'external', ctrlPressed: boolean) => void;
     mainViewSortFlag: boolean;
 
   }
@@ -467,7 +467,7 @@
 
   //       console.log(dataStr)
   //       // Trigger the requested function
-  //       // onItemDrop(sourceType, sourcePath, sourceParentPath, targetType, targetPath, targetParentPath);
+  //       // onItemDrop(sourceType, sourcePath, sourceParentPath, targetType, targetPath, targetParentPath, event.ctrlKey);
   //     } catch (e) {
   //       console.error("Failed to parse drag data:", e);
   //     }
@@ -484,7 +484,7 @@
       const payload = getDragPayload(event);
       if (!payload) return;
 
-      onItemDrop(payload.type, payload.path, payload.parentPath, targetType, targetPath, targetParentPath, payload.source);
+      onItemDrop(payload.type, payload.path, payload.parentPath, targetType, targetPath, targetParentPath, payload.source, event.ctrlKey);
 
     } catch (e) {
       console.error("Failed to parse drag data:", e);
@@ -503,12 +503,12 @@
 
       if(payload.type == "folder"){
         // Trigger the requested function
-        onItemDrop(payload.type, payload.path, payload.parentPath, targetType, targetPath, "", "internal");
+        onItemDrop(payload.type, payload.path, payload.parentPath, targetType, targetPath, "", "internal", event.ctrlKey);
       }
       if(payload.type == "file"){
         if(targetPath != ""){
 
-          onItemDrop(payload.type, payload.path, payload.parentPath, targetType, targetPath, targetParentPath, payload.source);
+          onItemDrop(payload.type, payload.path, payload.parentPath, targetType, targetPath, targetParentPath, payload.source, event.ctrlKey);
         }
       }
     } catch (e) {

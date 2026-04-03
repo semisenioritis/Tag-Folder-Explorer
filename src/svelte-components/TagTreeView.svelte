@@ -16,7 +16,7 @@
     initialVersion?: number;
     controller: ControllerInterface | null | undefined;
     model: ModelInterface | null | undefined;
-    onItemDrop: (sourceType: 'folder' | 'file', sourcePath: string, sourceParentPath: string, targetType: 'folder', targetPath: string, targetParentPath: string, source: 'internal' | 'external') => void;
+    onItemDrop: (sourceType: 'folder' | 'file', sourcePath: string, sourceParentPath: string, targetType: 'folder', targetPath: string, targetParentPath: string, source: 'internal' | 'external', ctrlPressed: boolean) => void;
   }
   
   // Type definitions
@@ -246,7 +246,7 @@
       const payload = getDragPayload(event);
       if (!payload) return;
 
-      onItemDrop(payload.type, payload.path, payload.parentPath, targetType, targetPath, targetParentPath, payload.source);
+      onItemDrop(payload.type, payload.path, payload.parentPath, targetType, targetPath, targetParentPath, payload.source, event.ctrlKey);
 
     } catch (e) {
       console.error("Failed to parse drag data:", e);
@@ -272,7 +272,7 @@
         
         if(sourceType == "folder"){
           // Trigger the requested function
-          onItemDrop(sourceType, sourcePath, sourceParentPath, targetType, targetPath, "", "internal");
+          onItemDrop(sourceType, sourcePath, sourceParentPath, targetType, targetPath, "", "internal", event.ctrlKey);
         }
 
       } catch (e) {
@@ -299,7 +299,7 @@
         
         if(sourceType == "file"){
           // Trigger the requested function
-          onItemDrop(sourceType, sourcePath, sourceParentPath, targetType, targetPath, "", "internal");
+          onItemDrop(sourceType, sourcePath, sourceParentPath, targetType, targetPath, "", "internal", event.ctrlKey);
         }
 
       } catch (e) {

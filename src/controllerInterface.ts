@@ -107,20 +107,17 @@ export class ControllerInterface {
      * 
      * @param sourceFolderTagPath - The tag path of the source folder
      * @param destinationFolderTagPath - The tag path of the destination folder
-     * @param fileName - The file name
      * @param filePath - The file path
      * @returns Promise with success status and error if failed
      */
     async copyFileToFolder(
         sourceFolderTagPath: string,
         destinationFolderTagPath: string,
-        fileName: string,
         filePath: string
     ): Promise<{ success: boolean; error?: any }> {
         return await this.orchestrator.copyFileToFolder(
             sourceFolderTagPath,
             destinationFolderTagPath,
-            fileName,
             filePath
         );
     }

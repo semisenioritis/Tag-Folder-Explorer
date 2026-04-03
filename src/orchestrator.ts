@@ -1586,14 +1586,12 @@ export class Orchestrator {
      * 
      * @param sourceFolderTagPath - The tag path of the source folder
      * @param destinationFolderTagPath - The tag path of the destination folder
-     * @param fileName - The file name (used for reference)
      * @param filePath - The file path used to retrieve the FileLeaf
      * @returns Object with success status and error if failed
      */
     async copyFileToFolder(
         sourceFolderTagPath: string,
         destinationFolderTagPath: string,
-        fileName: string,
         filePath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
@@ -1647,11 +1645,15 @@ export class Orchestrator {
                     jsonObject["modified"] = newModifiedDate
                     
 
-                    // Call updateMeta function with jsonobject and replace
-                    const updateSuccessDestination = destinationTagNode.updateMeta(jsonObject, 'replace');
-                    if (!updateSuccessDestination) {
-                        if (owner){this.setInconsistencyFlag(false)}
-                        return { success: false, error: "Failed to update folder metadata" };
+
+                    if (destinationFolderTagPath != ""){
+                        // Call updateMeta function with jsonobject and replace
+                        const updateSuccessDestination = destinationTagNode.updateMeta(jsonObject, 'replace');
+                        if (!updateSuccessDestination) {
+                            if (owner){this.setInconsistencyFlag(false)}
+                            return { success: false, error: "Failed to update folder metadata" };
+                        }
+
                     }
 
                 // ---(Physical File Edits End)---
@@ -2271,7 +2273,7 @@ export class Orchestrator {
 
                 // Validate that mainfoldertagpath is not an ancestor of destinationfoldertagpath
                 if (destinationFolderTagPath.startsWith(mainFolderTagPath + '/') || 
-                    destinationFolderTagPath === mainFolderTagPath) {
+                    destinationFolderTagPath === mainFolderTagPath || destinationFolderTagPath === parentFolderTagPath || mainFolderTagPath === parentFolderTagPath) {
                     if (owner){this.setInconsistencyFlag(false)}
                     return { success: false, error: "Cannot recreate folder into itself or its descendants" };
                 }
@@ -2501,18 +2503,25 @@ export class Orchestrator {
                 const newModifiedDate = new Date().toISOString()
                 jsonObject["modified"] = newModifiedDate
                 
-                // Call updateMeta function with jsonobject and replace
-                const updateSuccessSource = parentTagNode.updateMeta(jsonObject, 'replace');
-                if (!updateSuccessSource) {
-                    if (owner){this.setInconsistencyFlag(false)}
-                    return { success: false, error: "Failed to update folder metadata" };
+                if(parentFolderTagPath != ""){
+                    // Call updateMeta function with jsonobject and replace
+                    const updateSuccessSource = parentTagNode.updateMeta(jsonObject, 'replace');
+                    if (!updateSuccessSource) {
+                        if (owner){this.setInconsistencyFlag(false)}
+                        return { success: false, error: "Failed to update folder metadata" };
+                    }
+
+
                 }
 
-                // Call updateMeta function with jsonobject and replace
-                const updateSuccessDestination = destinationTagNode.updateMeta(jsonObject, 'replace');
-                if (!updateSuccessDestination) {
-                    if (owner){this.setInconsistencyFlag(false)}
-                    return { success: false, error: "Failed to update folder metadata" };
+                if(destinationFolderTagPath != ""){
+                    // Call updateMeta function with jsonobject and replace
+                    const updateSuccessDestination = destinationTagNode.updateMeta(jsonObject, 'replace');
+                    if (!updateSuccessDestination) {
+                        if (owner){this.setInconsistencyFlag(false)}
+                        return { success: false, error: "Failed to update folder metadata" };
+                    }
+                
                 }
 
                 // ---(Physical File Edits End - Second Phase)---
@@ -2826,7 +2835,6 @@ export class Orchestrator {
                         await this.copyFileToFolder(
                             parent,
                             destinationTagPath,
-                            fileName,
                             filePath,
                             false
                         );
