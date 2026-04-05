@@ -3,6 +3,7 @@ import process from "process";
 import builtins from "builtin-modules";
 import esbuildSvelte from 'esbuild-svelte';
 import { sveltePreprocess } from 'svelte-preprocess';
+import { existsSync, copyFileSync, mkdirSync } from "fs";
 
 const banner =
 `/*
@@ -56,7 +57,24 @@ const context = await esbuild.context({
 
 if (prod) {
 	await context.rebuild();
+
+	// ensure dist exists
+	mkdirSync("dist", { recursive: true });
+
+	// copy required files
+	copyFileSync("main.js", "dist/main.js");
+	copyFileSync("manifest.json", "dist/manifest.json");
+	copyFileSync("styles.css", "dist/styles.css");
+
 	process.exit(0);
 } else {
 	await context.watch();
+
+	console.log("Watching...");
+
+	// also copy once in dev
+	mkdirSync("dist", { recursive: true });
+	if (existsSync("main.js")) {copyFileSync("main.js", "dist/main.js")}
+	copyFileSync("manifest.json", "dist/manifest.json");
+	copyFileSync("styles.css", "dist/styles.css");
 }

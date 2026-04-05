@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-sample-plugin",
+	"name": "tag-folder-explorer",
 	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"description": "A tag folder based explorer for obsidian. Uses the nested tags feature of obsidian to create virtual folders, allowing individual files to exist in multiple locations, inside a single vault.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
