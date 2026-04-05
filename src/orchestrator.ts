@@ -87,6 +87,307 @@ export class Orchestrator {
 
 
     /**
+     * Integrates an externally created file into the virtual tag tree
+     * 
+     * @param file - The newly created TFile
+     */
+    async syncExternalFileCreation(file: TFile): Promise<void> {
+        try {
+            if (this.getInconsistencyFlag()) {
+                // If a plugin operation is ongoing, it's expected, so we ignore external syncing
+                // Or you can handle it depending on the exact logic of whether plugin edits trigger vault create events.
+                // Usually Obsidian metadata cache resolution takes enough time that we might catch our own changes here.
+                // So if inconsistency flag is ON, we might just return to prevent double processing. 
+                return;
+            }
+
+            // check if it is a child of excluded folder (proceed if it isnt)
+
+            //     create corresponding key value pair in file leaf map
+            //     retrive tags in file metadata
+            //         if null add file to untagged files
+            //         else add to those tagpaths
+                
+            //     broadcast
+            //     invalidate cache
+            //     set inconsistency flag all over the function ???? how
+
+
+            if (this.treeRoot.isExcludedFolder(file.parent?.path || "")) {
+                return;
+            }
+
+            let fileLeaf = this.treeRoot.getFilePathMap().get(file.path);
+            if (!fileLeaf) {
+                fileLeaf = new FileLeaf(file.basename, file.path, this.app);
+                this.treeRoot.getFilePathMap().set(file.path, fileLeaf);
+            }
+
+            const tagPaths = await fileLeaf.retrieveAllTagPaths();
+            
+            if (tagPaths.length === 0) {
+                this.treeRoot.getUntaggedFiles().add(fileLeaf);
+            } else {
+                for (const tagPath of tagPaths) {
+
+                    const tagSegments = tagPath.split('/').filter(segment => segment.length > 0);
+                    let currentNode = this.treeRoot.getRootNode();
+
+                    for (const segmentName of tagSegments) {
+                        let childNode = currentNode.getChild(segmentName);
+                        if (!childNode) {
+                            currentNode.addChildNode(segmentName);
+                            childNode = currentNode.getChild(segmentName);
+                        }
+                        if (childNode) {
+                            currentNode = childNode;
+                        }
+                    }
+                    
+                    currentNode.addFileLeaftoFiles(fileLeaf);
+                    // this.treeRoot.getNode(tagPath)?.addFileLeaftoFiles(fileLeaf);
+
+                }
+            }
+
+
+            // Invalidate cache
+            this.treeRoot.invalidateCache();
+
+            // Trigger frontend refresh
+            this.plugin.broadcastTreeUpdate();
+
+        } catch (error) {
+            console.error("Error in syncExternalFileCreation:", error);
+        }
+    }
+
+
+    /**
+     * Integrates an externally renamed file into the virtual tag tree
+     * 
+     * @param file - The updated TFile
+     * @param oldPath - The original file path
+     */
+    async syncExternalFileRename(file: TFile, oldPath: string): Promise<void> {
+        try {
+            if (this.getInconsistencyFlag()) {
+                return;
+            }
+
+
+            // extract old path and old name
+            // extract new path and new name from tfile
+
+            // extract old fileleaf from oldname and path
+            //     if not found proceed with CREATE
+            //     if found
+            //         check if it is a child of excluded folder 
+            //             if it is proceed to DELETE
+            //             if it isnt
+            //                 edit fileleaf name
+            //                 edit fileleaf path
+            //                 set tfile
+            //                 create new key value pair in file leaf map
+            //                 update the value as the fileleaf
+            //                 delete old entry
+
+            //                 broadcast
+            //                 invalidate cache
+            //                 set inconsistency flag all over the function   
+
+
+
+            let oldFileLeaf = this.treeRoot.fileLeafRetriever(oldPath)
+            if (!oldFileLeaf){
+                this.syncExternalFileCreation(file)
+            }else{
+
+                if (this.treeRoot.isExcludedFolder(file.parent?.path || "")) {
+                    this.syncExternalFileDelete(file)
+                }else{
+                    oldFileLeaf.editFileName(file.basename);
+                    oldFileLeaf.editPath(file.path);
+                    oldFileLeaf.setTFile(file);
+
+                    this.treeRoot.fileLeafIndexUpdater(oldPath, file.path);
+
+
+                }
+
+            }
+
+
+            // Invalidate cache
+            this.treeRoot.invalidateCache();
+            
+            // Trigger frontend refresh
+            this.plugin.broadcastTreeUpdate();
+
+        } catch (error) {
+            console.error("Error in syncExternalFileRename:", error);
+        }
+    }
+
+    /**
+     * Integrates an externally modified file into the virtual tag tree
+     * 
+     * @param file - The modified TFile
+     */
+    async syncExternalFileModify(file: TFile): Promise<void> {
+        try {
+            if (this.getInconsistencyFlag()) {
+                return;
+            }
+
+            // check if it is a child of excluded folder
+            //     if it is proceed to DELETE
+            //     if it isnt
+            //         extract path and name from tfile
+            //         extract fileleaf from name and path
+            //             if not found proceed with CREATE
+            //             if found
+            //                 retrive tags in file metadata
+            //                     if null add "" to newtaglist
+            //                     else get newtaglist
+            //                 extract oldtaglist of tags where file leaf exists
+            //                 compare oldtaglist
+
+            //                 remove the file leaf from the tagnodes that are not in newtaglist
+            //                 add the file leaf to the locations that are in newtaglist 
+
+            //                 broadcast
+            //                 invalidate cache
+            //                 set inconsistency flag all over the function  
+
+
+            if (this.treeRoot.isExcludedFolder(file.parent?.path || "")) {
+                this.syncExternalFileDelete(file)
+            }else{
+                let currFileLeaf = this.treeRoot.fileLeafRetriever(file.path)
+                    if (!currFileLeaf){
+                        this.syncExternalFileCreation(file)
+                    }else{
+                        const oldTagPaths = this.treeRoot.getAllInstancesOfFile(currFileLeaf.getName(), currFileLeaf.getPath());
+
+                        const newTagPaths = await currFileLeaf.retrieveAllTagPaths();
+
+                        if (newTagPaths.length === 0) {
+                            newTagPaths.push("");
+                        }
+
+                        const oldSet = new Set(oldTagPaths);
+                        const newSet = new Set(newTagPaths);
+
+                        // Extra in newTagPaths
+                        const extraInNew = newTagPaths.filter(tag => !oldSet.has(tag));
+
+                        // Extra in oldTagPaths
+                        const extraInOld = oldTagPaths.filter(tag => !newSet.has(tag));
+                        
+                        for (const tagPath of extraInOld) {
+                            this.treeRoot.getNode(tagPath)?.removeFile(file.path)
+                        }
+                        
+                        for (const tagPath of extraInNew) {
+                            // this.treeRoot.getNode(tagPath)?.addFileLeaftoFiles(currFileLeaf)
+
+                            const tagSegments = tagPath.split('/').filter(segment => segment.length > 0);
+                            let currentNode = this.treeRoot.getRootNode();
+
+                            for (const segmentName of tagSegments) {
+                                let childNode = currentNode.getChild(segmentName);
+                                if (!childNode) {
+                                    currentNode.addChildNode(segmentName);
+                                    childNode = currentNode.getChild(segmentName);
+                                }
+                                if (childNode) {
+                                    currentNode = childNode;
+                                }
+                            }
+                            
+                            currentNode.addFileLeaftoFiles(currFileLeaf);
+                        }
+
+                    }
+            }
+
+
+            // Invalidate cache
+            this.treeRoot.invalidateCache();
+            
+            // Trigger frontend refresh
+            this.plugin.broadcastTreeUpdate();
+
+        } catch (error) {
+            console.error("Error in syncExternalFileModify:", error);
+        }
+    }
+
+    /**
+     * Removes an externally deleted file from the virtual tag tree
+     * 
+     * @param file - The deleted TFile
+     */
+    async syncExternalFileDelete(file: TFile): Promise<void> {
+        try {
+            if (this.getInconsistencyFlag()) {
+                return;
+            }
+
+
+            // extract name 
+            // extract path
+            // extract fileleaf from name and path
+            //     if it doesnt exist
+            //         done
+            //     if it does exist
+            //         find alltags list where this fileleaf exists
+            //         if null
+            //             remove file leaf from untagged files
+            //         else
+            //             remove the file leaf from the tagnodes
+            //         if necessary remove file leaf from untagged (cuz maybe last removal of tag has added it again)
+            //         delete key value pair from te fileleaf map
+
+            //         broadcast
+            //         invalidate cache
+            //         set inconsistency flag all over the function  
+
+            let currFileLeaf = this.treeRoot.fileLeafRetriever(file.path)
+            if (!currFileLeaf){
+
+            }else{
+                const oldTagPaths = this.treeRoot.getAllInstancesOfFile(currFileLeaf.getName(), currFileLeaf.getPath());
+
+                if (oldTagPaths.length === 1 && oldTagPaths[0] === ""){
+                    this.treeRoot.getUntaggedFiles().delete(currFileLeaf);
+                }else{
+                    for (const tagPath of oldTagPaths) {
+                        this.treeRoot.getNode(tagPath)?.removeFile(file.path)
+                    }
+                }
+
+                this.treeRoot.getUntaggedFiles().delete(currFileLeaf);
+
+                this.treeRoot.getFilePathMap().delete(file.path);
+
+            }
+
+
+            // Invalidate cache
+            this.treeRoot.invalidateCache();
+            
+            // Trigger frontend refresh
+            this.plugin.broadcastTreeUpdate();
+
+        } catch (error) {
+            console.error("Error in syncExternalFileDelete:", error);
+        }
+    }
+
+
+    /**
      * Create a new file inside a tag folder
      * 
      * Steps:
@@ -3238,7 +3539,7 @@ export class Orchestrator {
                         if (lockStatus == "notlocked"){
                             
                             // remove tag from my key
-                            let currKeyListHolder = []
+                            let currKeyListHolder: string[]  = []
 
                             if (frontmatter && frontmatter[currkey]) {
                                 if (Array.isArray(frontmatter[currkey])) {

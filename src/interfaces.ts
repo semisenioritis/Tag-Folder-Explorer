@@ -83,6 +83,12 @@ export interface IFileLeaf {
     getTFile(): TFile;
     
 
+    /**
+     * Updates the referenced tFile of the file
+     * 
+     * @param tFile - The new TFile instance
+     */
+    setTFile(tFile: TFile): void ;
 
     /**
      * Edits/updates the name of the file

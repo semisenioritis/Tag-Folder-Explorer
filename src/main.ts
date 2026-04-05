@@ -5,6 +5,7 @@ import { TreeRoot } from './TreeRoot';
 import { ControllerInterface } from './controllerInterface';
 import { ModelInterface } from './modelInterface';
 import { Orchestrator } from './orchestrator';
+import { EventListener } from './eventlistener';
 
 
 /*
@@ -416,6 +417,9 @@ export default class TagFolderPlugin extends Plugin {
 
     this.model = new ModelInterface(this.treeRoot, this.app)
 
+    // Register event listeners for external file changes
+    const eventListener = new EventListener(this, orchestrator);
+    eventListener.registerListeners();
 
     
 		

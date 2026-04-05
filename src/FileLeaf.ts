@@ -80,6 +80,14 @@ export class FileLeaf implements IFileLeaf {
         return this.file
     }
 
+    /**
+     * Updates the referenced tFile of the file
+     * 
+     * @param tFile - The new TFile instance
+     */
+    public setTFile(tFile: TFile): void {
+        this.file = tFile;
+    }
 
     /**
      * Edits/updates the name of the file

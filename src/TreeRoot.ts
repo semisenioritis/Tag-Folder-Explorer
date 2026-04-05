@@ -976,9 +976,16 @@ export class TreeRoot implements ITreeRoot {
      * @param folderPath - The path of the folder relative to vault root
      * @returns boolean - true if folder should be excluded
      */
-    private isExcludedFolder(folderPath: string): boolean {
-        // console.log("hiiiii "+folderPath)
-        return this.excludedFolders.has(folderPath);
+    isExcludedFolder(folderPath: string): boolean {
+        for (const excluded of this.excludedFolders) {
+            if (
+                folderPath === excluded ||
+                folderPath.startsWith(excluded)
+            ) {
+                return true;
+            }
+        }
+        return false;
     }
     
     /**

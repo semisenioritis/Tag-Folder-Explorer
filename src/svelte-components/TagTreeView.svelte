@@ -4,6 +4,8 @@
   import { openFileInNewTab } from '../windows'
   import type { ControllerInterface } from '../controllerInterface';
   import type { ModelInterface } from '../modelInterface';
+  import { openTagExplorerInNewTab } from '../windows';
+
 
   // Props
   interface Props {
@@ -89,18 +91,24 @@
     return expandedTags.has(path);
   }
 
-  function handleFolderClick(folder:string, parentPath: string = '') {
+  function handleFolderClick(folder:string, parentPath: string = '', ctrlClicked: boolean) {
 
- 
-    let folderpath = folder
-		// console.log('Folder clicked!');
-    // console.log(foldername+" "+folderpath)
+    if (ctrlClicked){
+      openTagExplorerInNewTab(folder);
 
-    onUpdate(folderpath);
+    }else{
+      let folderpath = folder
+      // console.log('Folder clicked!');
+      // console.log(foldername+" "+folderpath)
+  
+      onUpdate(folderpath);
+  
+      if (onFocusChange) {
+        onFocusChange('folder', folderpath, parentPath);
+      } 
 
-    if (onFocusChange) {
-      onFocusChange('folder', folderpath, parentPath);
-    } 
+    }
+
 
 	}
 
@@ -388,8 +396,8 @@ function handleDragLeaveUntagged(event: DragEvent) {
         class="tree-item-inner nav-folder-title-content my-tree"
         role="button"
         tabindex="0"
-        onclick={() => handleFolderClick(node.path, parentPath)}
-        onkeydown={(e) => e.key === 'Enter' && handleFolderClick(node.path, parentPath)}
+        onclick={(e) => handleFolderClick(node.path, parentPath, e.ctrlKey)}
+        onkeydown={(e) => e.key === 'Enter' && handleFolderClick(node.path, parentPath, e.ctrlKey)}
       >{node.name}</div>
       <div class="tree-item-flair-outer">
         <span class="tree-item-flair">{node.totalFileCount}</span>

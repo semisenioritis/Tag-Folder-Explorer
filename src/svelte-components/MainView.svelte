@@ -4,6 +4,7 @@
   import { openFileInNewTab } from '../windows'
   import type { ControllerInterface } from '../controllerInterface';
   import type { ModelInterface } from '../modelInterface';
+  import { openTagExplorerInNewTab } from '../windows';
 
   // Props
   interface Props {
@@ -93,7 +94,7 @@
 
 
 
-  function handleFolderClick(folder:frontendFolder) {
+  function handleFolderClick(folder:frontendFolder, ctrlClicked: boolean ) {
     // Delay single-click action to check for double-click
     if (clickTimeout !== null) {
       clearTimeout(clickTimeout);
@@ -109,6 +110,11 @@
       if (onFocusChange) {
         onFocusChange('folder', folderpath, currentPath);
       }
+
+      if (ctrlClicked){
+        openTagExplorerInNewTab(folder.path);
+
+      }else{}
       
       clickTimeout = null;
     }, CLICK_DELAY);
@@ -116,7 +122,7 @@
 
 
 
-	function handleFileClick(file:frontendFile) {
+	function handleFileClick(file:frontendFile, ctrlClicked: boolean) {
     // Delay single-click action to check for double-click
     if (clickTimeout !== null) {
       clearTimeout(clickTimeout);
@@ -166,7 +172,7 @@
   function handleItemClick(event: MouseEvent, handler: Function, item: any) {
     // Stop event from bubbling to main-view
     event.stopPropagation();
-    handler(item);
+    handler(item, event.ctrlKey);
   }
 
   async function handleLegendActionButtonClickFolder(event: MouseEvent, currColor:string, tagPath:string ) {

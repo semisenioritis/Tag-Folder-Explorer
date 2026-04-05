@@ -856,10 +856,6 @@ async function deleteSelectedItem(type: 'folder' | 'file', path: string, parentp
     display: none;
   }
 
-  .left-btn{
-    margin-right: auto;
-  }
-
 
 
 
