@@ -57,17 +57,32 @@ By utilizing nested tags as placeholders for traditional folder paths, we can ma
 
 > ⚠️ **Warning**
 > This plugin is currently under development. If you want to test it out, make sure to keep a backup copy of your vault. Although the chance of the plugin corrupting your files is incredibly low, it is never absolutely zero.
+## Installation
 
-1. Download the zip file of this repository or clone it locally.
-2. In your Obsidian vault, navigate to the `.obsidian/plugins/` folder. (Create it if it doesn't exist).
+You can either clone/download the repository manually **or download the latest pre-built files from the Releases page**.
+
+### Option 1: Using a Release (recommended)
+1. Go to the **Releases** page and download the files `main.js`, `styles.css`, and `manifest.json` under Assets.
+2. Navigate into your vault’s `.obsidian/plugins/` folder.
+3. Create a new folder named `tag-folder-explorer` inside `.obsidian/plugins/`.
+4. Paste these files into the `tag-folder-explorer` directory you created.
+5. Open Obsidian, go to **Settings → Community plugins**.
+6. Disable Safe Mode (if enabled).
+7. Enable the **sample** plugin.
+8. Reload Obsidian.
+
+### Option 2: Manual Installation (from source)
+1. Download the zip file of this repository directly or from the releases page or clone it locally.
+2. In your Obsidian vault, navigate to the `.obsidian/plugins/` folder (create it if it doesn't exist).
 3. Create a new folder named `tag-folder-explorer` inside `.obsidian/plugins/`.
 4. Locate the `dist/` folder from the downloaded zip/repo.
-5. Copy the `main.js`, `styles.css`, and `manifest.json` files from it.
+5. Copy `main.js`, `styles.css`, and `manifest.json` from it.
 6. Paste these files into the `tag-folder-explorer` directory you created.
 7. Open Obsidian, go to **Settings → Community plugins**.
 8. Disable Safe Mode (if enabled).
-9. Enable the **Tag Folder Explorer** plugin.
+9. Enable the **sample** plugin.
 10. Reload Obsidian.
+
 
 ## Development
 
