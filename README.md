@@ -18,14 +18,24 @@ This project strikes a balance between both approaches. It provides a virtual, n
 ## Features
 
 - **Virtual Folders Representation**: Leverages Obsidian's nested tags (e.g., `#fruit/orange`, `#fruit/apple`) to create a familiar folder-like tree structure.
+
 - **Multi-location Files**: By adding multiple nested tags to a single file, the file will identically appear in multiple "virtual" folders at the same time.
+
 - **Sortable Tree Sidebar**: The left sidebar provides a nested view of your tags, allowing quick navigation and a bird's-eye view of your vault. Files are automatically organized based on their metadata tags. Untagged files are conveniently gathered in a dedicated "Untagged Files" folder.
+
 - **Folder Descriptions**: Prevent the common issue of forgetting why a nested folder was created. Each virtual folder has an associated metadata file where you can manually document its context and purpose.
+
 - **File/Folder Legends (Color Coding)**: Instead of creating endless subfolders for minor segregation, you can assign one of 6 legend colors to any file or folder. The meaning of these labels can be defined inside the parent folder's properties (e.g., "Red tags in the Math folder mean there's an upcoming deadline").
+
 - **Pinned Files and Folders**: Keep your most important items easily accessible by pinning them to the top of any parent folder.
+
 - **Intuitive GUI Manipulation**: Create, rename, and delete files and Tag Folders directly from the user interface. No need to manually type the exact tag into the file's frontmatter!
+
 - **Drag & Drop Organization**: Seamlessly drag and drop files and folders between the tree sidebar and the main view to move them. Hold `Ctrl` (or `Cmd` on Mac) while dragging to assign the new tag while keeping the old one, making the file exist in both locations.
+
 - **Smart Navigation**: Click on tag folders to open them in the current view, or hold `Ctrl` to open them seamlessly in a new background tab.
+
+- **Data Portability**: Staying true to the philosophy of Obsidian, all the plugin's data is stored natively inside file metadata. This means your organization is never locked behind a proprietary internal database. Every virtual folder has an associated `.json` file stored in the `.TagNodeMeta` folder at the root of your vault.
 
 ## How it Works
 
