@@ -25,7 +25,7 @@ export class EventListener {
         );
 
         this.plugin.registerEvent(
-            this.app.metadataCache.on("changed", this.handleModify.bind(this))
+            this.app.vault.on("modify", this.handleModify.bind(this))
         );
 
         this.plugin.registerEvent(
@@ -79,7 +79,7 @@ export class EventListener {
                 return;
             }
     
-            console.log(`[Tag Folder Explorer] Detected file modification (cache changed): ${file.path}`);
+            console.log(`[Tag Folder Explorer] Detected file modification : ${file.path}`);
             await this.orchestrator.syncExternalFileModify(file);
             
 

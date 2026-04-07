@@ -6348,10 +6348,6 @@ export class Orchestrator {
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
         try {
-            if ((!this.getInconsistencyFlag() && owner) || !owner){
-                if (owner){this.setInconsistencyFlag(true)}
-
-
                 let cleanPath = path.replace(/\/+$/, ""); 
                 let parts = cleanPath.split("/");
 
@@ -6367,11 +6363,11 @@ export class Orchestrator {
                     textboxText: currentname,
 
     
-                    onOpen: () => this.setInconsistencyFlag(true),
+                    onOpen: () => {},
                     onClose: () => {},
     
                     onConfirm: async(inputValue) => {
-                        await this.renameFile( inputValue, path, false)
+                        await this.renameFile( inputValue, path)
                     },
                     onCancel: () => {}
                     });
@@ -6388,10 +6384,10 @@ export class Orchestrator {
                     textboxText: currentname,
 
     
-                    onOpen: () => this.setInconsistencyFlag(true),
+                    onOpen: () => {},
                     onClose: () => {},
     
-                    onConfirm: async(inputValue) => await this.renameFolder(path, inputValue, false),
+                    onConfirm: async(inputValue) => await this.renameFolder(path, inputValue),
                     onCancel: () => {}
                     });
     
@@ -6408,13 +6404,8 @@ export class Orchestrator {
                 this.plugin.broadcastTreeUpdate();
                 // ---(Frontend Refresh End)---
                 
-                if (owner){this.setInconsistencyFlag(false)}
                 return { success: true };
-            }else {
-                return { success: false, error: "Inconsistency flag is true" }
-            }
         } catch (error) {
-            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in addFileToTagpath:", error);
             return { success: false, error };
         }
@@ -6435,10 +6426,6 @@ export class Orchestrator {
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
         try {
-            if ((!this.getInconsistencyFlag() && owner) || !owner){
-                if (owner){this.setInconsistencyFlag(true)}
-
-
                 if(type == "file"){
                     const modal = new InputModal(this.app, {
 
@@ -6447,9 +6434,9 @@ export class Orchestrator {
                     placeholder: "New File Name...",
                     
 
-                    onOpen: () => this.setInconsistencyFlag(true),
+                    onOpen: () => {},
                     onClose: () => {},
-    
+
                     onConfirm: async(inputValue) => {
 
                         let newName
@@ -6459,11 +6446,11 @@ export class Orchestrator {
                         } else{
                             newName = inputValue
                         }
-                        await this.createFileInTagFolder( parentpath, newName, false)
+                        await this.createFileInTagFolder( parentpath, newName)
                     },
                     onCancel: () => {}
                     });
-    
+
                     modal.open();
 
 
@@ -6474,10 +6461,10 @@ export class Orchestrator {
                     cancelText: "Cancel",
                     placeholder: "New Folder Name...",
 
-    
-                    onOpen: () => this.setInconsistencyFlag(true),
+
+                    onOpen: () => {},
                     onClose: () => {},
-    
+
                     onConfirm: async(inputValue) => {
 
                         let newName
@@ -6487,11 +6474,11 @@ export class Orchestrator {
                         } else{
                             newName = inputValue
                         }
-                        await this.createFolderInFolder( parentpath, newName, false)
+                        await this.createFolderInFolder( parentpath, newName)
                     },
                     onCancel: () => {}
                     });
-    
+
                     modal.open();
 
                 }
@@ -6505,13 +6492,11 @@ export class Orchestrator {
                 this.plugin.broadcastTreeUpdate();
                 // ---(Frontend Refresh End)---
                 
-                if (owner){this.setInconsistencyFlag(false)}
+                console.log("the modal caller terminated terminated ")
+                
                 return { success: true };
-            }else {
-                return { success: false, error: "Inconsistency flag is true" }
-            }
+
         } catch (error) {
-            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in addFileToTagpath:", error);
             return { success: false, error };
         }
@@ -6554,10 +6539,6 @@ export class Orchestrator {
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
         try {
-            if ((!this.getInconsistencyFlag() && owner) || !owner){
-                if (owner){this.setInconsistencyFlag(true)}
-
-
                 if(type == "file"){
                     const modal = new ConfirmationModal(this.app, {
 
@@ -6566,12 +6547,12 @@ export class Orchestrator {
                     confirmButton: "Remove",
                     
 
-                    onOpen: () => this.setInconsistencyFlag(true),
+                    onOpen: () => {},
                     onClose: () => {},
     
                     onConfirm: async() => {
 
-                        await this.removeFileFromFolder( parentpath, path, false)
+                        await this.removeFileFromFolder( parentpath, path)
                     },
                     onCancel: () => {}
                     });
@@ -6587,12 +6568,12 @@ export class Orchestrator {
                     confirmButton: "Delete",
 
     
-                    onOpen: () => this.setInconsistencyFlag(true),
+                    onOpen: () => {},
                     onClose: () => {},
     
                     onConfirm: async() => {
 
-                        await this.removeFolderFromFolder( path, false)
+                        await this.removeFolderFromFolder( path)
                     },
                     onCancel: () => {}
                     });
@@ -6610,13 +6591,8 @@ export class Orchestrator {
                 this.plugin.broadcastTreeUpdate();
                 // ---(Frontend Refresh End)---
                 
-                if (owner){this.setInconsistencyFlag(false)}
                 return { success: true };
-            }else {
-                return { success: false, error: "Inconsistency flag is true" }
-            }
         } catch (error) {
-            if (owner){this.setInconsistencyFlag(false)}
             console.error("Error in addFileToTagpath:", error);
             return { success: false, error };
         }

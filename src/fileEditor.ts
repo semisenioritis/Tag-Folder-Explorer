@@ -1,4 +1,4 @@
-import { App, TFile } from "obsidian";
+import { App, TFile, normalizePath } from "obsidian";
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -25,7 +25,7 @@ export async function createNewFile(
 		let finalName = fileName + extension;
 		let counter = 1;
 		
-		while (app.vault.getAbstractFileByPath(`${folderPath}${finalName}`)) {
+		while (await app.vault.adapter.exists(normalizePath(`${folderPath}${finalName}`), false)) {
 			finalName = `${fileName} ${counter}${extension}`;
 			counter++;
 		}
