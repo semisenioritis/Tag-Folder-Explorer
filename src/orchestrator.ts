@@ -1900,6 +1900,11 @@ export class Orchestrator {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
 
+                if (sourceFolderTagPath == ""){
+                    if (owner){this.setInconsistencyFlag(false)}
+                    return { success: false, error: `File cant be copied from the untagged folder, it must be moved` };
+                }
+
                 // Extract fileleaf object from the file leaf map using filepath
                 const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
                 if (!fileLeaf) {

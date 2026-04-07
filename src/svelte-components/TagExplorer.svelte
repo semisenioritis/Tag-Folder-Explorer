@@ -301,6 +301,24 @@
     targetParentPath: string, 
     source: 'internal' | 'external',
     ctrlPressed: boolean) {
+      // console.log("🔴ondrop details:")
+      // console.log("sourceType")
+      // console.log(sourceType)
+      // console.log("sourcePath")
+      // console.log(sourcePath)
+      // console.log("sourceParentPath")
+      // console.log(sourceParentPath)
+      // console.log("targetType")
+      // console.log(targetType)
+      // console.log("targetPath")
+      // console.log(targetPath)
+      // console.log("targetParentPath")
+      // console.log(targetParentPath)
+      // console.log("source")
+      // console.log(source)
+      // console.log("ctrlPressed")
+      // console.log(ctrlPressed)
+      // console.log("-----------")
 
     if (source == "external"){
       if (sourceType === "file"){
@@ -319,7 +337,13 @@
         }else{
 
           if(ctrlPressed){
-            await controller!.copyFileToFolder(sourceParentPath, targetPath, sourcePath)
+            if (sourceParentPath == ""){
+              await controller!.moveFileToFolder(sourceParentPath, targetPath, sourcePath)
+
+            }else{
+              await controller!.copyFileToFolder(sourceParentPath, targetPath, sourcePath)
+
+            }
 
           }else{
             await controller!.moveFileToFolder(sourceParentPath, targetPath, sourcePath)
