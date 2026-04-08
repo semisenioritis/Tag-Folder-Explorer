@@ -172,7 +172,7 @@
   function handleItemClick(event: MouseEvent, handler: Function, item: any) {
     // Stop event from bubbling to main-view
     event.stopPropagation();
-    handler(item, event.ctrlKey);
+    handler(item, event.ctrlKey || event.metaKey);
   }
 
   async function handleLegendActionButtonClickFolder(event: MouseEvent, currColor:string, tagPath:string ) {
@@ -473,7 +473,7 @@
 
   //       console.log(dataStr)
   //       // Trigger the requested function
-  //       // onItemDrop(sourceType, sourcePath, sourceParentPath, targetType, targetPath, targetParentPath, event.ctrlKey);
+  //       // onItemDrop(sourceType, sourcePath, sourceParentPath, targetType, targetPath, targetParentPath, event.ctrlKey || event.metaKey);
   //     } catch (e) {
   //       console.error("Failed to parse drag data:", e);
   //     }
@@ -490,7 +490,7 @@
       const payload = getDragPayload(event);
       if (!payload) return;
 
-      onItemDrop(payload.type, payload.path, payload.parentPath, targetType, targetPath, targetParentPath, payload.source, event.ctrlKey);
+      onItemDrop(payload.type, payload.path, payload.parentPath, targetType, targetPath, targetParentPath, payload.source, event.ctrlKey || event.metaKey);
 
     } catch (e) {
       console.error("Failed to parse drag data:", e);
@@ -509,12 +509,12 @@
 
       if(payload.type == "folder"){
         // Trigger the requested function
-        onItemDrop(payload.type, payload.path, payload.parentPath, targetType, targetPath, "", "internal", event.ctrlKey);
+        onItemDrop(payload.type, payload.path, payload.parentPath, targetType, targetPath, "", "internal", event.ctrlKey || event.metaKey);
       }
       if(payload.type == "file"){
         if(targetPath != ""){
 
-          onItemDrop(payload.type, payload.path, payload.parentPath, targetType, targetPath, targetParentPath, payload.source, event.ctrlKey);
+          onItemDrop(payload.type, payload.path, payload.parentPath, targetType, targetPath, targetParentPath, payload.source, event.ctrlKey || event.metaKey);
         }
       }
     } catch (e) {
