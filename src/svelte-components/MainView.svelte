@@ -626,36 +626,38 @@ ondragleave={handleBackgroundDragLeave}
           {/each}
 
           <!-- Render files -->
-          {#each mainViewData.files as file}
-            {#if filePinnedStatuses[file.path] === true}
+          {#if currentPath != ""}
+            {#each mainViewData.files as file}
+              {#if filePinnedStatuses[file.path] === true}
 
-              <div 
-              class="item file" 
-              role="button" 
-              tabindex="0" 
-              title="{file.path}" 
-              onclick={(e) => handleItemClick(e, handleFileClick, file)} 
-              ondblclick={(e) => { e.stopPropagation(); handleFileDblClick(file); }} 
-              onkeydown={(e) => handleKeyDown(e, handleFileDblClick, file)}
-              draggable="true"
-              ondragstart={(e) => handleDragStart(e, 'file', file.path, file.parentPath)}
-              ondragover={handleDragOverDisabled}
-              ondrop={(e) => handleDropDisabled(e, "file", file.path, file.parentPath)}
-              >
-                <div class="icon">📄</div>
-                <div class="label">{file.name}</div>
-                {#if currentPath !== ""}
-                  <!-- <button class="legend-button circle" class:hidden={await getFileButtonColor(file) === ""} style="background-color: {getColorForName( await getFileButtonColor(file))}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button> -->
-                  <button class="legend-button circle" class:hidden={!fileButtonColors[file.path]}  style="background-color: {fileButtonColors[file.path] ?? ''}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Legend: {fileButtonColors[file.path]}"></button>
-                {/if} 
+                <div 
+                class="item file" 
+                role="button" 
+                tabindex="0" 
+                title="{file.path}" 
+                onclick={(e) => handleItemClick(e, handleFileClick, file)} 
+                ondblclick={(e) => { e.stopPropagation(); handleFileDblClick(file); }} 
+                onkeydown={(e) => handleKeyDown(e, handleFileDblClick, file)}
+                draggable="true"
+                ondragstart={(e) => handleDragStart(e, 'file', file.path, file.parentPath)}
+                ondragover={handleDragOverDisabled}
+                ondrop={(e) => handleDropDisabled(e, "file", file.path, file.parentPath)}
+                >
+                  <div class="icon">📄</div>
+                  <div class="label">{file.name}</div>
+                  {#if currentPath !== ""}
+                    <!-- <button class="legend-button circle" class:hidden={await getFileButtonColor(file) === ""} style="background-color: {getColorForName( await getFileButtonColor(file))}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button> -->
+                    <button class="legend-button circle" class:hidden={!fileButtonColors[file.path]}  style="background-color: {fileButtonColors[file.path] ?? ''}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Legend: {fileButtonColors[file.path]}"></button>
+                  {/if} 
 
-                <button class="top-left square" class:pinned={filePinnedStatuses[file.path] === true} onclick={(e) => handlePinnedActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Pinned">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" style="opacity: 70%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
-                </button>
+                  <button class="top-left square" class:pinned={filePinnedStatuses[file.path] === true} onclick={(e) => handlePinnedActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Pinned">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" style="opacity: 70%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
+                  </button>
 
-              </div>
-            {/if}
-          {/each}
+                </div>
+              {/if}
+            {/each}
+          {/if}
         </div>
 
         {#if hasPinnedItems}
@@ -697,36 +699,39 @@ ondragleave={handleBackgroundDragLeave}
           {/each}
 
           <!-- Render files -->
-          {#each mainViewData.files as file}
-            {#if filePinnedStatuses[file.path] === false}
+          {#if currentPath != ""}
 
-              <div 
-              class="item file" 
-              role="button" 
-              tabindex="0" 
-              title="{file.path}" 
-              onclick={(e) => handleItemClick(e, handleFileClick, file)} 
-              ondblclick={(e) => { e.stopPropagation(); handleFileDblClick(file); }} 
-              onkeydown={(e) => handleKeyDown(e, handleFileDblClick, file)}
-              draggable="true"
-              ondragstart={(e) => handleDragStart(e, 'file', file.path, file.parentPath)}
-              ondragover={handleDragOverDisabled}
-              ondrop={(e) => handleDropDisabled(e, "file", file.path, file.parentPath)}
-              >
-                <div class="icon">📄</div>
-                <div class="label">{file.name}</div>
-                {#if currentPath !== ""}
-                  <!-- <button class="legend-button circle" class:hidden={await getFileButtonColor(file) === ""} style="background-color: {getColorForName( await getFileButtonColor(file))}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button> -->
-                  <button class="legend-button circle" class:hidden={!fileButtonColors[file.path]}  style="background-color: {fileButtonColors[file.path] ?? ''}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Legend: {fileButtonColors[file.path]}"></button>
-                {/if} 
+            {#each mainViewData.files as file}
+              {#if filePinnedStatuses[file.path] === false}
 
-                <button class="top-left square" class:pinned={filePinnedStatuses[file.path] === true} onclick={(e) => handlePinnedActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Pinned">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" style="opacity: 70%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
-                </button>
+                <div 
+                class="item file" 
+                role="button" 
+                tabindex="0" 
+                title="{file.path}" 
+                onclick={(e) => handleItemClick(e, handleFileClick, file)} 
+                ondblclick={(e) => { e.stopPropagation(); handleFileDblClick(file); }} 
+                onkeydown={(e) => handleKeyDown(e, handleFileDblClick, file)}
+                draggable="true"
+                ondragstart={(e) => handleDragStart(e, 'file', file.path, file.parentPath)}
+                ondragover={handleDragOverDisabled}
+                ondrop={(e) => handleDropDisabled(e, "file", file.path, file.parentPath)}
+                >
+                  <div class="icon">📄</div>
+                  <div class="label">{file.name}</div>
+                  {#if currentPath !== ""}
+                    <!-- <button class="legend-button circle" class:hidden={await getFileButtonColor(file) === ""} style="background-color: {getColorForName( await getFileButtonColor(file))}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button> -->
+                    <button class="legend-button circle" class:hidden={!fileButtonColors[file.path]}  style="background-color: {fileButtonColors[file.path] ?? ''}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Legend: {fileButtonColors[file.path]}"></button>
+                  {/if} 
 
-              </div>
-            {/if}
-          {/each}
+                  <button class="top-left square" class:pinned={filePinnedStatuses[file.path] === true} onclick={(e) => handlePinnedActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Pinned">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" style="opacity: 70%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
+                  </button>
+
+                </div>
+              {/if}
+            {/each}
+          {/if}
         </div>
       {:else}
         <div class="empty-state">
