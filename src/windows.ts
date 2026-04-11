@@ -1,4 +1,4 @@
-import { App, TFile } from "obsidian";
+import { App, TFile, WorkspaceLeaf } from "obsidian";
 
 
 
@@ -56,3 +56,52 @@ export async function openTagExplorerInNewTab(tagPath: string) {
         }
     });
 }
+
+export async function openRaindropInSidebar(raindropUrl: string) {
+    
+    const rightSplit = app.workspace.rightSplit;
+    if (rightSplit && rightSplit.collapsed) {
+        await rightSplit.expand();
+    }
+
+    const leaves = app.workspace.getLeavesOfType("webviewer");
+
+    let targetLeaf: WorkspaceLeaf | null = null;
+
+    for (const leaf of leaves) {
+        const state = leaf.getViewState();
+
+        const currentUrl = state?.state?.url;
+
+        if (
+            leaf.getRoot() === app.workspace.rightSplit && 
+            typeof currentUrl === "string" &&
+            currentUrl.includes("raindrop.io")
+        ) {
+            targetLeaf = leaf;
+            break;
+        }
+    }
+
+    if (targetLeaf) {
+        await targetLeaf.setViewState({
+            type: "webviewer",
+            state: { url: raindropUrl }
+        });
+
+        app.workspace.setActiveLeaf(targetLeaf, { focus: true });
+        return;
+    }else{
+        const newLeaf = app.workspace.getRightLeaf(false);
+    
+        if (newLeaf) {
+            await newLeaf.setViewState({
+                type: "webviewer",
+                state: { url: raindropUrl }
+            });
+    
+            app.workspace.setActiveLeaf(newLeaf, { focus: true });
+        }
+    }
+
+    }

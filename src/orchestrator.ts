@@ -2053,6 +2053,67 @@ export class Orchestrator {
         }
     }
 
+
+    /**
+     * Edit/update folder raindrop.io url 
+     * 
+     * @param folderTagPath - The tag path of the folder
+     * @param jsonObject - JSON object containing the new raindropio url property
+     * @returns Promise with success status and error if failed
+     */
+    async updateFolderRaindropioLink(
+        folderTagPath: string,
+        jsonObject: Record<string, any>,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            if ((!this.getInconsistencyFlag() && owner) || !owner){
+                if (owner){this.setInconsistencyFlag(true)}
+
+                // Retrieve tagfoldernode
+                const tagFolderNode = this.treeRoot.getNode(folderTagPath);
+                if (!tagFolderNode) {
+                    if (owner){this.setInconsistencyFlag(false)}
+                    return { success: false, error: `Tag folder node not found for path: ${folderTagPath}` };
+                }
+
+                // Validate that only one key is in the json object and it is called description
+                const keys = Object.keys(jsonObject);
+                if (keys.length !== 1 || keys[0] !== 'raindropLink') {
+                    if (owner){this.setInconsistencyFlag(false)}
+                    return { success: false, error: "JSON object must contain only one key called 'description'" };
+                }
+
+
+                const newModifiedDate = new Date().toISOString()
+                jsonObject["modified"] = newModifiedDate
+
+                // Call updateMeta function with jsonobject and replace
+                const updateSuccess = tagFolderNode.updateMeta(jsonObject, 'replace');
+                if (!updateSuccess) {
+                    if (owner){this.setInconsistencyFlag(false)}
+                    return { success: false, error: "Failed to update folder metadata" };
+                }
+
+                // Note: No cache invalidation needed as metadata changes don't affect tree structure
+
+                // Refresh ui using broadcastTreeUpdate
+                this.plugin.broadcastTreeUpdate();
+
+                if (owner){this.setInconsistencyFlag(false)}
+                return { success: true };
+            }else {
+                return { success: false, error: "Inconsistency flag is true" }
+            }
+        } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
+            console.error("Error in updateFolderRaindropioLink:", error);
+            return { success: false, error };
+        }
+    }
+
+
+
     /**
      * Edit/update folder legend
      * 

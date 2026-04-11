@@ -202,6 +202,20 @@ export class ControllerInterface {
     }
 
     /**
+     * Edit/update folder raindrop.io url 
+     * 
+     * @param folderTagPath - The tag path of the folder
+     * @param jsonObject - JSON object containing the new raindropio url property
+     * @returns Promise with success status and error if failed
+     */
+    async updateFolderRaindropioLink(
+        folderTagPath: string,
+        jsonObject: Record<string, any>
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.updateFolderRaindropioLink(folderTagPath, jsonObject);
+    }
+
+    /**
      * Edit/update folder legend
      * 
      * @param folderTagPath - The tag path of the folder

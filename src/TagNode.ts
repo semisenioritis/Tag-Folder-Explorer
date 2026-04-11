@@ -213,7 +213,7 @@ export class TagNode implements ITagNode {
                 name: this.name,
                 created: new Date().toISOString(),
                 modified: new Date().toISOString(),
-                description: ``,
+                description: "",
                 legend:{
                     Red: "",
                     Orange: "",
@@ -221,7 +221,8 @@ export class TagNode implements ITagNode {
                     Green: "",
                     Blue: "",
                     Purple: ""
-                }
+                },
+                raindropLink: ""
             };
             
             // Convert to JSON string with formatting

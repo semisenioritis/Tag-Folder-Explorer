@@ -70,8 +70,6 @@ if (prod) {
 } else {
 	await context.watch();
 
-	console.log("Watching...");
-
 	// also copy once in dev
 	mkdirSync("dist", { recursive: true });
 	if (existsSync("main.js")) {copyFileSync("main.js", "dist/main.js")}

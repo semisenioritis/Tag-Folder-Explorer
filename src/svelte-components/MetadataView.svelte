@@ -3,7 +3,7 @@
 //   import { getrightSidebarData } from '../modelInterface'
     import type { ControllerInterface } from '../controllerInterface';
     import type { ModelInterface } from '../modelInterface';
-    import { openTagExplorerInNewTab } from '../windows';
+    import { openTagExplorerInNewTab, openRaindropInSidebar } from '../windows';
 
     // Props
     interface Props {
@@ -48,6 +48,19 @@
             }
         }
         return tempdescriptionValue
+	});
+
+	let raindropUrlValue = $derived.by(() => {
+        console.log("derivation was triggered")
+        let tempraindropUrlValue
+        if (focusedObjectType== "folder"){
+            if (metadataViewData?.raindropLink) {
+                tempraindropUrlValue = metadataViewData.raindropLink;
+            }else{
+                tempraindropUrlValue = ""
+            }
+        }
+        return tempraindropUrlValue
 	});
 
 	let legendValue = $derived.by(() => {
@@ -141,6 +154,10 @@
         await openTagExplorerInNewTab(tag);
     }
 
+    async function handleRaindropButtonClick(raindropurl: string): Promise<void> {
+        await openRaindropInSidebar(raindropurl);
+    }
+
     async function handleDescriptionUpdate() {
         if (!controller) return;
 
@@ -160,6 +177,35 @@
             console.error('Failed to update description:', error);
         }
     }
+
+    async function handleRaindropUrlUpdate() {
+        if (!controller) return;
+
+        try {
+            if (focusedObjectType === 'folder') {
+
+                const urlValidationValue = raindropUrlValue.trim();
+
+                const pattern = /^https:\/\/app\.raindrop\.io\/.+$/;
+
+
+                if (!pattern.test(urlValidationValue)) {
+                    console.log("Invalid Raindrop URL");
+                    raindropUrlValue = ""
+                    // probably should display a notice on the ui that this is invalid
+                    return;
+                }
+
+                await controller.updateFolderRaindropioLink(focusedObjectPath, {
+                    raindropLink: raindropUrlValue
+                });
+            }
+            await recomputeMetadata()
+        } catch (error) {
+            console.error('Failed to update raindrop url:', error);
+        }
+    }
+
 
     async function handleLegendUpdate() {
         console.log("updating legend")
@@ -254,7 +300,23 @@
             >
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
             </svg>
+            
+            {#if raindropUrlValue != ""}
+                <div class="raindrop-button">
+                    <button
+                        class="raindrop-button-internal"
+                        type="button"
+                        onclick={() => handleRaindropButtonClick(raindropUrlValue)}
+                        title="Raindrop.io"
+                        
+                    >
+                        <span class="raindrop-text">Raindrop.io</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-cloud-icon lucide-cloud"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+                    </button>
+                </div>
+            {/if}
             </div>
+
 
 
             <details class="metadata-section" open>
@@ -323,6 +385,16 @@
                 </details>
                 {/if}
             {/if}
+
+            <details class="metadata-section" open>
+                <summary class="metadata-title">Raindrop.io Folder</summary>
+                <textarea 
+                    placeholder="Add your raindrop.io folder url here..."
+                    class="description-text" 
+                    bind:value={raindropUrlValue}
+                    onchange={handleRaindropUrlUpdate}
+                ></textarea>
+            </details>
 
         </div>
         {:else}
@@ -473,9 +545,68 @@
     justify-content: center;
     background: linear-gradient(135deg, var(--background-secondary) 0%, var(--background-primary) 100%);
     border-radius: 8px;
-    padding: 20px;
+    padding: 25px;
     box-sizing: border-box;
+
+    position: relative;
   }
+
+.raindrop-button {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+
+  font-size: 12px;
+  padding: 4px;
+  border-radius: 6px;
+  cursor: pointer;
+justify-content: flex-end; /* 👈 keeps icon pinned right */
+
+transition: width 0.25s ease, background 0.2s ease;
+}
+
+.raindrop-button-internal {
+    border: 1px solid var(--background-modifier-border);
+    background: #1c82ae29;
+    color: #3e95bb;
+    border-radius: 999px;
+    padding: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    box-shadow: none;
+    text-align: left;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+
+
+}
+
+/* hidden text */
+.raindrop-text {
+  opacity: 0;
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+
+  transform: translateX(6px);
+  transition: opacity 0.4s ease, transform 0.4s ease, max-width 0.4s ease;
+}
+
+
+/* reveal text */
+.raindrop-button-internal:hover .raindrop-text {
+  opacity: 1;
+  transform: translateX(0);
+  max-width: 100px;
+  margin-left: 6px;
+  margin-right: 6px;
+}
 
   .folder-icon {
     width: 100%;
