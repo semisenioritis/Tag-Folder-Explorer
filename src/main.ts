@@ -384,6 +384,14 @@ export default class TagFolderPlugin extends Plugin {
         },
     });
 
+    this.addCommand({
+      id: 'launch-tag-file-explorer',
+      name: 'Launch Tag File Explorer',
+      callback: () => {
+        this.activateTagExplorerView()
+      },
+
+    });
 
   }
 
