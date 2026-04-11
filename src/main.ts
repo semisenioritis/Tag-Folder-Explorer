@@ -271,6 +271,7 @@ class TagExplorerView extends ItemView {
 export default class TagFolderPlugin extends Plugin {
 
 	settings: TagFolderPluginSettings = DEFAULT_SETTINGS;
+  private readonly HIDE_OBSIDIAN_METADATA_CLASS = 'tag-folder-hide-metadata';
 	
   /**
    * Shared runtime flag for all Tag Explorer view instances.
@@ -302,6 +303,7 @@ export default class TagFolderPlugin extends Plugin {
   async onload() {
 
     await this.loadSettings();
+    this.applyObsMetadataVisibility();
 
 		console.log('Tag Folder Plugin loaded');
 
@@ -512,6 +514,7 @@ export default class TagFolderPlugin extends Plugin {
 
 	onunload() {
 		console.log('Tag Folder Plugin unloaded');
+    document.body.classList.remove(this.HIDE_OBSIDIAN_METADATA_CLASS);
 		
 		// Clean up the tree reference
 		this.treeRoot = null;
@@ -528,6 +531,16 @@ export default class TagFolderPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+    this.applyObsMetadataVisibility();
 	}  
+
+  private applyObsMetadataVisibility(): void {
+    if (this.settings.showObsMetaData) {
+      document.body.classList.remove(this.HIDE_OBSIDIAN_METADATA_CLASS);
+      return;
+    }
+
+    document.body.classList.add(this.HIDE_OBSIDIAN_METADATA_CLASS);
+  }
 
 }
