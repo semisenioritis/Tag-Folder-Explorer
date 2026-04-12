@@ -18,11 +18,12 @@
     getColorForName: (name: string) => string;
     onItemDrop: (sourceType: 'folder' | 'file', sourcePath: string, sourceParentPath: string, targetType: 'folder', targetPath: string, targetParentPath: string, source: 'internal' | 'external', ctrlPressed: boolean) => void;
     mainViewSortFlag: boolean;
+    viewForm: "blocks" | "list" | "details";
 
   }
 
 
-  let { currentPath, onUpdate, onFocusChange, refreshKey = 0, controller, model, colorDictionary, getColorForName, onItemDrop, mainViewSortFlag}:Props = $props();
+  let { currentPath, onUpdate, onFocusChange, refreshKey = 0, controller, model, colorDictionary, getColorForName, onItemDrop, mainViewSortFlag, viewForm}:Props = $props();
   // let { currentPath }: Props = $props();
 
 
@@ -590,149 +591,300 @@ ondragleave={handleBackgroundDragLeave}
 
     <div class="main-view" >
       {#if mainViewData}
-        <div class="file-grid">
-          <!-- Render child folders/tags -->
-          {#each mainViewData.children as child, index}
-            {#if getFolderPinnedStatus(child) == true}
-              <div 
-              class="item folder" 
-              role="button" 
-              tabindex="0" 
-              title="{child.path}" 
-              onclick={(e) => handleItemClick(e, handleFolderClick, child)}  
-              ondblclick={(e) => { e.stopPropagation(); handleFolderDblClick(child); }} 
-              onkeydown={(e) => handleKeyDown(e, handleFolderDblClick, child)}
-              draggable="true"
-              ondragstart={(e) => handleDragStart(e, 'folder', child.path, child.parentPath)}
-              ondragover={handleDragOver}
-              ondrop={(e) => handleDrop(e, "folder", child.path, child.parentPath)}
-
-              class:active={activeIndex === index}
-              ondragenter={() => handleDragEnter(index)}
-              ondragleave={(e) => handleDragLeave(e, index)}
-
-              >
-                <div class="icon">📁</div>
-                <div class="label">{child.name}</div>
-                {#if currentPath !== ""}
-                  <button class="legend-button circle" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleLegendActionButtonClickFolder(e, getFolderButtonColor(child) ,child.path)} ondblclick={(e) => e.stopPropagation()} title="Legend: {getFolderButtonColor(child)}"></button>
-                {/if}
-                  
-                <button class="top-left square"   class:pinned={getFolderPinnedStatus(child) == true} onclick={(e) => handlePinnedActionButtonClickFolder(e, child.path)} ondblclick={(e) => e.stopPropagation()} title="Pinned">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" style="opacity: 70%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
-                </button>
-              </div>
-            {/if}
-          {/each}
-
-          <!-- Render files -->
-          {#if currentPath != ""}
-            {#each mainViewData.files as file}
-              {#if filePinnedStatuses[file.path] === true}
-
+        {#if viewForm == "blocks"}
+          <div class="file-grid">
+            <!-- Render child folders/tags -->
+            {#each mainViewData.children as child, index}
+              {#if getFolderPinnedStatus(child) == true}
                 <div 
-                class="item file" 
+                class="item-blocks folder" 
                 role="button" 
                 tabindex="0" 
-                title="{file.path}" 
-                onclick={(e) => handleItemClick(e, handleFileClick, file)} 
-                ondblclick={(e) => { e.stopPropagation(); handleFileDblClick(file); }} 
-                onkeydown={(e) => handleKeyDown(e, handleFileDblClick, file)}
+                title="{child.path}" 
+                onclick={(e) => handleItemClick(e, handleFolderClick, child)}  
+                ondblclick={(e) => { e.stopPropagation(); handleFolderDblClick(child); }} 
+                onkeydown={(e) => handleKeyDown(e, handleFolderDblClick, child)}
                 draggable="true"
-                ondragstart={(e) => handleDragStart(e, 'file', file.path, file.parentPath)}
-                ondragover={handleDragOverDisabled}
-                ondrop={(e) => handleDropDisabled(e, "file", file.path, file.parentPath)}
-                >
-                  <div class="icon">📄</div>
-                  <div class="label">{file.name}</div>
-                  {#if currentPath !== ""}
-                    <!-- <button class="legend-button circle" class:hidden={await getFileButtonColor(file) === ""} style="background-color: {getColorForName( await getFileButtonColor(file))}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button> -->
-                    <button class="legend-button circle" class:hidden={!fileButtonColors[file.path]}  style="background-color: {fileButtonColors[file.path] ?? ''}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Legend: {fileButtonColors[file.path]}"></button>
-                  {/if} 
+                ondragstart={(e) => handleDragStart(e, 'folder', child.path, child.parentPath)}
+                ondragover={handleDragOver}
+                ondrop={(e) => handleDrop(e, "folder", child.path, child.parentPath)}
 
-                  <button class="top-left square" class:pinned={filePinnedStatuses[file.path] === true} onclick={(e) => handlePinnedActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Pinned">
+                class:active={activeIndex === index}
+                ondragenter={() => handleDragEnter(index)}
+                ondragleave={(e) => handleDragLeave(e, index)}
+
+                >
+                  <div class="icon-blocks">📁</div>
+                  <div class="label-blocks">{child.name}</div>
+                  {#if currentPath !== ""}
+                    <button class="legend-button circle" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleLegendActionButtonClickFolder(e, getFolderButtonColor(child) ,child.path)} ondblclick={(e) => e.stopPropagation()} title="Legend: {getFolderButtonColor(child)}"></button>
+                  {/if}
+                    
+                  <button class="top-left square"   class:pinned={getFolderPinnedStatus(child) == true} onclick={(e) => handlePinnedActionButtonClickFolder(e, child.path)} ondblclick={(e) => e.stopPropagation()} title="Pinned">
                     <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" style="opacity: 70%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
                   </button>
-
                 </div>
               {/if}
             {/each}
-          {/if}
-        </div>
 
-        {#if hasPinnedItems}
-          <div class="section-divider"></div>
+            <!-- Render files -->
+            {#if currentPath != ""}
+              {#each mainViewData.files as file}
+                {#if filePinnedStatuses[file.path] === true}
+
+                  <div 
+                  class="item-blocks file" 
+                  role="button" 
+                  tabindex="0" 
+                  title="{file.path}" 
+                  onclick={(e) => handleItemClick(e, handleFileClick, file)} 
+                  ondblclick={(e) => { e.stopPropagation(); handleFileDblClick(file); }} 
+                  onkeydown={(e) => handleKeyDown(e, handleFileDblClick, file)}
+                  draggable="true"
+                  ondragstart={(e) => handleDragStart(e, 'file', file.path, file.parentPath)}
+                  ondragover={handleDragOverDisabled}
+                  ondrop={(e) => handleDropDisabled(e, "file", file.path, file.parentPath)}
+                  >
+                    <div class="icon-blocks">📄</div>
+                    <div class="label-blocks">{file.name}</div>
+                    {#if currentPath !== ""}
+                      <!-- <button class="legend-button circle" class:hidden={await getFileButtonColor(file) === ""} style="background-color: {getColorForName( await getFileButtonColor(file))}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button> -->
+                      <button class="legend-button circle" class:hidden={!fileButtonColors[file.path]}  style="background-color: {fileButtonColors[file.path] ?? ''}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Legend: {fileButtonColors[file.path]}"></button>
+                    {/if} 
+
+                    <button class="top-left square" class:pinned={filePinnedStatuses[file.path] === true} onclick={(e) => handlePinnedActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Pinned">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" style="opacity: 70%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
+                    </button>
+
+                  </div>
+                {/if}
+              {/each}
+            {/if}
+          </div>
+
+          {#if hasPinnedItems}
+            <div class="section-divider"></div>
+          {/if}
+          <div class="file-grid">
+            <!-- Render child folders/tags -->
+            {#each mainViewData.children as child, index}
+              {#if getFolderPinnedStatus(child) == false}
+                <div 
+                class="item-blocks folder" 
+                role="button" 
+                tabindex="0" 
+                title="{child.path}" 
+                onclick={(e) => handleItemClick(e, handleFolderClick, child)}  
+                ondblclick={(e) => { e.stopPropagation(); handleFolderDblClick(child); }} 
+                onkeydown={(e) => handleKeyDown(e, handleFolderDblClick, child)}
+                draggable="true"
+                ondragstart={(e) => handleDragStart(e, 'folder', child.path, child.parentPath)}
+                ondragover={handleDragOver}
+                ondrop={(e) => handleDrop(e, "folder", child.path, child.parentPath)}
+
+                class:active={activeIndex === index}
+                ondragenter={() => handleDragEnter(index)}
+                ondragleave={(e) => handleDragLeave(e, index)}
+
+                >
+                  <div class="icon-blocks">📁</div>
+                  <div class="label-blocks">{child.name}</div>
+                  {#if currentPath !== ""}
+                    <button class="legend-button circle" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleLegendActionButtonClickFolder(e, getFolderButtonColor(child) ,child.path)} ondblclick={(e) => e.stopPropagation()} title="Legend: {getFolderButtonColor(child)}"></button>
+                  {/if}
+                    
+                  <button class="top-left square"   class:pinned={getFolderPinnedStatus(child) == true} onclick={(e) => handlePinnedActionButtonClickFolder(e, child.path)} ondblclick={(e) => e.stopPropagation()} title="Pinned">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" style="opacity: 70%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
+                  </button>
+                </div>
+              {/if}
+            {/each}
+
+            <!-- Render files -->
+            {#if currentPath != ""}
+
+              {#each mainViewData.files as file}
+                {#if filePinnedStatuses[file.path] === false}
+
+                  <div 
+                  class="item-blocks file" 
+                  role="button" 
+                  tabindex="0" 
+                  title="{file.path}" 
+                  onclick={(e) => handleItemClick(e, handleFileClick, file)} 
+                  ondblclick={(e) => { e.stopPropagation(); handleFileDblClick(file); }} 
+                  onkeydown={(e) => handleKeyDown(e, handleFileDblClick, file)}
+                  draggable="true"
+                  ondragstart={(e) => handleDragStart(e, 'file', file.path, file.parentPath)}
+                  ondragover={handleDragOverDisabled}
+                  ondrop={(e) => handleDropDisabled(e, "file", file.path, file.parentPath)}
+                  >
+                    <div class="icon-blocks">📄</div>
+                    <div class="label-blocks">{file.name}</div>
+                    {#if currentPath !== ""}
+                      <!-- <button class="legend-button circle" class:hidden={await getFileButtonColor(file) === ""} style="background-color: {getColorForName( await getFileButtonColor(file))}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button> -->
+                      <button class="legend-button circle" class:hidden={!fileButtonColors[file.path]}  style="background-color: {fileButtonColors[file.path] ?? ''}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Legend: {fileButtonColors[file.path]}"></button>
+                    {/if} 
+
+                    <button class="top-left square" class:pinned={filePinnedStatuses[file.path] === true} onclick={(e) => handlePinnedActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Pinned">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" style="opacity: 70%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
+                    </button>
+
+                  </div>
+                {/if}
+              {/each}
+            {/if}
+          </div>
+        {:else if viewForm == "list" }
+          <div class="file-list">
+            <!-- Render child folders/tags -->
+            {#each mainViewData.children as child, index}
+              {#if getFolderPinnedStatus(child) == true}
+                <div 
+                class="item-list folder" 
+                role="button" 
+                tabindex="0" 
+                title="{child.path}" 
+                onclick={(e) => handleItemClick(e, handleFolderClick, child)}  
+                ondblclick={(e) => { e.stopPropagation(); handleFolderDblClick(child); }} 
+                onkeydown={(e) => handleKeyDown(e, handleFolderDblClick, child)}
+                draggable="true"
+                ondragstart={(e) => handleDragStart(e, 'folder', child.path, child.parentPath)}
+                ondragover={handleDragOver}
+                ondrop={(e) => handleDrop(e, "folder", child.path, child.parentPath)}
+
+                class:active={activeIndex === index}
+                ondragenter={() => handleDragEnter(index)}
+                ondragleave={(e) => handleDragLeave(e, index)}
+
+                >
+                  <div class="icon-list">📁</div>
+                  <div class="label-list">{child.name}</div>
+                  {#if currentPath !== ""}
+                    <button class="legend-button circle" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleLegendActionButtonClickFolder(e, getFolderButtonColor(child) ,child.path)} ondblclick={(e) => e.stopPropagation()} title="Legend: {getFolderButtonColor(child)}"></button>
+                  {/if}
+                    
+                  <button class="top-left-list square"   class:pinned={getFolderPinnedStatus(child) == true} onclick={(e) => handlePinnedActionButtonClickFolder(e, child.path)} ondblclick={(e) => e.stopPropagation()} title="Pinned">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" style="opacity: 70%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
+                  </button>
+                </div>
+              {/if}
+            {/each}
+
+            <!-- Render files -->
+            {#if currentPath != ""}
+              {#each mainViewData.files as file}
+                {#if filePinnedStatuses[file.path] === true}
+
+                  <div 
+                  class="item-list file" 
+                  role="button" 
+                  tabindex="0" 
+                  title="{file.path}" 
+                  onclick={(e) => handleItemClick(e, handleFileClick, file)} 
+                  ondblclick={(e) => { e.stopPropagation(); handleFileDblClick(file); }} 
+                  onkeydown={(e) => handleKeyDown(e, handleFileDblClick, file)}
+                  draggable="true"
+                  ondragstart={(e) => handleDragStart(e, 'file', file.path, file.parentPath)}
+                  ondragover={handleDragOverDisabled}
+                  ondrop={(e) => handleDropDisabled(e, "file", file.path, file.parentPath)}
+                  >
+                    <div class="icon-list">📄</div>
+                    <div class="label-list">{file.name}</div>
+                    {#if currentPath !== ""}
+                      <!-- <button class="legend-button circle" class:hidden={await getFileButtonColor(file) === ""} style="background-color: {getColorForName( await getFileButtonColor(file))}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button> -->
+                      <button class="legend-button circle" class:hidden={!fileButtonColors[file.path]}  style="background-color: {fileButtonColors[file.path] ?? ''}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Legend: {fileButtonColors[file.path]}"></button>
+                    {/if} 
+
+                    <button class="top-left-list square" class:pinned={filePinnedStatuses[file.path] === true} onclick={(e) => handlePinnedActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Pinned">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" style="opacity: 70%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
+                    </button>
+
+                  </div>
+                {/if}
+              {/each}
+            {/if}
+          </div>
+          
+          {#if hasPinnedItems}
+            <div class="section-divider"></div>
+          {/if}
+          <div class="file-list">
+            <!-- Render child folders/tags -->
+            {#each mainViewData.children as child, index}
+              {#if getFolderPinnedStatus(child) == false}
+                <div 
+                class="item-list folder" 
+                role="button" 
+                tabindex="0" 
+                title="{child.path}" 
+                onclick={(e) => handleItemClick(e, handleFolderClick, child)}  
+                ondblclick={(e) => { e.stopPropagation(); handleFolderDblClick(child); }} 
+                onkeydown={(e) => handleKeyDown(e, handleFolderDblClick, child)}
+                draggable="true"
+                ondragstart={(e) => handleDragStart(e, 'folder', child.path, child.parentPath)}
+                ondragover={handleDragOver}
+                ondrop={(e) => handleDrop(e, "folder", child.path, child.parentPath)}
+
+                class:active={activeIndex === index}
+                ondragenter={() => handleDragEnter(index)}
+                ondragleave={(e) => handleDragLeave(e, index)}
+
+                >
+                  <div class="icon-list">📁</div>
+                  <div class="label-list">{child.name}</div>
+                  {#if currentPath !== ""}
+                    <button class="legend-button circle" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleLegendActionButtonClickFolder(e, getFolderButtonColor(child) ,child.path)} ondblclick={(e) => e.stopPropagation()} title="Legend: {getFolderButtonColor(child)}"></button>
+                  {/if}
+                    
+                  <button class="top-left-list square"   class:pinned={getFolderPinnedStatus(child) == true} onclick={(e) => handlePinnedActionButtonClickFolder(e, child.path)} ondblclick={(e) => e.stopPropagation()} title="Pinned">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" style="opacity: 70%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
+                  </button>
+                </div>
+              {/if}
+            {/each}
+
+            <!-- Render files -->
+            {#if currentPath != ""}
+
+              {#each mainViewData.files as file}
+                {#if filePinnedStatuses[file.path] === false}
+
+                  <div 
+                  class="item-list file" 
+                  role="button" 
+                  tabindex="0" 
+                  title="{file.path}" 
+                  onclick={(e) => handleItemClick(e, handleFileClick, file)} 
+                  ondblclick={(e) => { e.stopPropagation(); handleFileDblClick(file); }} 
+                  onkeydown={(e) => handleKeyDown(e, handleFileDblClick, file)}
+                  draggable="true"
+                  ondragstart={(e) => handleDragStart(e, 'file', file.path, file.parentPath)}
+                  ondragover={handleDragOverDisabled}
+                  ondrop={(e) => handleDropDisabled(e, "file", file.path, file.parentPath)}
+                  >
+                    <div class="icon-list">📄</div>
+                    <div class="label-list">{file.name}</div>
+                    {#if currentPath !== ""}
+                      <!-- <button class="legend-button circle" class:hidden={await getFileButtonColor(file) === ""} style="background-color: {getColorForName( await getFileButtonColor(file))}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button> -->
+                      <button class="legend-button circle" class:hidden={!fileButtonColors[file.path]}  style="background-color: {fileButtonColors[file.path] ?? ''}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Legend: {fileButtonColors[file.path]}"></button>
+                    {/if} 
+
+                    <button class="top-left-list square" class:pinned={filePinnedStatuses[file.path] === true} onclick={(e) => handlePinnedActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Pinned">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" style="opacity: 70%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
+                    </button>
+
+                  </div>
+                {/if}
+              {/each}
+            {/if}
+          </div>
+
+        {:else if viewForm == "details" }
+          <div class="empty-state">
+            <p>Details view coming soon</p>
+          </div>
         {/if}
-        <div class="file-grid">
-          <!-- Render child folders/tags -->
-          {#each mainViewData.children as child, index}
-            {#if getFolderPinnedStatus(child) == false}
-              <div 
-              class="item folder" 
-              role="button" 
-              tabindex="0" 
-              title="{child.path}" 
-              onclick={(e) => handleItemClick(e, handleFolderClick, child)}  
-              ondblclick={(e) => { e.stopPropagation(); handleFolderDblClick(child); }} 
-              onkeydown={(e) => handleKeyDown(e, handleFolderDblClick, child)}
-              draggable="true"
-              ondragstart={(e) => handleDragStart(e, 'folder', child.path, child.parentPath)}
-              ondragover={handleDragOver}
-              ondrop={(e) => handleDrop(e, "folder", child.path, child.parentPath)}
-
-              class:active={activeIndex === index}
-              ondragenter={() => handleDragEnter(index)}
-              ondragleave={(e) => handleDragLeave(e, index)}
-
-              >
-                <div class="icon">📁</div>
-                <div class="label">{child.name}</div>
-                {#if currentPath !== ""}
-                  <button class="legend-button circle" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleLegendActionButtonClickFolder(e, getFolderButtonColor(child) ,child.path)} ondblclick={(e) => e.stopPropagation()} title="Legend: {getFolderButtonColor(child)}"></button>
-                {/if}
-                  
-                <button class="top-left square"   class:pinned={getFolderPinnedStatus(child) == true} onclick={(e) => handlePinnedActionButtonClickFolder(e, child.path)} ondblclick={(e) => e.stopPropagation()} title="Pinned">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" style="opacity: 70%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
-                </button>
-              </div>
-            {/if}
-          {/each}
-
-          <!-- Render files -->
-          {#if currentPath != ""}
-
-            {#each mainViewData.files as file}
-              {#if filePinnedStatuses[file.path] === false}
-
-                <div 
-                class="item file" 
-                role="button" 
-                tabindex="0" 
-                title="{file.path}" 
-                onclick={(e) => handleItemClick(e, handleFileClick, file)} 
-                ondblclick={(e) => { e.stopPropagation(); handleFileDblClick(file); }} 
-                onkeydown={(e) => handleKeyDown(e, handleFileDblClick, file)}
-                draggable="true"
-                ondragstart={(e) => handleDragStart(e, 'file', file.path, file.parentPath)}
-                ondragover={handleDragOverDisabled}
-                ondrop={(e) => handleDropDisabled(e, "file", file.path, file.parentPath)}
-                >
-                  <div class="icon">📄</div>
-                  <div class="label">{file.name}</div>
-                  {#if currentPath !== ""}
-                    <!-- <button class="legend-button circle" class:hidden={await getFileButtonColor(file) === ""} style="background-color: {getColorForName( await getFileButtonColor(file))}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Action"></button> -->
-                    <button class="legend-button circle" class:hidden={!fileButtonColors[file.path]}  style="background-color: {fileButtonColors[file.path] ?? ''}" onclick={(e) => handleLegendActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Legend: {fileButtonColors[file.path]}"></button>
-                  {/if} 
-
-                  <button class="top-left square" class:pinned={filePinnedStatuses[file.path] === true} onclick={(e) => handlePinnedActionButtonClickFile(e, file.path)} ondblclick={(e) => e.stopPropagation()} title="Pinned">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" style="opacity: 70%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
-                  </button>
-
-                </div>
-              {/if}
-            {/each}
-          {/if}
-        </div>
       {:else}
         <div class="empty-state">
           <p>No data available for this path</p>
@@ -781,7 +933,14 @@ ondragleave={handleBackgroundDragLeave}
   gap:12px;
 }
 
-.item{
+.file-list{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+
+.item-blocks{
   /* border:10px solid blue; */
   /* border: 1px solid var(--background-modifier-border); */
 
@@ -796,28 +955,70 @@ ondragleave={handleBackgroundDragLeave}
   user-select:none;
 }
 
-.item:hover{
+.item-blocks:hover{
   /* background:var(--bg-item-hover); */
   background: var(--background-modifier-border);
 
 
 }
 
-.item:focus{
+.item-blocks:focus{
   outline: 2px solid var(--interactive-accent);
   outline-offset: 2px;
   background: var(--background-modifier-border);
 }
 
-.icon{
+
+.item-list{
+  /* border:10px solid blue; */
+  /* border: 1px solid var(--background-modifier-border); */
+
+  position: relative;
+  border-radius:6px;
+  padding:12px 14px;
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  gap:6px;
+  cursor:pointer;
+  user-select:none;
+}
+
+.item-list:hover{
+  /* background:var(--bg-item-hover); */
+  background: var(--background-modifier-border);
+
+
+}
+
+.item-list:focus{
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 2px;
+  background: var(--background-modifier-border);
+}
+
+
+
+.icon-blocks{
   font-size:28px;
   line-height:1;
 }
 
-.label{
+.icon-list{
+  font-size:20px;
+  line-height:1;
+}
+
+.label-blocks{
   font-size:13px;
   text-align:center;
   word-break:break-word;
+}
+
+.label-list{
+  font-size:13px;
+  text-align:center;
+  margin-left: 15px;
 }
 
 .legend-button {
@@ -845,7 +1046,24 @@ ondragleave={handleBackgroundDragLeave}
 
 }
 
-.item:hover .legend-button {
+
+.top-left-list{
+  position: absolute;
+  top: 2px;
+  left: 1px;
+
+  padding: 0;
+  /* background: var(--background-secondary); */
+  cursor: pointer;
+  opacity: 0%;
+
+}
+
+.item-blocks:hover .legend-button {
+  display: block;
+}
+
+.item-list:hover .legend-button {
   display: block;
 }
 
@@ -872,10 +1090,13 @@ ondragleave={handleBackgroundDragLeave}
   transition: opacity 0.3s ease; /* smooth fade */
 }
 
-.item:hover .circle {
+.item-blocks:hover .circle {
   opacity: 1;
 }
 
+.item-list:hover .circle {
+  opacity: 1;
+}
 
 .square {
   display: inline-block;
@@ -887,7 +1108,11 @@ ondragleave={handleBackgroundDragLeave}
   background: transparent;
 }
 
-.item:hover .square {
+.item-blocks:hover .square {
+  opacity: 1;
+}
+
+.item-list:hover .square {
   opacity: 1;
 }
 

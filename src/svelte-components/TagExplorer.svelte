@@ -431,6 +431,21 @@ async function deleteSelectedItem(type: 'folder' | 'file', path: string, parentp
 }
 
 
+let viewForm: "blocks" | "list" | "details"= $state("blocks")
+
+function toggleViewForm(){
+  if(viewForm == "blocks"){
+    viewForm = "list"
+
+  }else if (viewForm == "list"){
+    viewForm = "details"
+
+  }else if (viewForm == "details"){
+    viewForm = "blocks"
+
+  }
+}
+
 </script>
 
 
@@ -647,6 +662,23 @@ async function deleteSelectedItem(type: 'folder' | 'file', path: string, parentp
       </div>
 
       <div 
+      class="subheader-button"
+      role="button"
+      tabindex="0"
+      onclick={() => toggleViewForm()}
+      onkeydown={(e) => e.key === 'Enter' && toggleViewForm()}
+      title="Change View"
+      >
+        {#if viewForm == "blocks"}
+          <svg style="padding:2px" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-grid2x2-icon lucide-grid-2x2"><path d="M12 3v18"/><path d="M3 12h18"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+        {:else if viewForm == "list"}
+          <svg style="padding:2px" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rows4-icon lucide-rows-4"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M21 7.5H3"/><path d="M21 12H3"/><path d="M21 16.5H3"/></svg>
+        {:else if viewForm == "details"}
+          <svg style="padding:2px" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-layout-list-icon lucide-layout-list"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/><path d="M14 4h7"/><path d="M14 9h7"/><path d="M14 15h7"/><path d="M14 20h7"/></svg>
+        {/if}
+      </div>
+
+      <div 
       class="subheader-button subheader-button-left"
       role="button"
       tabindex="0"
@@ -672,6 +704,7 @@ async function deleteSelectedItem(type: 'folder' | 'file', path: string, parentp
       getColorForName = {getColorForName}
       onItemDrop = {onItemDrop}
       mainViewSortFlag = {mainViewSortFlag}
+      viewForm = {viewForm}
 
     />
 
