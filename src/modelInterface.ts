@@ -121,5 +121,24 @@ export class ModelInterface {
         return node !== null;
     }
 
+
+    async getDetailedViewData(parentfolder: string, type: string, path: string){
+
+        if (type == 'folder'){
+            const node = this.treeObj?.getNode(path);
+            let foldermetadata = node?.readMeta()
+            return foldermetadata
+        }
+        if (type =='file'){
+            let filename = path.split("/").pop()?.replace(/\.[^/.]+$/, "") ?? "";
+            const file = this.treeObj?.getFile(filename, path, parentfolder)
+            let filepathstring = file?.getPath()
+            let filemetadata = await file?.fileMetadata()
+            let fileinitial = await file?.readInitial()
+            let fileobsdata = file?.fileObsCreateModDate()
+
+            return {filemetadata, fileinitial, fileobsdata, filepathstring}
+        }
+    }
 }
 

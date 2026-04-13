@@ -10,3 +10,14 @@ If your plugin does not need CSS, delete this file.
 body.tag-folder-hide-metadata .metadata-property[data-property-key^="🏷-"] {
     display: none;
 }
+
+/* div {
+  border: 1px solid white;
+  padding: 1px;
+  margin: 1px;
+  box-sizing: border-box;
+} */
+
+/* div {
+  border: 1px solid white;
+} */
