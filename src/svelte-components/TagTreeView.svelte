@@ -19,6 +19,7 @@
     controller: ControllerInterface | null | undefined;
     model: ModelInterface | null | undefined;
     onItemDrop: (sourceType: 'folder' | 'file', sourcePath: string, sourceParentPath: string, targetType: 'folder', targetPath: string, targetParentPath: string, source: 'internal' | 'external', ctrlPressed: boolean) => void;
+    treeView: "tree" | "untagged" | "emptyfolders" | "allfiles" | "allfolders";
   }
   
   // Type definitions
@@ -40,9 +41,12 @@
   interface TreeData {
     rootTags: TagNodeData[];
     untaggedFiles: FileData[];
+    emptyTagNodes: TagNodeData[];
+    allTagNodeFolders: TagNodeData[];
+    allFiles: FileData[];
   }
 
-  let { currentPath, onUpdate, onFocusChange, refreshKey, treeViewSortFlag, initialTreeData, initialVersion = 0, controller, model, onItemDrop }:Props = $props();
+  let { currentPath, onUpdate, onFocusChange, refreshKey, treeViewSortFlag, initialTreeData, initialVersion = 0, controller, model, onItemDrop, treeView }:Props = $props();
   
   if (!model) {
       throw new Error("model is not initialized");
@@ -54,6 +58,7 @@
       ? (initialTreeData as TreeData) 
       : (model!.getleftSidebarTree(treeViewSortFlag).tree as TreeData)
   );
+
   // console.log("test")
   // console.log(treeData) 
   // console.log($state.snapshot(treeData));
@@ -379,6 +384,7 @@ function handleDragLeaveUntagged(event: DragEvent) {
       class:active={activeIndex === `${level}_${index}`}
       ondragenter={() => handleDragEnter(index, level)}
       ondragleave={(e) => handleDragLeave(e, index)}
+      aria-label={node.path}
     >
       <div 
         class="tree-item-icon collapse-icon is-clickable " 
@@ -410,6 +416,14 @@ function handleDragLeaveUntagged(event: DragEvent) {
       class:active={activeIndex === `${level}_${index}`}
 
       >
+
+        <!-- Render child tags -->
+        {#if node.children && node.children.length > 0}
+          {#each node.children as child, index}
+            {@render renderTagNode(child, node.path, index, level+1)}
+          {/each}
+        {/if}
+
         <!-- Render files in this tag -->
         {#if node.files && node.files.length > 0}
           {#each node.files as file}
@@ -429,6 +443,7 @@ function handleDragLeaveUntagged(event: DragEvent) {
 
                 ondragenter={() => handleDragEnter(index, level)}
                 ondragleave={(e) => handleDragLeave(e, index)}
+                aria-label={file.path}
               >
                 <div class="tree-item-inner nav-file-title-content">{file.name}</div>
               </div>
@@ -436,12 +451,6 @@ function handleDragLeaveUntagged(event: DragEvent) {
           {/each}
         {/if}
         
-        <!-- Render child tags -->
-        {#if node.children && node.children.length > 0}
-          {#each node.children as child, index}
-            {@render renderTagNode(child, node.path, index, level+1)}
-          {/each}
-        {/if}
       </div>
     {/if}
   </div>
@@ -449,105 +458,311 @@ function handleDragLeaveUntagged(event: DragEvent) {
 
 <!-- Tag Tree using Obsidian's native classes -->
 {#if treeData && treeData.rootTags}
-  <div class="nav-files-container node-insert-event">
-    <div class="tree-item nav-folder" class:is-collapsed={!isExpanded(ROOT_TAGS_NODE_PATH)}>
-      <div 
-        class="tree-item-self nav-folder-title is-clickable mod-collapsible"
-        data-path={""}
-        role="button"
-        tabindex="0"
-        ondragover={handleDragOver}
-        ondrop={(e) => handleRootDrop(e, 'folder', "")}
-        onclick={() => toggleTag(ROOT_TAGS_NODE_PATH)}
-        onkeydown={(e) => e.key === 'Enter' && toggleTag(ROOT_TAGS_NODE_PATH)}
-
-        class:active={isRootActive === true}
-        ondragenter={() => handleDragEnterRoot()}
-        ondragleave={(e) => handleDragLeaveRoot(e)}
-      >
-        <div class="tree-item-icon collapse-icon" class:is-collapsed={!isExpanded(ROOT_TAGS_NODE_PATH)}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle">
-            <path d="M3 8L12 17L21 8"></path>
-          </svg>
-        </div>
-        <div class="tree-item-inner nav-folder-title-content main-folder-title">Tags</div>
-        <div class="tree-item-flair-outer">
-          <span class="tree-item-flair">{treeData.rootTags.length}</span>
-        </div>
-      </div>
-
-      {#if isExpanded(ROOT_TAGS_NODE_PATH)}
-        <div class="tree-item-children nav-folder-children">
-          
-          {#each treeData.rootTags as tagNode, index}
-            {@render renderTagNode(tagNode, "", index, 1)}
-          {/each}
-        </div>
-      {/if}
-    </div>
-    
-    {#if treeData.untaggedFiles && treeData.untaggedFiles.length > 0}
-      <!-- Untagged Files as a special folder -->
-      <div class="tree-item nav-folder" class:is-collapsed={!isExpanded('__untagged__')}>
+  {#if treeView == "tree"}
+    <div class="nav-files-container node-insert-event">
+      <div class="tree-item nav-folder" class:is-collapsed={!isExpanded(ROOT_TAGS_NODE_PATH)}>
         <div 
           class="tree-item-self nav-folder-title is-clickable mod-collapsible"
-          data-path="__untagged__"
+          data-path={""}
           role="button"
           tabindex="0"
           ondragover={handleDragOver}
-          ondrop={(e) => handleUntaggedDrop(e, 'folder', "")}
-          onclick={() => toggleTag('__untagged__')}
-          onkeydown={(e) => e.key === 'Enter' && toggleTag('__untagged__')}
+          ondrop={(e) => handleRootDrop(e, 'folder', "")}
+          onclick={() => toggleTag(ROOT_TAGS_NODE_PATH)}
+          onkeydown={(e) => e.key === 'Enter' && toggleTag(ROOT_TAGS_NODE_PATH)}
 
-          class:active={isUntaggedActive === true}
-          ondragenter={() => handleDragEnterUntagged()}
-          ondragleave={(e) => handleDragLeaveUntagged(e)}
+          class:active={isRootActive === true}
+          ondragenter={() => handleDragEnterRoot()}
+          ondragleave={(e) => handleDragLeaveRoot(e)}
         >
-          <div class="tree-item-icon collapse-icon" class:is-collapsed={!isExpanded('__untagged__')}>
+          <div class="tree-item-icon collapse-icon" class:is-collapsed={!isExpanded(ROOT_TAGS_NODE_PATH)}>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle">
               <path d="M3 8L12 17L21 8"></path>
             </svg>
           </div>
-          <div class="tree-item-inner nav-folder-title-content main-folder-title">Untagged Files</div>
+          <div class="tree-item-inner nav-folder-title-content main-folder-title">Tags</div>
           <div class="tree-item-flair-outer">
-            <span class="tree-item-flair">{treeData.untaggedFiles.length}</span>
+            <span class="tree-item-flair">{treeData.rootTags.length}</span>
           </div>
         </div>
-        
-        {#if isExpanded('__untagged__')}
-          <div 
-          class="tree-item-children nav-folder-children"
-          class:active={isUntaggedActive === true}
-          >
-            {#each treeData.untaggedFiles as file}
-              <div class="tree-item nav-file">
-                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <div 
-                  class="tree-item-self nav-file-title tappable is-clickable"
-                  data-path={file.path}
-                  role="button"
-                  tabindex="0"
-                  draggable="true"
-                  ondragstart={(e) => handleDragStart(e, 'file', file.path, "")}
-                  ondragover={handleDragOver}
-                  ondrop={(e) => handleUntaggedDrop(e, 'folder', "")}
-                  ondblclick={() => handleFileClick(file.path, '')}
-                  onkeydown={(e) => e.key === 'Enter' && handleFileClick(file.path, '__untagged__')}
 
-
-                  ondragenter={() => handleDragEnterUntagged()}
-                  ondragleave={(e) => handleDragLeaveUntagged(e)}
-                >
-                  <div class="tree-item-inner nav-file-title-content">{file.name}</div>
-                </div>
-                
-              </div>
+        {#if isExpanded(ROOT_TAGS_NODE_PATH)}
+          <div class="tree-item-children nav-folder-children">
+            
+            {#each treeData.rootTags as tagNode, index}
+              {@render renderTagNode(tagNode, "", index, 1)}
             {/each}
           </div>
         {/if}
       </div>
-    {/if}
-  </div>
+      
+      {#if treeData.untaggedFiles && treeData.untaggedFiles.length > 0}
+        <!-- Untagged Files as a special folder -->
+        <div class="tree-item nav-folder" class:is-collapsed={!isExpanded('__untagged__')}>
+          <div 
+            class="tree-item-self nav-folder-title is-clickable mod-collapsible"
+            data-path="__untagged__"
+            role="button"
+            tabindex="0"
+            ondragover={handleDragOver}
+            ondrop={(e) => handleUntaggedDrop(e, 'folder', "")}
+            onclick={() => toggleTag('__untagged__')}
+            onkeydown={(e) => e.key === 'Enter' && toggleTag('__untagged__')}
+
+            class:active={isUntaggedActive === true}
+            ondragenter={() => handleDragEnterUntagged()}
+            ondragleave={(e) => handleDragLeaveUntagged(e)}
+          >
+            <div class="tree-item-icon collapse-icon" class:is-collapsed={!isExpanded('__untagged__')}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle">
+                <path d="M3 8L12 17L21 8"></path>
+              </svg>
+            </div>
+            <div class="tree-item-inner nav-folder-title-content main-folder-title">Untagged Files</div>
+            <div class="tree-item-flair-outer">
+              <span class="tree-item-flair">{treeData.untaggedFiles.length}</span>
+            </div>
+          </div>
+          
+          {#if isExpanded('__untagged__')}
+            <div 
+            class="tree-item-children nav-folder-children"
+            class:active={isUntaggedActive === true}
+            >
+              {#each treeData.untaggedFiles as file}
+                <div class="tree-item nav-file">
+                  <!-- svelte-ignore a11y_no_static_element_interactions -->
+                  <div 
+                    class="tree-item-self nav-file-title tappable is-clickable"
+                    data-path={file.path}
+                    role="button"
+                    tabindex="0"
+                    draggable="true"
+                    ondragstart={(e) => handleDragStart(e, 'file', file.path, "")}
+                    ondragover={handleDragOver}
+                    ondrop={(e) => handleUntaggedDrop(e, 'folder', "")}
+                    ondblclick={() => handleFileClick(file.path, '')}
+                    onkeydown={(e) => e.key === 'Enter' && handleFileClick(file.path, '__untagged__')}
+
+
+                    ondragenter={() => handleDragEnterUntagged()}
+                    ondragleave={(e) => handleDragLeaveUntagged(e)}
+                    aria-label={file.path}
+                  >
+                    <div class="tree-item-inner nav-file-title-content">{file.name}</div>
+                  </div>
+                  
+                </div>
+              {/each}
+            </div>
+          {/if}
+        </div>
+      {/if}
+    </div>
+  {:else if treeView == "untagged" }
+    <div class="nav-files-container node-insert-event">
+
+      {#if treeData.untaggedFiles && treeData.untaggedFiles.length > 0}
+        <div class="tree-item nav-folder" class:is-collapsed={!isExpanded('__untagged__')}>
+          <div 
+            class="tree-item-self nav-folder-title is-clickable mod-collapsible"
+            data-path="__untagged__"
+            role="button"
+            tabindex="0"
+            ondragover={handleDragOver}
+            ondrop={(e) => handleUntaggedDrop(e, 'folder', "")}
+            onclick={() => toggleTag('__untagged__')}
+            onkeydown={(e) => e.key === 'Enter' && toggleTag('__untagged__')}
+
+            class:active={isUntaggedActive === true}
+            ondragenter={() => handleDragEnterUntagged()}
+            ondragleave={(e) => handleDragLeaveUntagged(e)}
+          >
+            <div class="tree-item-icon collapse-icon" class:is-collapsed={!isExpanded('__untagged__')}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle">
+                <path d="M3 8L12 17L21 8"></path>
+              </svg>
+            </div>
+            <div class="tree-item-inner nav-folder-title-content main-folder-title">Untagged Files</div>
+            <div class="tree-item-flair-outer">
+              <span class="tree-item-flair">{treeData.untaggedFiles.length}</span>
+            </div>
+          </div>
+          
+          {#if isExpanded('__untagged__')}
+            <div 
+            class="tree-item-children nav-folder-children"
+            class:active={isUntaggedActive === true}
+            >
+              {#each treeData.untaggedFiles as file}
+                <div class="tree-item nav-file">
+                  <!-- svelte-ignore a11y_no_static_element_interactions -->
+                  <div 
+                    class="tree-item-self nav-file-title tappable is-clickable"
+                    data-path={file.path}
+                    role="button"
+                    tabindex="0"
+                    draggable="true"
+                    ondragstart={(e) => handleDragStart(e, 'file', file.path, "")}
+                    ondragover={handleDragOver}
+                    ondrop={(e) => handleUntaggedDrop(e, 'folder', "")}
+                    ondblclick={() => handleFileClick(file.path, '')}
+                    onkeydown={(e) => e.key === 'Enter' && handleFileClick(file.path, '__untagged__')}
+
+
+                    ondragenter={() => handleDragEnterUntagged()}
+                    ondragleave={(e) => handleDragLeaveUntagged(e)}
+                    aria-label={file.path}
+
+                  >
+                    <div class="tree-item-inner nav-file-title-content">{file.name}</div>
+                  </div>
+                  
+                </div>
+              {/each}
+            </div>
+          {/if}
+        </div>
+      {/if}
+    </div>
+
+  {:else if treeView == "emptyfolders" }
+
+    <div class="nav-files-container node-insert-event">
+
+      {#if treeData.emptyTagNodes && treeData.emptyTagNodes.length > 0}
+        <div class="tree-item nav-folder" class:is-collapsed={!isExpanded('__emptyfolders__')}>
+          <div 
+            class="tree-item-self nav-folder-title is-clickable mod-collapsible"
+            data-path="__emptyfolders__"
+            role="button"
+            tabindex="0"
+            onclick={() => toggleTag('__emptyfolders__')}
+            onkeydown={(e) => e.key === 'Enter' && toggleTag('__emptyfolders__')}
+
+          >
+            <div class="tree-item-icon collapse-icon" class:is-collapsed={!isExpanded('__emptyfolders__')}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle">
+                <path d="M3 8L12 17L21 8"></path>
+              </svg>
+            </div>
+            <div class="tree-item-inner nav-folder-title-content main-folder-title">Empty Folders</div>
+            <div class="tree-item-flair-outer">
+              <span class="tree-item-flair">{treeData.emptyTagNodes.length}</span>
+            </div>
+          </div>
+          
+          {#if isExpanded('__emptyfolders__')}
+            <div 
+            class="tree-item-children nav-folder-children"
+            >
+              {#each treeData.emptyTagNodes as tagNode, index}
+                {@render renderTagNode(tagNode, "", index, 1)}
+              {/each}
+            </div>
+          {/if}
+        </div>
+
+      {/if}
+    </div>
+
+  {:else if treeView == "allfiles" }
+    <div class="nav-files-container node-insert-event">
+
+      {#if treeData.allFiles && treeData.allFiles.length > 0}
+        <div class="tree-item nav-folder" class:is-collapsed={!isExpanded('__allfiles__')}>
+          <div 
+            class="tree-item-self nav-folder-title is-clickable mod-collapsible"
+            data-path="__allfiles__"
+            role="button"
+            tabindex="0"
+            onclick={() => toggleTag('__allfiles__')}
+            onkeydown={(e) => e.key === 'Enter' && toggleTag('__allfiles__')}
+
+          >
+            <div class="tree-item-icon collapse-icon" class:is-collapsed={!isExpanded('__allfiles__')}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle">
+                <path d="M3 8L12 17L21 8"></path>
+              </svg>
+            </div>
+            <div class="tree-item-inner nav-folder-title-content main-folder-title">All Files</div>
+            <div class="tree-item-flair-outer">
+              <span class="tree-item-flair">{treeData.allFiles.length}</span>
+            </div>
+          </div>
+          
+          {#if isExpanded('__allfiles__')}
+            <div 
+            class="tree-item-children nav-folder-children"
+            >
+              {#each treeData.allFiles as file}
+                <div class="tree-item nav-file">
+                  <!-- svelte-ignore a11y_no_static_element_interactions -->
+                  <div 
+                    class="tree-item-self nav-file-title tappable is-clickable"
+                    data-path={file.path}
+                    role="button"
+                    tabindex="0"
+                    draggable="true"
+                    ondragstart={(e) => handleDragStart(e, 'file', file.path, "")}
+                    ondblclick={() => handleFileClick(file.path, '')}
+                    onkeydown={(e) => e.key === 'Enter' && handleFileClick(file.path, '__allfiles__')}
+                    aria-label={file.path}
+
+
+                  >
+                    <div class="tree-item-inner nav-file-title-content">{file.name}</div>
+                  </div>
+                  
+                </div>
+              {/each}
+            </div>
+          {/if}
+        </div>
+
+
+
+
+
+      {/if}
+    </div>
+  {:else if treeView == "allfolders" }
+      
+      {#if treeData.allTagNodeFolders && treeData.allTagNodeFolders.length > 0}
+        <div class="tree-item nav-folder" class:is-collapsed={!isExpanded('__allfolders__')}>
+          <div 
+            class="tree-item-self nav-folder-title is-clickable mod-collapsible"
+            data-path="__allfolders__"
+            role="button"
+            tabindex="0"
+            onclick={() => toggleTag('__allfolders__')}
+            onkeydown={(e) => e.key === 'Enter' && toggleTag('__allfolders__')}
+
+          >
+            <div class="tree-item-icon collapse-icon" class:is-collapsed={!isExpanded('__allfolders__')}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle">
+                <path d="M3 8L12 17L21 8"></path>
+              </svg>
+            </div>
+            <div class="tree-item-inner nav-folder-title-content main-folder-title">All Folders</div>
+            <div class="tree-item-flair-outer">
+              <span class="tree-item-flair">{treeData.allTagNodeFolders.length}</span>
+            </div>
+          </div>
+          
+          {#if isExpanded('__allfolders__')}
+            <div 
+            class="tree-item-children nav-folder-children"
+            >
+              {#each treeData.allTagNodeFolders as tagNode, index}
+                {@render renderTagNode(tagNode, "", index, 1)}
+              {/each}
+            </div>
+          {/if}
+        </div>
+
+      {/if}
+  {/if}
 {:else}
   <p class="placeholder-text">No tags found</p>
 {/if}

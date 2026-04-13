@@ -1156,6 +1156,11 @@ export class TreeRoot implements ITreeRoot {
      * @returns unknown - JSON representation of the tree
      */
     private serializeTree(sortFlag: boolean = true): unknown {
+        const emptyTagNodes: any[] = [];
+
+        const allTagNodeFoldersSet: Set<any> = new Set();
+        const allFiles: Map<string, any> = new Map();
+
         const serializeNode = (node: ITagNode): any => {
             const serializedChildren = Object.values(node.getChildren()).map(serializeNode);
             
@@ -1163,28 +1168,46 @@ export class TreeRoot implements ITreeRoot {
             const directFileCount = node.getFiles().size;
             const childFileCount = serializedChildren.reduce((sum, child) => sum + child.totalFileCount, 0);
             const totalFileCount = directFileCount + childFileCount;
-            
-            return {
+
+            const serializedNode = {
                 name: node.getName(),
                 path: node.getPath(),
                 children: serializedChildren.sort((a, b) => sortFlag ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)),
                 parentPath: node.getParent()?.getPath() ?? "",
-                files: Array.from(node.getFiles()).map(file => ({
-                    name: file.getName(),
-                    path: file.getPath()
-            
-                })).sort((a, b) => sortFlag ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)),
+                files: Array.from(node.getFiles()).map(file => {
+                    const f = {
+                        name: file.getName(),
+                        path: file.getPath()
+                    };
+                    allFiles.set(f.path, f);
+                    return f
+
+                }).sort((a, b) => sortFlag ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)),
                 totalFileCount: totalFileCount,
             };
+
+            if (directFileCount === 0 && serializedChildren.length === 0) {
+                emptyTagNodes.push(serializedNode);
+            }
+
+            allTagNodeFoldersSet.add(serializedNode)
+
+            return serializedNode;
         };
-    
         return {
             rootTags: Array.from(this.rootTags).map(serializeNode).sort((a, b) => sortFlag ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)),
-            untaggedFiles: Array.from(this.untaggedFiles).map(file => ({
-                name: file.getName(),
-                path: file.getPath()
+            untaggedFiles: Array.from(this.untaggedFiles).map(file => {
+                const f = {
+                    name: file.getName(),
+                    path: file.getPath()
+                };
+                allFiles.set(f.path, f);
+                return f
                 
-            })).sort((a, b) => sortFlag ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)),
+            }).sort((a, b) => sortFlag ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)),
+            emptyTagNodes: emptyTagNodes.sort((a, b) => sortFlag ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)),
+            allTagNodeFolders: Array.from(allTagNodeFoldersSet).sort((a, b) => sortFlag ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)),
+            allFiles: Array.from(allFiles.values()).sort((a, b) => sortFlag ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)),
         };
     }
  
