@@ -1243,14 +1243,15 @@ export function metadataRecomputeName( app: App, tagPath: string): string {
 	// Normalize the tag path by removing leading '#' if present
 	const normalizedPath = tagPath.startsWith('#') ? tagPath.slice(1) : tagPath;
 	
-	// Replace / with _ for human-readable part
-	const humanReadablePath = normalizedPath.replace(/\//g, '_');
 
-	// Base64 encode the original path
-	const base64Path = btoa(normalizedPath);
+	const crypto = require('crypto');
 
-	// Combine both parts with underscore separator and .json extension
-	const filename = `${humanReadablePath}_${base64Path}.json`;
+	function hashPath(path:string) {
+	return crypto.createHash('sha256').update(path).digest('hex');
+	}
+
+	const filename = `${hashPath(normalizedPath)}.json`;
+
 
 	// Return absolute path
 	return path.join(vaultPath, '.TagNodeMeta', filename);

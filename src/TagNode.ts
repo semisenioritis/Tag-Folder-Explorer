@@ -341,15 +341,14 @@ export class TagNode implements ITagNode {
     private getMetadataFilePath(): string {
         // Get the vault's base path from the app
         const vaultPath = (this.app.vault.adapter as any).basePath || '';
-        
-        // Replace / with _ for human-readable part
-        const humanReadablePath = this.path.replace(/\//g, '_');
-        
-        // Base64 encode the original path
-        const base64Path = btoa(this.path);
-        
-        // Combine both parts with underscore separator and .json extension
-        const filename = `${humanReadablePath}_${base64Path}.json`;
+         
+        const crypto = require('crypto');
+
+        function hashPath(path:string) {
+        return crypto.createHash('sha256').update(path).digest('hex');
+        }
+
+        const filename = `${hashPath(this.path)}.json`;
         
         // Return absolute path
         return path.join(vaultPath, '.TagNodeMeta', filename);

@@ -1022,7 +1022,7 @@ export class TreeRoot implements ITreeRoot {
                 }
                 
                 // Extract the tag path from the filename
-                const tagPath = this.extractTagPathFromFilename(filename);
+                const tagPath = this.extractTagPathFromFilename(filename, metaFolderPath);
                 
                 if (!tagPath || tagPath.trim() === '') {
                     continue; // Invalid or empty path, skip
@@ -1057,29 +1057,32 @@ export class TreeRoot implements ITreeRoot {
      * @param filename - The name of the metadata file
      * @returns string - The extracted tag path, or empty string if not found
      */
-    private extractTagPathFromFilename(filename: string): string {
+    private extractTagPathFromFilename(filename: string, metaFolderPath: string): string {
         try {
-            // Remove the .md extension
-            const nameWithoutExtension = filename.replace(/\.json$/, '');
             
-            // Find the last underscore which separates the base64 part
-            const lastUnderscoreIndex = nameWithoutExtension.lastIndexOf('_');
             
-            if (lastUnderscoreIndex === -1) {
-                return ''; // No underscore found, invalid format
+            let finMetafileName = path.join(metaFolderPath, filename)
+            
+        
+            let fileContent = fs.readFileSync(finMetafileName, 'utf8');
+            
+            let metadata = JSON.parse(fileContent);
+
+            let tagnodePath = metadata.path
+            const crypto = require('crypto');
+
+            function hashPath(path:string) {
+            return crypto.createHash('sha256').update(path).digest('hex');
             }
-            
-            // Extract the base64 encoded part (after the last underscore)
-            const base64Part = nameWithoutExtension.substring(lastUnderscoreIndex + 1);
-            
-            if (!base64Part) {
-                return ''; // Empty base64 part
+
+            if(hashPath(tagnodePath) == filename){
+                return tagnodePath
+            }else {
+                return ''
             }
-            
-            // Decode the base64 string to get the original tag path
-            const decodedPath = atob(base64Part);
-            
-            return decodedPath;
+
+
+
         } catch (error) {
             console.error(`Error extracting tag path from filename ${filename}:`, error);
             return '';
