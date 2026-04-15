@@ -8,7 +8,7 @@ import TagFolderPlugin from "./main";
 
 import { inconsistencyFlag } from './store';
 
-import  {InputModal, ConfirmationModal}  from "./modals";
+import  {InputModal, ConfirmationModal, SingleSelectModal}  from "./modals";
 
 /**
  * Orchestrator class - coordinates all write operations between file system and tree structure
@@ -2640,7 +2640,7 @@ export class Orchestrator {
 
                 // Validate that mainfoldertagpath is not an ancestor of destinationfoldertagpath
                 if (destinationFolderTagPath.startsWith(mainFolderTagPath + '/') || 
-                    destinationFolderTagPath === mainFolderTagPath || destinationFolderTagPath === parentFolderTagPath || mainFolderTagPath === parentFolderTagPath) {
+                    destinationFolderTagPath === mainFolderTagPath || mainFolderTagPath === parentFolderTagPath) {
                     if (owner){this.setInconsistencyFlag(false)}
                     return { success: false, error: "Cannot recreate folder into itself or its descendants" };
                 }
@@ -3665,6 +3665,200 @@ export class Orchestrator {
             return { success: false, error };
         }
     }
+
+
+    /**
+     * Update legend for file in folder 
+     * 
+     * This function takes in a color and a tagpath, and if the old color exists under that tagpath, removes it and adds the new color under that tagpath
+     * 
+     * @param newColor - the new legned color to be added to the file
+     * @param filePath - The file path
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async updateLegendOfFile(
+        newColor: string,
+        filePath: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            if ((!this.getInconsistencyFlag() && owner) || !owner){
+                if (owner){this.setInconsistencyFlag(true)}
+
+                // Extract fileleaf using filepath from fileleaf map
+                const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
+                if (!fileLeaf) {
+                    if (owner){this.setInconsistencyFlag(false)}
+                    return { success: false, error: `FileLeaf not found for path: ${filePath}` };
+                }
+
+                // Extract file from fileleaf
+                const tFile = fileLeaf.getTFile();
+                if (!(tFile instanceof TFile)) {
+                    if (owner){this.setInconsistencyFlag(false)}
+                    return { success: false, error: `TFile not found at path: ${filePath}` };
+                }
+
+                // Maintain list of colors
+                const colorList = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple", ""];
+                
+                // Construct prefixed and locked tag paths
+                const prefixedTagPath = `🏠/${tagPath}`;
+                const lockedTagPath = `🔒/ ${tagPath}`;
+
+                // Key list for all legend colors
+                const legendKeys = [
+                    { key: "🏷-Legend-Red", color: "Red" },
+                    { key: "🏷-Legend-Orange", color: "Orange" },
+                    { key: "🏷-Legend-Yellow", color: "Yellow" },
+                    { key: "🏷-Legend-Green", color: "Green" },
+                    { key: "🏷-Legend-Blue", color: "Blue" },
+                    { key: "🏷-Legend-Purple", color: "Purple" }
+                ];
+
+                let currColor = ""
+                let lockStatus = "notlocked"
+
+
+                let successStatus = true
+                let successStatusReason = ""       
+                await this.app.fileManager.processFrontMatter(tFile, (frontmatter) => {
+                    /*
+                        im modifying the cyclelegendoffile function. here im reading the metadata directly using the processfrontmatter function.
+                        inside it i want to extract the current legend value. 
+                        then calculate the next legend key and removing the old value from the list , append the tagpath to the new key for the next legend.
+                        complete the function
+                    **/ 
+
+                
+                    // Extract all 6 fields and check for matches
+                    for (const { key, color } of legendKeys) {
+                        const value = frontmatter[key];
+
+                        if (!value) continue;
+
+                        // Convert to array if needed
+                        let statusArray: string[] = [];
+                        if (Array.isArray(value)) {
+                            statusArray = value;
+                        } else if (typeof value === 'string') {
+                            statusArray = [value];
+                        }
+
+                        // Check each element in array
+                        for (const element of statusArray) {
+                            if (element === prefixedTagPath) {
+
+                                currColor = color
+                                lockStatus = "notlocked"
+                                break
+                            }
+                            if (element === lockedTagPath) {
+                                
+                                currColor = color
+                                lockStatus = "locked"
+                                break
+                            }
+                        }
+                    }
+
+
+                    // Extract index of colorlist matching currlegendcolor
+                    const currentIndex = colorList.indexOf(currColor);
+                    if (currentIndex === -1) {
+                        if (owner){this.setInconsistencyFlag(false)}
+                        return { success: false, error: `Invalid legend color: ${currColor}` };
+                    }
+
+
+                    const currkey = `🏷-Legend-${currColor}`;
+                    const nextkey = `🏷-Legend-${newColor}`;
+
+                    let nextKeyListHolder = []
+                    // If legend color is ""
+                    if (currColor === "") {
+                        // Just add next index color
+
+                        if (frontmatter && frontmatter[nextkey]) {
+                            if (Array.isArray(frontmatter[nextkey])) {
+                                nextKeyListHolder = frontmatter[nextkey];
+                            } else if (typeof frontmatter[nextkey] === 'string') {
+                                nextKeyListHolder = [frontmatter[nextkey]];
+                            }
+                        }
+
+                        nextKeyListHolder.push(prefixedTagPath)
+
+                        frontmatter[nextkey] = nextKeyListHolder
+                        // return correct statements here
+                    } else {
+                        if (lockStatus == "notlocked"){
+                            
+                            // remove tag from my key
+                            let currKeyListHolder: string[]  = []
+
+                            if (frontmatter && frontmatter[currkey]) {
+                                if (Array.isArray(frontmatter[currkey])) {
+                                    currKeyListHolder = frontmatter[currkey];
+                                } else if (typeof frontmatter[currkey] === 'string') {
+                                    currKeyListHolder = [frontmatter[currkey]];
+                                }
+                            }
+
+                            currKeyListHolder = currKeyListHolder.filter(item => item !== prefixedTagPath);
+
+                            frontmatter[currkey] = currKeyListHolder
+
+                            if (newColor == ""){
+                                // add the return statement or the alternative here
+                            } else {
+
+                                if (frontmatter && frontmatter[nextkey]) {
+                                    if (Array.isArray(frontmatter[nextkey])) {
+                                        nextKeyListHolder = frontmatter[nextkey];
+                                    } else if (typeof frontmatter[nextkey] === 'string') {
+                                        nextKeyListHolder = [frontmatter[nextkey]];
+                                    }
+                                }
+
+                                nextKeyListHolder.push(prefixedTagPath)
+
+                                frontmatter[nextkey] = nextKeyListHolder
+                                // remember to return here too
+                            }
+
+
+                        }else {
+                            // need to notify with a return that lock is present so no mod
+                            successStatus = false
+                            successStatusReason = "File has locked tag path: ${lockedTagPath}"      
+                        }
+                        
+                    }
+
+                });
+
+                if (successStatus == true){
+                    if (owner){this.setInconsistencyFlag(false)}
+                    return { success: true}
+                } else {
+                    if (owner){this.setInconsistencyFlag(false)}
+                    return { success: false, error: successStatusReason };
+                }
+            }else {
+                return { success: false, error: "Inconsistency flag is true" }
+            }
+
+        } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
+            console.error("Error in cycleLegend:", error);
+            return { success: false, error };
+        }
+    }
+
 
     /**
      * Add to legend lock for file in folder
@@ -5613,13 +5807,11 @@ export class Orchestrator {
      * Steps:
      * 1. Add SelfLegend.legend value as next index color and SelfLegend.locked value as false
      * 
-     * @param currLegendColor - The current legend color
      * @param tagPath - The tag path
      * @param owner - Whether this is an owner operation (default true)
      * @returns Promise with success status and error if failed
      */
     async cycleLegendForFolder(
-        currLegendColor: string,
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
@@ -5635,11 +5827,24 @@ export class Orchestrator {
                 }
 
                 console.log("inside orchestrator")
-                console.log(currLegendColor)
+
 
                 // Maintain list of colors
                 const colorList = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple", ""];
                 
+                // Read metadata of tagnode
+                const metadata = fileEditor.metadataReadAllFrontmatter(this.app, tagPath);
+                
+                // Key is "SelfLegend"
+                const key = "SelfLegend";
+                const selfLegendValue = metadata ? metadata[key] : undefined;
+
+                let currLegendColor = ""
+
+                if (selfLegendValue){
+                    currLegendColor = selfLegendValue.legend
+                }
+
                 // Extract index of colorlist matching to currlegendcolor
                 const currentIndex = colorList.indexOf(currLegendColor);
                 
@@ -5652,12 +5857,124 @@ export class Orchestrator {
                 console.log(nextIndex)
                 console.log(nextColor)
 
+
+                // Check if SelfLegend is not present or if SelfLegend.locked is false or not present
+                if (!selfLegendValue ) {
+                    // Add SelfLegend.legend value as next index color
+                    // Add SelfLegend.locked value as false
+                    const updateContent: Record<string, any> = {};
+                    updateContent[key] = {
+                        legend: nextColor,
+                        locked: false
+                    };
+
+                    const newModifiedDate = new Date().toISOString()
+                    updateContent["modified"] = newModifiedDate
+
+                    // Update file of metadata for tagnode
+                    fileEditor.metadataAddNewProperty(
+                        this.app,
+                        tagPath,
+                        updateContent
+                    );
+
+
+                    console.log("im hoping this went well")
+                    if (owner){this.setInconsistencyFlag(false)}
+                    return { success: true };
+                } else if (selfLegendValue.locked !== true) {
+
+                    // Add SelfLegend.legend value as next index color
+                    // Add SelfLegend.locked value as false
+                    const updateContent: Record<string, any> = {};
+                    updateContent[key] = {
+                        legend: nextColor,
+                        locked: false
+                    };
+
+                    const newModifiedDate = new Date().toISOString()
+                    updateContent["modified"] = newModifiedDate
+
+                    // Update file of metadata for tagnode
+                    fileEditor.metadataReplaceExistingProperty(
+                        this.app,
+                        tagPath,
+                        updateContent
+                    );
+
+
+                    console.log("im hoping this went well")
+                    if (owner){this.setInconsistencyFlag(false)}
+                    return { success: true };
+                } else {
+                    // SelfLegend is locked
+                    if (owner){this.setInconsistencyFlag(false)}
+                    return { success: false, error: "SelfLegend is locked" };
+                }
+            }else {
+                return { success: false, error: "Inconsistency flag is true" }
+            }
+        } catch (error) {
+            if (owner){this.setInconsistencyFlag(false)}
+            console.error("Error in cycleLegendForFolder:", error);
+            return { success: false, error };
+        }
+    }
+
+
+
+    /**
+     * Update legend of folder with new legend color
+     * 
+     * Steps:
+     * 1. Add SelfLegend.legend value as next index color and SelfLegend.locked value as false
+     * 
+     * @param currLegendColor - The current legend color
+     * @param tagPath - The tag path
+     * @param owner - Whether this is an owner operation (default true)
+     * @returns Promise with success status and error if failed
+     */
+    async updateLegendForFolder(
+        newColor: string,
+        tagPath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+            if ((!this.getInconsistencyFlag() && owner) || !owner){
+                if (owner){this.setInconsistencyFlag(true)}
+
+                // Extract tagnode using tagpath from tree
+                const tagNode = this.treeRoot.getNode(tagPath);
+                if (!tagNode) {
+                    if (owner){this.setInconsistencyFlag(false)}
+                    return { success: false, error: `TagNode not found for path: ${tagPath}` };
+                }
+
+                console.log("inside orchestrator")
+
+
+                // Maintain list of colors
+                const colorList = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple", ""];
+                
                 // Read metadata of tagnode
                 const metadata = fileEditor.metadataReadAllFrontmatter(this.app, tagPath);
                 
                 // Key is "SelfLegend"
                 const key = "SelfLegend";
                 const selfLegendValue = metadata ? metadata[key] : undefined;
+
+                let currLegendColor = ""
+
+                if (selfLegendValue){
+                    currLegendColor = selfLegendValue.legend
+                }
+
+
+                // Extract next index color from color list
+                const nextColor = newColor
+
+                console.log(nextColor)
+
 
                 // Check if SelfLegend is not present or if SelfLegend.locked is false or not present
                 if (!selfLegendValue ) {
@@ -6663,5 +6980,326 @@ export class Orchestrator {
             return { success: false, error };
         }
     }
+
+
+    /**
+     * Move a file/folder to a folder given source tagpath, by triggering the Move modal.
+     * 
+     * @param type - The type of the item passed in
+     * @param path - The file path or tagpath of the item
+     * @param parentPath - The tag path of parent folder
+     * @returns Object with success status and error if failed
+     */
+    async triggerMoveModal(
+        type: 'folder' | 'file', 
+        path: string, 
+        parentpath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+                let cleanPath = path.replace(/\/+$/, ""); 
+                let parts = cleanPath.split("/");
+
+                let currentname = parts.pop();
+                currentname = currentname?.replace(/\.md$/, "");
+
+                let allTagNodeFolders = this.treeRoot.getSortedTree()?.allTagNodeFolders
+
+                const mapped = allTagNodeFolders?.map(folder => `/${folder.path}`) ?? []
+                const paths = mapped.length ? ["/", ...mapped] : []
+
+                if(type == "file"){
+
+                    const modal = new SingleSelectModal(this.app, {
+
+                    title: "Move File",
+                    body: "Move the file '"+ currentname +"' to :",
+                    options: paths,
+                    confirmButtonText: "Move File",
+                    cancelButtonText: "Cancel",
+
+    
+                    onOpen: () => {},
+                    onClose: () => {},
+    
+                    onConfirm: async(inputValue) => {
+                        await this.moveFileToFolder(parentpath, inputValue, path)
+                    },
+                    onCancel: () => {}
+                    });
+    
+                    modal.open();
+
+
+                }else if(type == "folder"){
+
+                    const modal = new SingleSelectModal(this.app, {
+
+                    title: "Move Folder",
+                    body: "Move the folder '"+ currentname +"' to :",
+                    options: paths,
+                    confirmButtonText: "Move Folder",
+                    cancelButtonText: "Cancel",
+
+    
+                    onOpen: () => {},
+                    onClose: () => {},
+    
+                    onConfirm: async(inputValue) => {
+                        await this.moveFolderToFolder(parentpath, inputValue, path)
+                    },
+                    onCancel: () => {}
+                    });
+    
+                    modal.open();
+
+                }
+
+
+
+                // Invalidate cache
+                this.treeRoot.invalidateCache();
+                // ---(Virtual Edits End)---
+                // ---(Frontend Refresh)---
+                this.plugin.broadcastTreeUpdate();
+                // ---(Frontend Refresh End)---
+                
+                return { success: true };
+        } catch (error) {
+            console.error("Error in addFileToTagpath:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Move a file/folder to a folder given source tagpath, by triggering the Move modal.
+     * 
+     * @param type - The type of the item passed in
+     * @param path - The file path or tagpath of the item
+     * @param parentPath - The tag path of parent folder
+     * @returns Object with success status and error if failed
+     */
+    async triggerCopyModal(
+        type: 'folder' | 'file', 
+        path: string, 
+        parentpath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+                let cleanPath = path.replace(/\/+$/, ""); 
+                let parts = cleanPath.split("/");
+
+                let currentname = parts.pop();
+                currentname = currentname?.replace(/\.md$/, "");
+                
+                let allTagNodeFolders = this.treeRoot.getSortedTree()?.allTagNodeFolders
+
+                const mapped = allTagNodeFolders?.map(folder => `/${folder.path}`) ?? []
+                
+                const paths = mapped.length ? ["/", ...mapped] : []
+
+                if(type == "file"){
+
+                    const modal = new SingleSelectModal(this.app, {
+
+                    title: "Copy File",
+                    body: "Copy the file '"+ currentname +"' to :",
+                    options: paths,
+                    confirmButtonText: "Copy File",
+                    cancelButtonText: "Cancel",
+
+    
+                    onOpen: () => {},
+                    onClose: () => {},
+    
+                    onConfirm: async(inputValue) => {
+                        await this.copyFileToFolder(parentpath, inputValue, path)
+                    },
+                    onCancel: () => {}
+                    });
+    
+                    modal.open();
+
+
+                }else if(type == "folder"){
+
+                    const modal = new SingleSelectModal(this.app, {
+
+                    title: "Copy Folder",
+                    body: "Copy the folder '"+ currentname +"' to :",
+                    options: paths,
+                    confirmButtonText: "Copy Folder",
+                    cancelButtonText: "Cancel",
+
+    
+                    onOpen: () => {},
+                    onClose: () => {},
+    
+                    onConfirm: async(inputValue) => {
+                        await this.recreateFolder(path, inputValue)
+                    },
+                    onCancel: () => {}
+                    });
+    
+                    modal.open();
+
+                }
+
+
+
+                // Invalidate cache
+                this.treeRoot.invalidateCache();
+                // ---(Virtual Edits End)---
+                // ---(Frontend Refresh)---
+                this.plugin.broadcastTreeUpdate();
+                // ---(Frontend Refresh End)---
+                
+                return { success: true };
+        } catch (error) {
+            console.error("Error in addFileToTagpath:", error);
+            return { success: false, error };
+        }
+    }
+
+
+    /**
+     * Add legend to a file/folder given source tagpath, by triggering the Legend modal.
+     * 
+     * @param type - The type of the item passed in
+     * @param path - The file path or tagpath of the item
+     * @param parentPath - The tag path of parent folder
+     * @returns Object with success status and error if failed
+     */
+    async triggerLegendModal(
+        type: 'folder' | 'file', 
+        path: string, 
+        parentpath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        try {
+                let cleanPath = path.replace(/\/+$/, ""); 
+                let parts = cleanPath.split("/");
+
+                let currentname = parts.pop();
+                currentname = currentname?.replace(/\.md$/, "");
+                            
+                const colorList = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple", ""];
+
+
+                if(type == "file"){
+
+                    const modal = new SingleSelectModal(this.app, {
+
+                    title: "Add Legend",
+                    body: "Add a legnd to the file '"+ currentname +"':",
+                    options: colorList,
+                    confirmButtonText: "Add Legend",
+                    cancelButtonText: "Cancel",
+
+    
+                    onOpen: () => {},
+                    onClose: () => {},
+    
+                    onConfirm: async(inputValue) => {
+                        await this.updateLegendOfFile(inputValue, path, parentpath )                       
+
+                    },
+                    onCancel: () => {}
+                    });
+    
+                    modal.open();
+
+
+                }else if(type == "folder"){
+
+                    const modal = new SingleSelectModal(this.app, {
+
+                    title: "Add Legend",
+                    body: "Add a legnd to the folder '"+ currentname +"':",
+                    options: colorList,
+                    confirmButtonText: "Add Legend",
+                    cancelButtonText: "Cancel",
+
+    
+                    onOpen: () => {},
+                    onClose: () => {},
+    
+                    onConfirm: async(inputValue) => {
+                        await this.updateLegendForFolder(inputValue, path )                       
+                    },
+                    onCancel: () => {}
+                    });
+    
+                    modal.open();
+
+                }
+
+
+
+                // Invalidate cache
+                this.treeRoot.invalidateCache();
+                // ---(Virtual Edits End)---
+                // ---(Frontend Refresh)---
+                this.plugin.broadcastTreeUpdate();
+                // ---(Frontend Refresh End)---
+                
+                return { success: true };
+        } catch (error) {
+            console.error("Error in addFileToTagpath:", error);
+            return { success: false, error };
+        }
+    }
+
+
+    async revealFileInNavigation( filePath: string) {
+
+
+        const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
+        if (!fileLeaf) {
+            return
+        }
+
+        const tFile = fileLeaf.getTFile()
+
+        if (!(tFile instanceof TFile)) {
+            return 
+        }
+
+        const leftSplit = this.app.workspace.leftSplit;
+        if (leftSplit?.collapsed) {
+            leftSplit.expand();
+            // Wait for sidebar to finish opening
+            await new Promise(resolve => setTimeout(resolve, 200));
+        }
+
+        let leaves = this.app.workspace.getLeavesOfType('file-explorer');
+        
+        if (leaves.length === 0) {
+
+            await this.app.workspace.ensureSideLeaf('file-explorer', 'left', { reveal: true });
+            
+            leaves = this.app.workspace.getLeavesOfType('file-explorer');
+        }
+
+        if (leaves.length === 0) {
+            console.warn('Could not open file explorer');
+            return;
+        }
+
+
+
+        const explorer = leaves[0].view as any;
+        
+        leaves[0].setEphemeralState({ focus: true });
+
+        await explorer.revealInFolder(tFile);
+
+
+
+
+    }
+
+
+
 
 }

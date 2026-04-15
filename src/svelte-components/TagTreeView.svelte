@@ -5,7 +5,8 @@
   import type { ControllerInterface } from '../controllerInterface';
   import type { ModelInterface } from '../modelInterface';
   import { openTagExplorerInNewTab } from '../windows';
-
+  import type { FileData, TagNodeData, SerializedTreeData} from '../interfaces';
+  
 
   // Props
   interface Props {
@@ -22,29 +23,6 @@
     treeView: "tree" | "untagged" | "emptyfolders" | "allfiles" | "allfolders";
   }
   
-  // Type definitions
-  interface FileData {
-    name: string;
-    path: string;
-    tagpath: string;
-  }
-
-  interface TagNodeData {
-    name: string;
-    path: string;
-    parentPath: string;
-    children: TagNodeData[];
-    files: FileData[];
-    totalFileCount: number;
-  }
-
-  interface TreeData {
-    rootTags: TagNodeData[];
-    untaggedFiles: FileData[];
-    emptyTagNodes: TagNodeData[];
-    allTagNodeFolders: TagNodeData[];
-    allFiles: FileData[];
-  }
 
   let { currentPath, onUpdate, onFocusChange, refreshKey, treeViewSortFlag, initialTreeData, initialVersion = 0, controller, model, onItemDrop, treeView }:Props = $props();
   
@@ -53,10 +31,10 @@
   }
 
   // State - Initialize with provided data or fetch from backend
-  let treeData = $state<TreeData>(
+  let treeData = $state<SerializedTreeData>(
     initialTreeData 
-      ? (initialTreeData as TreeData) 
-      : (model!.getleftSidebarTree(treeViewSortFlag).tree as TreeData)
+      ? (initialTreeData as SerializedTreeData) 
+      : (model!.getleftSidebarTree(treeViewSortFlag).tree as SerializedTreeData)
   );
 
   // console.log("test")
@@ -71,14 +49,14 @@
    * Update tree data - called when the backend broadcasts an update
    */
   export function updateTreeData(newTreeData: unknown, newVersion: number): void {
-    treeData = model!.getleftSidebarTree(treeViewSortFlag).tree as TreeData;
+    treeData = model!.getleftSidebarTree(treeViewSortFlag).tree as SerializedTreeData;
     treeVersion = newVersion;
     console.log("TagTreeView updated to version:", newVersion);
   }
 
   $effect(() => {
     void refreshKey;
-    treeData = model!.getleftSidebarTree(treeViewSortFlag).tree as TreeData;
+    treeData = model!.getleftSidebarTree(treeViewSortFlag).tree as SerializedTreeData;
   });
 
 

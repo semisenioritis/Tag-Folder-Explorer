@@ -1,5 +1,5 @@
 import { App, TFile, TFolder } from 'obsidian';
-import type { ITreeRoot, ITagNode, IFileLeaf, ISerializedTagNode} from './interfaces';
+import type { ITreeRoot, ITagNode, IFileLeaf, ISerializedTagNode, SerializedTreeData} from './interfaces';
 import { TagNode } from './TagNode';
 import { FileLeaf } from './FileLeaf';
 import * as fs from 'fs';
@@ -55,7 +55,7 @@ export class TreeRoot implements ITreeRoot {
      * Cache of the last serialized tree to avoid recomputation.
      * Invalidated whenever tree structure changes.
      */
-    private cachedSerializedTree: Record<'asc' | 'desc', unknown | null> = {
+    private cachedSerializedTree: Record<'asc' | 'desc', SerializedTreeData | null> = {
         asc: null,
         desc: null,
     }
@@ -170,7 +170,7 @@ export class TreeRoot implements ITreeRoot {
      * 
      * Used when: Frontend rendering, static tree snapshots, tree serialization
      */
-    public getSortedTree(sortFlag: boolean = true): unknown {
+    public getSortedTree(sortFlag: boolean = true): SerializedTreeData | null{
         const cacheKey: 'asc' | 'desc' = sortFlag ? 'asc' : 'desc';
 
         // Return cached version if available
@@ -1158,7 +1158,7 @@ export class TreeRoot implements ITreeRoot {
      * 
      * @returns unknown - JSON representation of the tree
      */
-    private serializeTree(sortFlag: boolean = true): unknown {
+    private serializeTree(sortFlag: boolean = true): SerializedTreeData {
         const emptyTagNodes: any[] = [];
 
         const allTagNodeFoldersSet: Set<any> = new Set();
@@ -1202,7 +1202,8 @@ export class TreeRoot implements ITreeRoot {
             untaggedFiles: Array.from(this.untaggedFiles).map(file => {
                 const f = {
                     name: file.getName(),
-                    path: file.getPath()
+                    path: file.getPath(),
+                    tagpath: ""
                 };
                 allFiles.set(f.path, f);
                 return f

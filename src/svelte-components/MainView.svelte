@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
+  import { Menu } from 'obsidian';
   // import { getmainViewData, ModelInterface, readLegendStatusOfFile, readLegendStatusOfFolder } from '../modelInterface'
   import type { ISerializedTagNode, frontendFile, frontendFolder } from '../interfaces'
   import { openFileInNewTab } from '../windows'
@@ -48,6 +49,236 @@
   // Track click timeouts to prevent single-click on double-click
   let clickTimeout: number | null = null;
   const CLICK_DELAY = 250; // milliseconds
+
+  function handleContextMenu(event: MouseEvent, type: 'folder' | 'file', item: frontendFolder | frontendFile) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const menu = new Menu();
+    
+    if(type == "file"){
+
+      // Commenteing this out cuz for some reason it was not displaying the results on the ui so just sticking to the classic controlls
+
+      // menu.addItem((menuItem) =>
+      //   menuItem
+      //     .setTitle(`Add Legend`)
+      //     .setIcon("pencil")
+      //     .onClick(async() => {
+      //       if (currentPath != ""){
+      //         await controller!.triggerLegendModal(type, item.path, currentPath)
+
+      //         // After the action, re-fetch just this file's color
+      //         const file = mainViewData!.files.find(f => f.path === item.path);
+      //         if (file) {
+      //           fileButtonColors[item.path] = await getFileButtonColor(file);
+      //         }
+
+      //       }
+      //     })
+      // );
+      
+      menu.addItem((menuItem) =>
+        menuItem
+          .setTitle(`Toggle Pin`)
+          .setIcon("pin")
+          .onClick(async() => {
+            await controller?.cyclePinnedOfFile(item.path, currentPath)
+
+            const file = mainViewData!.files.find(f => f.path === item.path);
+            if (file) {
+              filePinnedStatuses[item.path] = await getFilePinnedStatus(file);
+            }
+          })
+      );
+
+      // Commenting out for now. 
+
+      // menu.addItem((menuItem) =>
+      //   menuItem
+      //     .setTitle(`Toggle Legend Lock`)
+      //     .setIcon("pencil")
+      //     .onClick(() => {
+
+      //       console.log(`Dummy Toggle Legend Lock`);
+      //     })
+      // );
+
+      // menu.addItem((menuItem) =>
+      //   menuItem
+      //     .setTitle(`Toggle Pin Lock`)
+      //     .setIcon("pencil")
+      //     .onClick(() => {
+      //       console.log(`Dummy Toggle Pin Lock`);
+      //     })
+      // );
+      
+
+      // menu.addItem((menuItem) =>
+      //   menuItem
+      //     .setTitle(`Toggle Bookmark`)
+      //     .setIcon("pencil")
+      //     .onClick(() => {
+      //       console.log(`Toggle Bookmark`);
+      //     })
+      // );
+      
+      menu.addItem((menuItem) =>
+        menuItem
+          .setTitle(`Copy File To...`)
+          .setIcon("clipboard-plus")
+          .onClick(async() => {
+            await controller!.triggerCopyModal(type, item.path, currentPath)
+          })
+      );
+
+
+      menu.addItem((menuItem) =>
+        menuItem
+          .setTitle(`Move File To...`)
+          .setIcon("file-symlink")
+          .onClick(async() => {
+            await controller!.triggerMoveModal(type, item.path, currentPath)
+          })
+      );
+
+
+      menu.addItem((menuItem) =>
+        menuItem
+          .setTitle(`Reveal File`)
+          .setIcon("file-search-corner")
+          .onClick(async() => {
+            await controller!.revealFileInNavigation( item.path)
+          })
+      );
+
+      menu.addItem((menuItem) =>
+        menuItem
+          .setTitle(`Rename File`)
+          .setIcon("text-cursor-input")
+          .onClick(async() => {
+            await controller!.triggerRenameModal(type, item.path, currentPath)
+          })
+      );
+
+      menu.addItem((menuItem) =>
+        menuItem
+          .setTitle(`Remove File`)
+          .setIcon("trash-2")
+          .onClick(async() => {
+            await controller!.triggerDeleteModal(type, item.path, currentPath)
+          })
+      );
+      
+
+    }else if(type == "folder"){
+
+      // Commenteing this out cuz for some reason it was not displaying the results on the ui so just sticking to the classic controlls
+
+      // menu.addItem((menuItem) =>
+      //   menuItem
+      //     .setTitle(`Add Legend`)
+      //     .setIcon("pencil")
+      //     .onClick(async() => {
+      //       if (currentPath != ""){
+      //         await controller!.triggerLegendModal(type, item.path, currentPath)
+      //         recomputeMainView()
+
+      //       }
+      //     })
+      // );
+      
+      menu.addItem((menuItem) =>
+        menuItem
+          .setTitle(`Toggle Pin`)
+          .setIcon("pin")
+          .onClick(async() => {
+            await controller?.cyclePinnedOfFolder(item.path)
+            recomputeMainView()
+
+          })
+      );
+
+      // Commenting out for now. 
+
+      // menu.addItem((menuItem) =>
+      //   menuItem
+      //     .setTitle(`Toggle Legend Lock`)
+      //     .setIcon("pencil")
+      //     .onClick(() => {
+      //       console.log(`Dummy Toggle Legend Lock`);
+      //     })
+      // );
+
+      // menu.addItem((menuItem) =>
+      //   menuItem
+      //     .setTitle(`Toggle Pin Lock`)
+      //     .setIcon("pencil")
+      //     .onClick(() => {
+      //       console.log(`Dummy Toggle Pin Lock`);
+      //     })
+      // );
+      
+
+      // menu.addItem((menuItem) =>
+      //   menuItem
+      //     .setTitle(`Toggle Bookmark`)
+      //     .setIcon("pencil")
+      //     .onClick(() => {
+      //       console.log(`Dummy Toggle Bookmark`);
+      //     })
+      // );
+      
+      menu.addItem((menuItem) =>
+        menuItem
+          .setTitle(`Copy Folder To...`)
+          .setIcon("clipboard-plus")
+          .onClick(async() => {
+            await controller!.triggerCopyModal(type, item.path, currentPath)
+          })
+      );
+
+      menu.addItem((menuItem) =>
+        menuItem
+          .setTitle(`Move Folder To...`)
+          .setIcon("folder-symlink")
+          .onClick(async() => {
+            await controller!.triggerMoveModal(type, item.path, currentPath)
+          })
+      );
+
+      menu.addItem((menuItem) =>
+        menuItem
+          .setTitle(`Dulpicate Folder`)
+          .setIcon("folder-plus")
+          .onClick(async() => {
+            await controller!.recreateFolder(item.path, currentPath)
+          })
+      );
+
+      menu.addItem((menuItem) =>
+        menuItem
+          .setTitle(`Rename Folder`)
+          .setIcon("text-cursor-input")
+          .onClick(async() => {
+            await controller!.triggerRenameModal(type, item.path, currentPath)
+          })
+      );
+    
+    menu.addItem((menuItem) =>
+      menuItem
+        .setTitle(`Delete Folder`)
+        .setIcon("trash-2")
+        .onClick(async() => {
+          await controller!.triggerDeleteModal(type, item.path, currentPath)
+        })
+    );
+    
+  }
+
+    // Show the menu at the cursor position
+    menu.showAtMouseEvent(event);
+  }
 
   function handleFolderDblClick(folder:frontendFolder) {
     // Cancel any pending single-click
@@ -177,12 +408,12 @@
     handler(item, event.ctrlKey || event.metaKey);
   }
 
-  async function handleLegendActionButtonClickFolder(event: MouseEvent, currColor:string, tagPath:string ) {
+  async function handleLegendActionButtonClickFolder(event: MouseEvent, tagPath:string ) {
     event.stopPropagation();
     // console.log(currColor)
     // console.log(tagPath);
     // console.log("changing color")
-    const newColor = await controller?.cycleLegendForFolder(currColor, tagPath)
+    const newColor = await controller?.cycleLegendForFolder( tagPath)
 
     // Update local reactive data
     recomputeMainView()
@@ -690,6 +921,7 @@ ondragleave={handleBackgroundDragLeave}
                 tabindex="0" 
                 title="{child.path}" 
                 onclick={(e) => handleItemClick(e, handleFolderClick, child)}  
+                oncontextmenu={(e) => handleContextMenu(e, 'folder', child)}
                 ondblclick={(e) => { e.stopPropagation(); handleFolderDblClick(child); }} 
                 onkeydown={(e) => handleKeyDown(e, handleFolderDblClick, child)}
                 draggable="true"
@@ -704,7 +936,7 @@ ondragleave={handleBackgroundDragLeave}
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c1acec" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-icon lucide-folder"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></div>
                   <div class="label-blocks">{child.name}</div>
                   {#if currentPath !== ""}
-                    <button class="legend-button circle" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleLegendActionButtonClickFolder(e, getFolderButtonColor(child) ,child.path)} ondblclick={(e) => e.stopPropagation()} aria-label="Legend: {getFolderButtonColor(child)}"></button>
+                    <button class="legend-button circle" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleLegendActionButtonClickFolder(e ,child.path)} ondblclick={(e) => e.stopPropagation()} aria-label="Legend: {getFolderButtonColor(child)}"></button>
                   {/if}
                     
                   <button class="top-left square"   class:pinned={getFolderPinnedStatus(child) == true} onclick={(e) => handlePinnedActionButtonClickFolder(e, child.path)} ondblclick={(e) => e.stopPropagation()} aria-label="Pin">
@@ -725,6 +957,7 @@ ondragleave={handleBackgroundDragLeave}
                   tabindex="0" 
                   aria-label="{file.path}" 
                   onclick={(e) => handleItemClick(e, handleFileClick, file)} 
+                  oncontextmenu={(e) => handleContextMenu(e, 'file', file)}
                   ondblclick={(e) => { e.stopPropagation(); handleFileDblClick(file); }} 
                   onkeydown={(e) => handleKeyDown(e, handleFileDblClick, file)}
                   draggable="true"
@@ -763,6 +996,7 @@ ondragleave={handleBackgroundDragLeave}
                 tabindex="0" 
                 aria-label="{child.path}" 
                 onclick={(e) => handleItemClick(e, handleFolderClick, child)}  
+                oncontextmenu={(e) => handleContextMenu(e, 'folder', child)}
                 ondblclick={(e) => { e.stopPropagation(); handleFolderDblClick(child); }} 
                 onkeydown={(e) => handleKeyDown(e, handleFolderDblClick, child)}
                 draggable="true"
@@ -777,7 +1011,7 @@ ondragleave={handleBackgroundDragLeave}
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c1acec" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-icon lucide-folder"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></div>
                   <div class="label-blocks">{child.name}</div>
                   {#if currentPath !== ""}
-                    <button class="legend-button circle" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleLegendActionButtonClickFolder(e, getFolderButtonColor(child) ,child.path)} ondblclick={(e) => e.stopPropagation()} aria-label="Legend: {getFolderButtonColor(child)}"></button>
+                    <button class="legend-button circle" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleLegendActionButtonClickFolder(e, child.path)} ondblclick={(e) => e.stopPropagation()} aria-label="Legend: {getFolderButtonColor(child)}"></button>
                   {/if}
                     
                   <button class="top-left square"   class:pinned={getFolderPinnedStatus(child) == true} onclick={(e) => handlePinnedActionButtonClickFolder(e, child.path)} ondblclick={(e) => e.stopPropagation()} aria-label="Pin">
@@ -799,6 +1033,7 @@ ondragleave={handleBackgroundDragLeave}
                   tabindex="0" 
                   aria-label="{file.path}" 
                   onclick={(e) => handleItemClick(e, handleFileClick, file)} 
+                  oncontextmenu={(e) => handleContextMenu(e, 'file', file)}
                   ondblclick={(e) => { e.stopPropagation(); handleFileDblClick(file); }} 
                   onkeydown={(e) => handleKeyDown(e, handleFileDblClick, file)}
                   draggable="true"
@@ -834,6 +1069,7 @@ ondragleave={handleBackgroundDragLeave}
                 tabindex="0" 
                 aria-label="{child.path}" 
                 onclick={(e) => handleItemClick(e, handleFolderClick, child)}  
+                oncontextmenu={(e) => handleContextMenu(e, 'folder', child)}
                 ondblclick={(e) => { e.stopPropagation(); handleFolderDblClick(child); }} 
                 onkeydown={(e) => handleKeyDown(e, handleFolderDblClick, child)}
                 draggable="true"
@@ -848,7 +1084,7 @@ ondragleave={handleBackgroundDragLeave}
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c1acec" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-icon lucide-folder"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></div>
                   <div class="label-list">{child.name}</div>
                   {#if currentPath !== ""}
-                    <button class="legend-button circle" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleLegendActionButtonClickFolder(e, getFolderButtonColor(child) ,child.path)} ondblclick={(e) => e.stopPropagation()} aria-label="Legend: {getFolderButtonColor(child)}"></button>
+                    <button class="legend-button circle" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleLegendActionButtonClickFolder(e, child.path)} ondblclick={(e) => e.stopPropagation()} aria-label="Legend: {getFolderButtonColor(child)}"></button>
                   {/if}
                     
                   <button class="top-left-list square"   class:pinned={getFolderPinnedStatus(child) == true} onclick={(e) => handlePinnedActionButtonClickFolder(e, child.path)} ondblclick={(e) => e.stopPropagation()} aria-label="Pin">
@@ -869,6 +1105,7 @@ ondragleave={handleBackgroundDragLeave}
                   tabindex="0" 
                   aria-label="{file.path}" 
                   onclick={(e) => handleItemClick(e, handleFileClick, file)} 
+                  oncontextmenu={(e) => handleContextMenu(e, 'file', file)}
                   ondblclick={(e) => { e.stopPropagation(); handleFileDblClick(file); }} 
                   onkeydown={(e) => handleKeyDown(e, handleFileDblClick, file)}
                   draggable="true"
@@ -907,6 +1144,7 @@ ondragleave={handleBackgroundDragLeave}
                 tabindex="0" 
                 aria-label="{child.path}" 
                 onclick={(e) => handleItemClick(e, handleFolderClick, child)}  
+                oncontextmenu={(e) => handleContextMenu(e, 'folder', child)}
                 ondblclick={(e) => { e.stopPropagation(); handleFolderDblClick(child); }} 
                 onkeydown={(e) => handleKeyDown(e, handleFolderDblClick, child)}
                 draggable="true"
@@ -921,7 +1159,7 @@ ondragleave={handleBackgroundDragLeave}
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c1acec" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-icon lucide-folder"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></div>
                   <div class="label-list">{child.name}</div>
                   {#if currentPath !== ""}
-                    <button class="legend-button circle" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleLegendActionButtonClickFolder(e, getFolderButtonColor(child) ,child.path)} ondblclick={(e) => e.stopPropagation()} aria-label="Legend: {getFolderButtonColor(child)}"></button>
+                    <button class="legend-button circle" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleLegendActionButtonClickFolder(e, child.path)} ondblclick={(e) => e.stopPropagation()} aria-label="Legend: {getFolderButtonColor(child)}"></button>
                   {/if}
                     
                   <button class="top-left-list square"   class:pinned={getFolderPinnedStatus(child) == true} onclick={(e) => handlePinnedActionButtonClickFolder(e, child.path)} ondblclick={(e) => e.stopPropagation()} aria-label="Pin">
@@ -943,6 +1181,7 @@ ondragleave={handleBackgroundDragLeave}
                   tabindex="0" 
                   aria-label="{file.path}" 
                   onclick={(e) => handleItemClick(e, handleFileClick, file)} 
+                  oncontextmenu={(e) => handleContextMenu(e, 'file', file)}
                   ondblclick={(e) => { e.stopPropagation(); handleFileDblClick(file); }} 
                   onkeydown={(e) => handleKeyDown(e, handleFileDblClick, file)}
                   draggable="true"
@@ -1000,6 +1239,7 @@ ondragleave={handleBackgroundDragLeave}
                     tabindex="0"
                     title="{child.path}" 
                     onclick={(e) => handleItemClick(e, handleFolderClick, child)}  
+                oncontextmenu={(e) => handleContextMenu(e, 'folder', child)}
                     ondblclick={(e) => { e.stopPropagation(); handleFolderDblClick(child); }} 
                     onkeydown={(e) => handleKeyDown(e, handleFolderDblClick, child)}
                     draggable="true"
@@ -1032,7 +1272,7 @@ ondragleave={handleBackgroundDragLeave}
                         <div class="details-data-cell details-center-align " role="cell">{currentPath}</div>
                         <div class="details-data-cell details-center-align" role="cell">
                   {#if currentPath !== ""}
-                    <button class="legend-button circle details-legend" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleLegendActionButtonClickFolder(e, getFolderButtonColor(child) ,child.path)} ondblclick={(e) => e.stopPropagation()} aria-label="Legend: {getFolderButtonColor(child)}"></button>
+                    <button class="legend-button circle details-legend" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleLegendActionButtonClickFolder(e, child.path)} ondblclick={(e) => e.stopPropagation()} aria-label="Legend: {getFolderButtonColor(child)}"></button>
                   {/if}
                         </div>
                         <div class="details-data-cell details-center-align" role="cell">
@@ -1056,6 +1296,7 @@ ondragleave={handleBackgroundDragLeave}
                       tabindex="0" 
                       title="{file.path}" 
                       onclick={(e) => handleItemClick(e, handleFileClick, file)} 
+                  oncontextmenu={(e) => handleContextMenu(e, 'file', file)}
                       ondblclick={(e) => { e.stopPropagation(); handleFileDblClick(file); }} 
                       onkeydown={(e) => handleKeyDown(e, handleFileDblClick, file)}
                       draggable="true"
@@ -1116,6 +1357,7 @@ ondragleave={handleBackgroundDragLeave}
                     tabindex="0" 
                     title="{child.path}" 
                     onclick={(e) => handleItemClick(e, handleFolderClick, child)}  
+                oncontextmenu={(e) => handleContextMenu(e, 'folder', child)}
                     ondblclick={(e) => { e.stopPropagation(); handleFolderDblClick(child); }} 
                     onkeydown={(e) => handleKeyDown(e, handleFolderDblClick, child)}
                     draggable="true"
@@ -1148,7 +1390,7 @@ ondragleave={handleBackgroundDragLeave}
                         <div class="details-data-cell details-center-align " role="cell">{currentPath}</div>
                         <div class="details-data-cell details-center-align" role="cell">
                   {#if currentPath !== ""}
-                    <button class="legend-button circle details-legend" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleLegendActionButtonClickFolder(e, getFolderButtonColor(child) ,child.path)} ondblclick={(e) => e.stopPropagation()} aria-label="Legend: {getFolderButtonColor(child)}"></button>
+                    <button class="legend-button circle details-legend" class:hidden={getFolderButtonColor(child) === ""} style="background-color: {getColorForName(getFolderButtonColor(child))}" onclick={(e) => handleLegendActionButtonClickFolder(e, child.path)} ondblclick={(e) => e.stopPropagation()} aria-label="Legend: {getFolderButtonColor(child)}"></button>
                   {/if}
                         </div>
                         <div class="details-data-cell details-center-align " role="cell">
@@ -1172,6 +1414,7 @@ ondragleave={handleBackgroundDragLeave}
                       tabindex="0" 
                       title="{file.path}" 
                       onclick={(e) => handleItemClick(e, handleFileClick, file)} 
+                      oncontextmenu={(e) => handleContextMenu(e, 'file', file)}
                       ondblclick={(e) => { e.stopPropagation(); handleFileDblClick(file); }} 
                       onkeydown={(e) => handleKeyDown(e, handleFileDblClick, file)}
                       draggable="true"

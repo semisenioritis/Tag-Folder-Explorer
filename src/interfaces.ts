@@ -778,3 +778,28 @@ export interface frontendFile {
      */
     path: string;
 }
+
+
+  export interface FileData {
+    name: string;
+    path: string;
+    tagpath: string;
+  }
+
+  export interface TagNodeData {
+    name: string;
+    path: string;
+    parentPath: string;
+    children: TagNodeData[];
+    files: FileData[];
+    totalFileCount: number;
+  }
+
+   export interface SerializedTreeData {
+    rootTags: TagNodeData[];
+    untaggedFiles: FileData[];
+    emptyTagNodes: TagNodeData[];
+    allTagNodeFolders: TagNodeData[];
+    allFiles: FileData[];
+  }
+

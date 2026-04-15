@@ -693,12 +693,11 @@ export class ControllerInterface {
      * @returns Promise with success status and error if failed
      */
     async cycleLegendForFolder(
-        currLegendColor: string,
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
         console.log("attempting to call orchestrator")
-        return await this.orchestrator.cycleLegendForFolder(currLegendColor, tagPath, owner);
+        return await this.orchestrator.cycleLegendForFolder(tagPath, owner);
     }
 
     /**
@@ -896,4 +895,72 @@ export class ControllerInterface {
     }
 
     
+    /**
+     * Move a file/folder to a folder given source tagpath, by triggering the Move modal.
+     * 
+     * @param type - The type of the item passed in
+     * @param path - The file path or tagpath of the item
+     * @param parentPath - The tag path of parent folder
+     * @returns Object with success status and error if failed
+     */
+    async triggerMoveModal(
+        type: 'folder' | 'file', 
+        path: string, 
+        parentpath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.triggerMoveModal(
+            type,
+            path,
+            parentpath
+        );
+    }
+    
+    /**
+     * Copy a file/folder to a folder given source tagpath, by triggering the Move modal.
+     * 
+     * @param type - The type of the item passed in
+     * @param path - The file path or tagpath of the item
+     * @param parentPath - The tag path of parent folder
+     * @returns Object with success status and error if failed
+     */
+    async triggerCopyModal(
+        type: 'folder' | 'file', 
+        path: string, 
+        parentpath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.triggerCopyModal(
+            type,
+            path,
+            parentpath
+        );
+    }
+
+    /**
+     * Add legend to a file/folder given source tagpath, by triggering the Legend modal.
+     * 
+     * @param type - The type of the item passed in
+     * @param path - The file path or tagpath of the item
+     * @param parentPath - The tag path of parent folder
+     * @returns Object with success status and error if failed
+     */
+    async triggerLegendModal(
+        type: 'folder' | 'file', 
+        path: string, 
+        parentpath: string,
+        owner: boolean = true
+    ): Promise<{ success: boolean; error?: any }> {
+        return await this.orchestrator.triggerLegendModal(
+            type,
+            path,
+            parentpath
+        );
+    }
+
+    async revealFileInNavigation(filePath: string){
+        await this.orchestrator.revealFileInNavigation(filePath)
+    }
+
+
 }

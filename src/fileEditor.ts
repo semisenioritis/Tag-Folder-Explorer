@@ -1573,7 +1573,7 @@ export function metadataAddNewProperty(
 }
 
 /**
- * Replace existing properties in a metadata JSON file (only if they already exist)
+ * Replace existing properties in a metadata JSON file (adds them if they dont already exist)
  * @param app - Obsidian App instance
  * @param tagPath - The nested tag path (used to compute the actual filename)
  * @param jsonObject - Object containing properties to replace
@@ -1600,9 +1600,9 @@ export function metadataReplaceExistingProperty(
 		// Replace only keys that already exist
 		const updatedData = { ...existingData };
 		for (const key in jsonObject) {
-			if (key in existingData) {
-				updatedData[key] = jsonObject[key];
-			}
+			
+			updatedData[key] = jsonObject[key];
+			
 		}
 		
 		// Compute the filename and write back to file

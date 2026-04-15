@@ -156,3 +156,100 @@ export class ConfirmationModal extends Modal {
 
 
 }
+
+interface SingleSelectModalConfig {
+  title?: string;
+  body?: string;
+  options: string[];
+  initialValue?: string;
+  confirmButtonText?: string;
+  cancelButtonText?: string;
+
+  onOpen?: () => void;
+  onClose?: () => void;
+
+  onConfirm: (selectedValue: string) => void;
+  onCancel: () => void;
+}
+
+export class SingleSelectModal extends Modal {
+  config: SingleSelectModalConfig;
+  selectEl!: HTMLSelectElement;
+
+  constructor(app: App, config: SingleSelectModalConfig) {
+    super(app);
+    this.config = config;
+  }
+
+  onOpen() {
+    this.config.onOpen?.();
+
+    const { contentEl } = this;
+
+    contentEl.createEl("h2", {
+      text: this.config.title ?? "Select an option",
+    });
+
+
+    contentEl.createEl("div", {
+      text: this.config.body ?? "",
+      attr: { style: "margin-bottom: 15px;" }
+    
+    });
+
+    // Select dropdown
+    this.selectEl = contentEl.createEl("select");
+    this.selectEl.style.marginBottom = "6px";
+    this.selectEl.style.padding = "4px";
+    this.selectEl.style.width = "80%";
+
+    this.config.options.forEach((optionText) => {
+      const optionEl = this.selectEl.createEl("option", {
+        text: optionText,
+        value: optionText,
+      });
+      if (optionText === this.config.initialValue) {
+        optionEl.selected = true;
+      }
+    });
+
+    const buttonContainer = contentEl.createEl("div");
+    buttonContainer.style.marginTop = "4px";
+    buttonContainer.style.display = "flex";
+    buttonContainer.style.gap = "4px";
+
+    // Confirm button
+    const confirmBtn = buttonContainer.createEl("button", {
+      text: this.config.confirmButtonText ?? "Confirm",
+    });
+
+    confirmBtn.style.padding = "4px 8px";
+    confirmBtn.style.marginRight = "auto";
+    confirmBtn.style.marginLeft = "15%";
+
+    confirmBtn.onclick = () => {
+      const value = this.selectEl.value;
+      this.config.onConfirm(value);
+      this.close(); 
+    };
+
+    // Cancel button
+    const cancelBtn = buttonContainer.createEl("button", {
+      text: this.config.cancelButtonText ?? "Cancel",
+    });
+
+    cancelBtn.style.padding = "4px 8px";
+    cancelBtn.style.marginRight = "15%";
+    cancelBtn.style.marginLeft = "auto";
+
+    cancelBtn.onclick = () => {
+      this.config.onCancel();
+      this.close();
+    };
+  }
+
+  onClose() {
+    this.config.onClose?.();
+    this.contentEl.empty();
+  }
+}
