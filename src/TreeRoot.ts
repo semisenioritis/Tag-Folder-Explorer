@@ -22,6 +22,15 @@ export class TreeRoot implements ITreeRoot {
      */
     private rootTags: Set<ITagNode>;
     
+
+    /**
+     * This is a map of the tags at the root level, indexing them making each node retrieval faster
+     * Contains a set of top-level TagNode objects.
+     */
+    // private rootTagsByName: Map<string, ITagNode> = new Map(); 
+    private rootTagsByName: Record<string, ITagNode> = {};
+
+
     /**
      * Files that don't have any parent tags associated with them.
      * Contains a set of FileLeaf objects that are untagged.
@@ -357,15 +366,15 @@ export class TreeRoot implements ITreeRoot {
                     const childName = newChildTagName.trim();
                     
                     // Check if child already exists in rootTags
-                    for (const tag of this.rootTags) {
-                        if (tag.getName() === childName) {
-                            return false; // Child already exists
-                        }
+                    let currentNode = this.getRootTagByName(childName);
+                    if (currentNode) {
+                        return false
                     }
-                    
+
                     // Create new root tag node
                     const childNode = new TagNode(childName, childName, this.rootTagNode, this.app, this.filePathToLeafMap);
                     this.rootTags.add(childNode);
+                    this.rootTagsByName[childName] = childNode;
                     
                     return true;
                 } catch (error) {
@@ -418,21 +427,12 @@ export class TreeRoot implements ITreeRoot {
             
             // Returns the rootTags as a Record
             getChildren: (): Record<string, ITagNode> => {
-                const children: Record<string, ITagNode> = {};
-                for (const tag of this.rootTags) {
-                    children[tag.getName()] = tag;
-                }
-                return children;
+                return this.rootTagsByName;
             },
             
             // Returns specific tag from rootTags
             getChild: (nameOfChild: string): ITagNode | null => {
-                for (const tag of this.rootTags) {
-                    if (tag.getName() === nameOfChild) {
-                        return tag;
-                    }
-                }
-                return null;
+                return this.rootTagsByName[nameOfChild] ?? null;
             },
             
             // Returns the untaggedFiles set
@@ -457,13 +457,14 @@ export class TreeRoot implements ITreeRoot {
             removeChildNode: (childTagName: string): boolean => {
                 try {
                     // Find and remove the child from rootTags
-                    for (const tag of this.rootTags) {
-                        if (tag.getName() === childTagName) {
-                            this.rootTags.delete(tag);
-                            return true;
-                        }
+                    let tag = this.rootTagsByName[childTagName]
+                    if (tag) {
+                        this.rootTags.delete(tag);
+                        delete this.rootTagsByName[childTagName];
+                        return true
+                    } else {
+                        return false
                     }
-                    return false; // Child not found
                 } catch (error) {
                     console.error('Error removing child node from root:', error);
                     return false;
@@ -586,12 +587,7 @@ export class TreeRoot implements ITreeRoot {
         
         // Find the root tag
         let currentNode: ITagNode | null = null;
-        for (const rootTag of this.rootTags) {
-            if (rootTag.getName() === tagSegments[0]) {
-                currentNode = rootTag;
-                break;
-            }
-        }
+        currentNode = this.getRootTagByName(tagSegments[0]);
         
         if (!currentNode) {
             return null;
@@ -659,6 +655,7 @@ export class TreeRoot implements ITreeRoot {
     public async recomputeTree(currentSettings:TagFolderPluginSettings): Promise<void> {
         // Clear existing tree
         this.rootTags.clear();
+        this.rootTagsByName = {};
         this.untaggedFiles.clear();
         
         // Get all files from vault
@@ -722,23 +719,19 @@ export class TreeRoot implements ITreeRoot {
         
         // If only one segment, delete from root tags
         if (tagSegments.length === 1) {
-            for (const rootTag of this.rootTags) {
-                if (rootTag.getName() === tagSegments[0]) {
-                    this.rootTags.delete(rootTag);
-                    return true;
-                }
+            const rootTag = this.rootTagsByName[tagSegments[0]];
+            if (rootTag) {
+                this.rootTags.delete(rootTag);
+                delete this.rootTagsByName[tagSegments[0]];
+                return true
+            } else {
+                return false
             }
-            return null; // Not found
         }
         
         // Navigate to the parent node
         let parentNode: ITagNode | null = null;
-        for (const rootTag of this.rootTags) {
-            if (rootTag.getName() === tagSegments[0]) {
-                parentNode = rootTag;
-                break;
-            }
-        }
+        parentNode = this.getRootTagByName(tagSegments[0]);
         
         if (!parentNode) {
             return null; // Root not found
@@ -782,6 +775,10 @@ export class TreeRoot implements ITreeRoot {
         // Remove the file from that specific node
         
         return tagNode.removeFile(filepath);
+    }
+
+    public getRootTagByName(name: string): ITagNode | null {
+        return this.rootTagsByName[name] || null; 
     }
     
     // ==================== PRIVATE HELPER METHODS ====================
@@ -932,17 +929,13 @@ export class TreeRoot implements ITreeRoot {
             if (i === 0) {
                 // First segment - check if it exists in root tags
                 let rootTag = null;
-                for (const tag of this.rootTags) {
-                    if (tag.getName() === segmentName) {
-                        rootTag = tag;
-                        break;
-                    }
-                }
+                rootTag = this.getRootTagByName(segmentName);
                 
                 if (!rootTag) {
                     // Create new root tag
                     rootTag = new TagNode(segmentName, currentPath, this.rootTagNode, this.app, this.filePathToLeafMap);
                     this.rootTags.add(rootTag);
+                    this.rootTagsByName[segmentName] =  rootTag
                 }
                 
                 currentNode = rootTag;
@@ -1117,20 +1110,14 @@ export class TreeRoot implements ITreeRoot {
             if (i === 0) {
                 // First segment - check if it exists in root tags
                 let rootTag: ITagNode | null = null;
-                for (const tag of this.rootTags) {
-                    if (tag.getName() === segmentName) {
-                        rootTag = tag;
-                        break;
-                    }
-                }
-
-
+                rootTag = this.getRootTagByName(segmentName);
 
                 
                 if (!rootTag) {
                     // Create new root tag
                     rootTag = new TagNode(segmentName, currentPath, this.rootTagNode, this.app, this.filePathToLeafMap);
                     this.rootTags.add(rootTag);
+                    this.rootTagsByName[segmentName] =  rootTag
                 }
                 
                 currentNode = rootTag;
