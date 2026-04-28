@@ -759,19 +759,46 @@ export async function shiftTagsFromBodyToMetadata(
 ): Promise<boolean> {
 	try {
 		// Get all tags from the file body
-		const bodyTags = await extractAllTagsFromFileBody(app, file);
+		let bodyTags = await extractAllTagsFromFileBody(app, file);
 		
 		if (bodyTags.length === 0) {
 			return true; // No tags to shift
 		}
 		
-		// Add each tag to frontmatter (addTagToFileYaml handles duplicates)
-		for (const tag of bodyTags) {
-			const success = await addTagToFileYaml(app, file, tag);
-			if (!success) {
+		const normalizedTags: string[] = [];
+
+		for (const rawTag of bodyTags) {
+			const tag = rawTag.startsWith('#') ? rawTag.slice(1) : rawTag;
+
+			if (!checkIfTagIsValid(tag)) {
 				return false;
 			}
+
+			normalizedTags.push(tag);
 		}
+
+		bodyTags = normalizedTags
+
+		await app.fileManager.processFrontMatter(file, (frontmatter) => {
+			if (!frontmatter.tags) {
+				frontmatter.tags = [];
+			}
+
+			if (!Array.isArray(frontmatter.tags)) {
+				frontmatter.tags = [frontmatter.tags];
+			}
+
+			const existingTags = frontmatter.tags.map((t: string) =>
+				t.startsWith('#') ? t.slice(1) : t
+			);
+
+			const combined = [...existingTags, ...normalizedTags];
+			const uniqueTags = Array.from(new Set(combined));
+
+			frontmatter.tags = uniqueTags;
+		});
+
+
 		
 		return true;
 	} catch (error) {
