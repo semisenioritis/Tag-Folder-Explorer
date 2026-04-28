@@ -321,9 +321,12 @@ export class TagNode implements ITagNode {
      * Used when: Finding specific file, file operations, targeted file access
      */
     getFile(pathOfFile: string): IFileLeaf | null {
-        for (const file of this.files) {
-            if (file.getPath() === pathOfFile) {
-                return file;
+
+        const fileObj = this.refFilePathToLeafMap.get(pathOfFile)
+
+        if (fileObj) {
+            if (this.files.has(fileObj)) {
+                return fileObj
             }
         }
         return null;
