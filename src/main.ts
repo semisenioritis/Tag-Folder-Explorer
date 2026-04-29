@@ -6,6 +6,7 @@ import { ControllerInterface } from './controllerInterface';
 import { ModelInterface } from './modelInterface';
 import { Orchestrator } from './orchestrator';
 import { EventListener } from './eventlistener';
+import {shiftTagsFromBodyToMetadata} from "./fileEditor";
 
 
 /*
@@ -346,39 +347,7 @@ export default class TagFolderPlugin extends Plugin {
               return;
           }
 
-
-          const cache = this.app.metadataCache.getFileCache(activeFile);
-          if (!cache?.tags) {
-            return [];
-          }
-          const bodyTags = cache.tags.map(tagCache => {
-            return tagCache.tag.startsWith('#') ? tagCache.tag.slice(1) : tagCache.tag;
-          });
-
-          const bodySet = new Set(bodyTags);
-
-          const tags: string[] = [];
-          await this.app.fileManager.processFrontMatter(activeFile, (frontmatter) => {
-            if (!frontmatter) return;
-            if (frontmatter.tags) {
-              if (Array.isArray(frontmatter.tags)) {
-                tags.push(...frontmatter.tags);
-              } else if (typeof frontmatter.tags === 'string') {
-                tags.push(frontmatter.tags);
-              }
-            }
-            console.log("command")
-            console.log(tags)
-
-            tags.map(tag => tag.startsWith('#') ? tag.slice(1) : tag);
-            const result = [
-              ...tags,
-              ...[...bodySet].filter(tag => !tags.includes(tag))
-            ];
-
-            frontmatter.tags = result
-          });
-  
+          shiftTagsFromBodyToMetadata(this.app, activeFile)
 
 
         },
