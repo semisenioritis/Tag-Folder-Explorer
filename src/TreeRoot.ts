@@ -1061,18 +1061,24 @@ export class TreeRoot implements ITreeRoot {
             
             let metadata = JSON.parse(fileContent);
 
-            let tagnodePath = metadata.path
+            let tagnodePath: string = metadata.path
+            if (typeof tagnodePath !== 'string') {
+                return '';
+            }
+
+            if (tagnodePath.startsWith('#')) {
+                tagnodePath = tagnodePath.slice(1);
+            }
             const crypto = require('crypto');
 
             function hashPath(path:string) {
             return crypto.createHash('sha256').update(path).digest('hex');
             }
 
-            if(hashPath(tagnodePath) == filename){
-                return tagnodePath
-            }else {
-                return ''
-            }
+            const expectedBaseName = hashPath(tagnodePath);
+            const actualBaseName = path.parse(filename).name;
+
+            return actualBaseName === expectedBaseName ? tagnodePath : '';
 
 
 
