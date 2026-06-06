@@ -1,7 +1,8 @@
 
 
 # Tag Folder Explorer for Obsidian
-<img width="1916" height="1019" alt="image" src="https://github.com/user-attachments/assets/4eeea79f-f51a-42a5-87be-6f8af239d5e3" />
+<img width="1916" height="1019" alt="tagfolderScreenshot" src="https://github.com/user-attachments/assets/bfb3a34c-e603-4cb5-a03f-21707a858117" />
+
 
 
 A tag folder-based explorer for Obsidian. It uses the nested tags feature of Obsidian to create virtual folders, allowing individual files to exist in multiple locations inside a single vault.
@@ -20,7 +21,9 @@ This project strikes a balance between both approaches. It provides a virtual, n
 
 
 
-https://github.com/user-attachments/assets/2a3878b4-6a01-4192-81c1-1f18583262f8
+https://github.com/user-attachments/assets/56658ef6-98c4-4291-ac19-80c72fd3a66b
+
+
 
 
 - **Virtual Folders Representation**: Leverages Obsidian's nested tags (e.g., `#fruit/orange`, `#fruit/apple`) to create a familiar folder-like tree structure. (In the example, the parent folder is fruit which has two children folders orange and apple).
