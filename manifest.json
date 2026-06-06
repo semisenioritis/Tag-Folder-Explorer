@@ -4,8 +4,8 @@
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "A tag folder based explorer for obsidian. Uses the nested tags feature of obsidian to create virtual folders, allowing individual files to exist in multiple locations, inside a single vault.",
-	"author": "",
-	"authorUrl": "",
+	"author": "semisemioritis",
+	"authorUrl": "https://atharvadhamankar.github.io/",
 	"fundingUrl": "",
 	"isDesktopOnly": true
 }
