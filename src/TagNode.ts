@@ -1,4 +1,6 @@
 import { App, TFile, TFolder } from 'obsidian';
+import { FileSystemAdapter } from "obsidian";
+import { createHash } from 'crypto';
 import type { ITagNode, IFileLeaf, ISerializedTagNode  } from './interfaces';
 import { FileLeaf } from './FileLeaf';
 import * as fs from 'fs';
@@ -343,12 +345,11 @@ export class TagNode implements ITagNode {
      */
     private getMetadataFilePath(): string {
         // Get the vault's base path from the app
-        const vaultPath = (this.app.vault.adapter as any).basePath || '';
+        const vaultPath = (this.app.vault.adapter as any).getBasePath() || '';
          
-        const crypto = require('crypto');
-
         function hashPath(path:string) {
-        return crypto.createHash('sha256').update(path).digest('hex');
+
+            return createHash('sha256').update(path).digest('hex'); 
         }
 
         const filename = `${hashPath(this.path)}.json`;
@@ -605,7 +606,7 @@ export class TagNode implements ITagNode {
             }
             
             // Get vault path
-            const vaultPath = (this.app.vault.adapter as any).basePath || '';
+            const vaultPath = (this.app.vault.adapter as FileSystemAdapter).getBasePath() || '';
             
             // Create .trash folder if it doesn't exist
             const trashPath = path.join(vaultPath, '.trash');

@@ -1,4 +1,6 @@
 import { App, TFile, TFolder } from 'obsidian';
+import { FileSystemAdapter } from 'obsidian';
+import { createHash } from 'crypto';
 import type { ITreeRoot, ITagNode, IFileLeaf, ISerializedTagNode, SerializedTreeData} from './interfaces';
 import { TagNode } from './TagNode';
 import { FileLeaf } from './FileLeaf';
@@ -996,7 +998,7 @@ export class TreeRoot implements ITreeRoot {
     private populateEmptyTagFoldersFromMetadata(): void {
         try {
             // Get the vault's base path
-            const vaultPath = (this.app.vault.adapter as any).basePath || '';
+            const vaultPath = (this.app.vault.adapter as FileSystemAdapter).getBasePath() || '';
             const metaFolderPath = path.join(vaultPath, '.TagNodeMeta');
             
             // Check if .TagNodeMeta folder exists
@@ -1059,9 +1061,9 @@ export class TreeRoot implements ITreeRoot {
         
             let fileContent = fs.readFileSync(finMetafileName, 'utf8');
             
-            let metadata = JSON.parse(fileContent);
+            let metadata: unknown  = JSON.parse(fileContent);
 
-            let tagnodePath: string = metadata.path
+            let tagnodePath: string = (metadata as { path: string }).path
             if (typeof tagnodePath !== 'string') {
                 return '';
             }
@@ -1072,7 +1074,9 @@ export class TreeRoot implements ITreeRoot {
             const crypto = require('crypto');
 
             function hashPath(path:string) {
-            return crypto.createHash('sha256').update(path).digest('hex');
+
+                return createHash('sha256').update(path).digest('hex'); 
+            
             }
 
             const expectedBaseName = hashPath(tagnodePath);
