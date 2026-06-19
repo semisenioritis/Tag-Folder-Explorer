@@ -44,7 +44,27 @@ export class TagFolderSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 		
-		setting.descEl.innerHTML = 'These are physical folders in your vault that you dont want to be indexed and included in the Tag-tree.<br><br>Enter each folder path on a new line<br><br> For eg:<br>Subject/Maths<br>Personal/Journal';
+		// setting.descEl.innerHTML = 'These are physical folders in your vault that you dont want to be indexed and included in the Tag-tree.<br><br>Enter each folder path on a new line<br><br> For eg:<br>Subject/Maths<br>Personal/Journal';
+
+		setting.descEl.empty();
+
+		const skip_folder_lines = [
+			"These are physical folders in your vault that you don't want to be indexed and included in the Tag-tree.",
+			"",
+			"Enter each folder path on a new line",
+			"",
+			"For e.g:",
+			"Subject/Maths",
+			"Personal/Journal"
+		];
+
+		skip_folder_lines.forEach(line => {
+			if (line === "") {
+				setting.descEl.createEl("br");
+			} else {
+				setting.descEl.createDiv({ text: line });
+			}
+		});
 
 
 		const showObsMetaData  = new Setting(containerEl)
@@ -74,7 +94,30 @@ export class TagFolderSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 		
-		fieldsToSkip.descEl.innerHTML = 'These are metadata fields in your files that you dont want to render in the Metadata Sidebar.<br><br>Enter each metadata field on a new line<br><br> For eg:<br>tags<br>assigned<br>category';
+		// fieldsToSkip.descEl.innerHTML = 'These are metadata fields in your files that you dont want to render in the Metadata Sidebar.<br><br>Enter each metadata field on a new line<br><br> For eg:<br>tags<br>assigned<br>category';
+
+
+		fieldsToSkip.descEl.empty();
+
+		const field_to_skip_lines = [
+
+			"These are metadata fields in your files that you dont want to render in the Metadata Sidebar.",
+			"",
+			"Enter each metadata field on a new line",
+			"",
+			"For e.g:",
+			"tags",
+			"assigned",
+			"category"
+		];
+
+		field_to_skip_lines.forEach(line => {
+			if (line === "") {
+				fieldsToSkip.descEl.createEl("br");
+			} else {
+				fieldsToSkip.descEl.createDiv({ text: line });
+			}
+		});
 
 
 	}
