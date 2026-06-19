@@ -1,7 +1,7 @@
 {
 	"id": "tag-folder-explorer",
 	"name": "Tag Folder Explorer",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"minAppVersion": "1.7.2",
 	"description": "A tag folder based explorer. Uses the nested tags feature to create virtual folders, allowing individual files to exist in multiple locations, inside a single vault.",
 	"author": "semisemioritis",
