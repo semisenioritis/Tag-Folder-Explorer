@@ -1316,38 +1316,38 @@ export function checkIfMetadataFileExists(
  * @param frontmatterName - The name of the frontmatter field to create
  * @returns Boolean indicating if the operation was successful
  */
-export function metadataCreateSpecificEmptyFrontmatter(
-	app: App,
-	tagPath: string,
-	frontmatterName: string
-): boolean {
-	try {
-		// Validate the tag path
-		if (!checkIfTagIsValid(tagPath)) return false;
+// export function metadataCreateSpecificEmptyFrontmatter(
+// 	app: App,
+// 	tagPath: string,
+// 	frontmatterName: string
+// ): boolean {
+// 	try {
+// 		// Validate the tag path
+// 		if (!checkIfTagIsValid(tagPath)) return false;
 
-		// Compute the actual filename from the tag path
-		const computedFilename = metadataRecomputeName(app, tagPath);
+// 		// Compute the actual filename from the tag path
+// 		const computedFilename = metadataRecomputeName(app, tagPath);
 		
-		let jsonData: any = {};
+// 		let jsonData: any = {};
 		
-		// Check if file exists and read it
-		if (fs.existsSync(computedFilename)) {
-			const fileContent = fs.readFileSync(computedFilename, 'utf-8');
-			jsonData = JSON.parse(fileContent);
-		}
+// 		// Check if file exists and read it
+// 		if (fs.existsSync(computedFilename)) {
+// 			const fileContent = fs.readFileSync(computedFilename, 'utf-8');
+// 			jsonData = JSON.parse(fileContent);
+// 		}
 		
-		// Create empty field with the frontmatter name
-		jsonData[frontmatterName] = null;
+// 		// Create empty field with the frontmatter name
+// 		jsonData[frontmatterName] = null;
 		
-		// Write back to the file
-		fs.writeFileSync(computedFilename, JSON.stringify(jsonData, null, 2), 'utf-8');
+// 		// Write back to the file
+// 		fs.writeFileSync(computedFilename, JSON.stringify(jsonData, null, 2), 'utf-8');
 		
-		return true;
-	} catch (error) {
-		console.error("Error creating empty frontmatter:", error);
-		return false;
-	}
-}
+// 		return true;
+// 	} catch (error) {
+// 		console.error("Error creating empty frontmatter:", error);
+// 		return false;
+// 	}
+// }
 
 /**
  * Add a "created" property to a metadata JSON file
@@ -1355,12 +1355,12 @@ export function metadataCreateSpecificEmptyFrontmatter(
  * @param tagPath - The nested tag path (used to compute the actual filename)
  * @returns Boolean indicating if the operation was successful
  */
-export function metadataAddCreatedProperty(
-	app: App,
-	tagPath: string
-): boolean {
-	return metadataCreateSpecificEmptyFrontmatter(app, tagPath, 'created');
-}
+// export function metadataAddCreatedProperty(
+// 	app: App,
+// 	tagPath: string
+// ): boolean {
+// 	return metadataCreateSpecificEmptyFrontmatter(app, tagPath, 'created');
+// }
 
 /**
  * Add a "modified" property to a metadata JSON file
@@ -1368,12 +1368,12 @@ export function metadataAddCreatedProperty(
  * @param tagPath - The nested tag path (used to compute the actual filename)
  * @returns Boolean indicating if the operation was successful
  */
-export function metadataAddModifiedProperty(
-	app: App,
-	tagPath: string
-): boolean {
-	return  metadataCreateSpecificEmptyFrontmatter(app, tagPath, 'modified');
-}
+// export function metadataAddModifiedProperty(
+// 	app: App,
+// 	tagPath: string
+// ): boolean {
+// 	return  metadataCreateSpecificEmptyFrontmatter(app, tagPath, 'modified');
+// }
 
 /**
  * Rename a metadata JSON file by computing new filename from new tag path

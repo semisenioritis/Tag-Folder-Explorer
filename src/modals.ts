@@ -43,10 +43,9 @@ export class InputModal extends Modal {
       value: this.config.textboxText ?? "",
 
     });
+
+    this.inputEl.addClass("modal-input");
     
-    this.inputEl.style.marginBottom = "6px";
-    this.inputEl.style.padding = "4px";
-    this.inputEl.style.width = "80%";
 
     this.inputEl.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
@@ -56,18 +55,17 @@ export class InputModal extends Modal {
 
 
     const buttonContainer = contentEl.createEl("div");
-    buttonContainer.style.marginTop = "4px";
-    buttonContainer.style.display = "flex";
-    buttonContainer.style.gap = "4px";
+
+    buttonContainer.addClass("modal-button-container");
+
 
     // Confirm button
     const confirmBtn = buttonContainer.createEl("button", {
       text: this.config.confirmText ?? "Confirm",
     });
 
-      confirmBtn.style.padding = "4px 8px";
-      confirmBtn.style.marginRight = "auto";
-      confirmBtn.style.marginLeft = "15%";
+      confirmBtn.addClass("modal-left-button");
+
     confirmBtn.onclick = () => {
       const value = this.inputEl.value;
       this.config.onConfirm(value);
@@ -79,9 +77,8 @@ export class InputModal extends Modal {
       text: this.config.cancelText ?? "Cancel",
     });
 
-      cancelBtn.style.padding = "4px 8px";
-      cancelBtn.style.marginRight = "15%";
-      cancelBtn.style.marginLeft = "auto";
+      cancelBtn.addClass("modal-right-button");
+
     cancelBtn.onclick = () => {
       this.config.onCancel();
       this.close();
@@ -116,18 +113,16 @@ export class ConfirmationModal extends Modal {
 
 
     const buttonContainer = contentEl.createEl("div");
-    buttonContainer.style.marginTop = "4px";
-    buttonContainer.style.display = "flex";
-    buttonContainer.style.gap = "4px";
+
+    buttonContainer.addClass("modal-button-container");
+
 
     // Confirm button
     const confirmBtn = buttonContainer.createEl("button", {
       text: this.config.confirmButton ?? "Confirm",
     });
 
-    confirmBtn.style.padding = "4px 8px";
-    confirmBtn.style.marginRight = "auto";
-    confirmBtn.style.marginLeft = "15%";
+    confirmBtn.addClass("modal-left-button");
 
     confirmBtn.onclick = () => {
       this.config.onConfirm(); 
@@ -139,9 +134,7 @@ export class ConfirmationModal extends Modal {
       text: this.config.cancelText ?? "Cancel",
     });
 
-    cancelBtn.style.padding = "4px 8px";
-    cancelBtn.style.marginRight = "15%";
-    cancelBtn.style.marginLeft = "auto";
+    cancelBtn.addClass("modal-right-button");
 
     cancelBtn.onclick = () => {
       this.config.onCancel();
@@ -199,9 +192,8 @@ export class SingleSelectModal extends Modal {
 
     // Select dropdown
     this.selectEl = contentEl.createEl("select");
-    this.selectEl.style.marginBottom = "6px";
-    this.selectEl.style.padding = "4px";
-    this.selectEl.style.width = "80%";
+
+    this.selectEl.addClass("modal-input");
 
     this.config.options.forEach((optionText) => {
       const optionEl = this.selectEl.createEl("option", {
@@ -214,19 +206,16 @@ export class SingleSelectModal extends Modal {
     });
 
     const buttonContainer = contentEl.createEl("div");
-    buttonContainer.style.marginTop = "4px";
-    buttonContainer.style.display = "flex";
-    buttonContainer.style.gap = "4px";
+
+    buttonContainer.addClass("modal-button-container");
 
     // Confirm button
     const confirmBtn = buttonContainer.createEl("button", {
       text: this.config.confirmButtonText ?? "Confirm",
     });
 
-    confirmBtn.style.padding = "4px 8px";
-    confirmBtn.style.marginRight = "auto";
-    confirmBtn.style.marginLeft = "15%";
-
+    confirmBtn.addClass("modal-left-button");
+    
     confirmBtn.onclick = () => {
       const value = this.selectEl.value;
       this.config.onConfirm(value);
@@ -238,9 +227,7 @@ export class SingleSelectModal extends Modal {
       text: this.config.cancelButtonText ?? "Cancel",
     });
 
-    cancelBtn.style.padding = "4px 8px";
-    cancelBtn.style.marginRight = "15%";
-    cancelBtn.style.marginLeft = "auto";
+    cancelBtn.addClass("modal-right-button");
 
     cancelBtn.onclick = () => {
       this.config.onCancel();

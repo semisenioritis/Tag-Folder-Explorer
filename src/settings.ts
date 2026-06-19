@@ -34,11 +34,9 @@ export class TagFolderSettingTab extends PluginSettingTab {
 				.then(t => {
 				const control = t.inputEl.closest('.setting-item-control');
 				if (control instanceof HTMLElement) {
-					control.style.flex = '0 0 40%';
+					control.addClass('setting-item-control-wide');
 				}
-				t.inputEl.style.width = '100%';
-				t.inputEl.style.minHeight = '100px';
-  				t.inputEl.style.resize = 'vertical';
+				t.inputEl.addClass('setting-item-data-contents');
 				})
 				.setValue(this.plugin.settings.folderPathsToSkip)
 				.onChange(async (value) => {
@@ -66,11 +64,9 @@ export class TagFolderSettingTab extends PluginSettingTab {
 				.then(t => {
 				const control = t.inputEl.closest('.setting-item-control');
 				if (control instanceof HTMLElement) {
-					control.style.flex = '0 0 40%';
+					control.addClass('setting-item-control-wide');
 				}
-				t.inputEl.style.width = '100%';
-				t.inputEl.style.minHeight = '100px';
-  				t.inputEl.style.resize = 'vertical';
+				t.inputEl.addClass('setting-item-data-contents');
 				})
 				.setValue(this.plugin.settings.fieldsToSkip)
 				.onChange(async (value) => {
