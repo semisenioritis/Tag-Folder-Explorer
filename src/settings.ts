@@ -1,5 +1,4 @@
-import {App, PluginSettingTab, Setting} from "obsidian";
-import TagFolderPlugin from "./main";
+import {App, Plugin, PluginSettingTab, Setting} from "obsidian";
 
 export interface TagFolderPluginSettings {
 	folderPathsToSkip: string;
@@ -15,10 +14,16 @@ export const DEFAULT_SETTINGS: TagFolderPluginSettings = {
 	debugLogging: false
 }
 
-export class TagFolderSettingTab extends PluginSettingTab {
-	plugin: TagFolderPlugin;
+/** The part of the plugin the settings tab needs. Avoids importing the plugin class (and a cycle with main.ts). */
+export interface SettingsHost extends Plugin {
+	settings: TagFolderPluginSettings;
+	saveSettings(): Promise<void>;
+}
 
-	constructor(app: App, plugin: TagFolderPlugin) {
+export class TagFolderSettingTab extends PluginSettingTab {
+	plugin: SettingsHost;
+
+	constructor(app: App, plugin: SettingsHost) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}

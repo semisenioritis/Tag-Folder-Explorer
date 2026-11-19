@@ -5,10 +5,11 @@
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
-		"build": "tsc -noEmit -skipLibCheck && node scripts/svelte-check-gate.mjs && node esbuild.config.mjs production",
+		"build": "tsc -noEmit -skipLibCheck && node scripts/check-cycles.mjs && node scripts/svelte-check-gate.mjs && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
 		"svelte-check": "svelte-check --tsconfig tsconfig.json",
-		"lint": "eslint src"
+		"lint": "eslint src",
+		"check:cycles": "node scripts/check-cycles.mjs"
 	},
 	"keywords": [],
 	"author": "semisenioritis",

@@ -18,6 +18,9 @@ import { mount, unmount } from 'svelte';
 
 import {DEFAULT_SETTINGS, TagFolderSettingTab} from "./settings";
 import { logger, setDebugLogging } from "./utils/logger";
+import type { PluginHost } from "./types";
+import { inconsistencyFlag } from "./store";
+import { initWindows, disposeWindows } from "./windows";
 import type {TagFolderPluginSettings} from "./settings";
 
 
@@ -126,11 +129,10 @@ class TagExplorerView extends ItemView {
   private refreshTree(): void {
     if (!this.component) return;
     
-    const treeData = this.plugin.treeRoot?.getSortedTree();
-    const version = this.plugin.getTreeVersion();
+    const snapshot = this.plugin.model?.getleftSidebarTree();
     
-    if (treeData) {
-      this.updateTree(treeData, version);
+    if (snapshot?.tree) {
+      this.updateTree(snapshot.tree, snapshot.version);
     }
   }
   
@@ -163,8 +165,9 @@ class TagExplorerView extends ItemView {
     }
     
     // Get initial tree data with version
-    const treeData = this.plugin.treeRoot?.getSortedTree();
-    const version = this.plugin.getTreeVersion();
+    const snapshot = this.plugin.model?.getleftSidebarTree();
+    const treeData = snapshot?.tree;
+    const version = snapshot?.version ?? 0;
     this.currentTreeVersion = version;
     
     this.component = mount(TagExplorer, {
@@ -197,7 +200,7 @@ class TagExplorerView extends ItemView {
 }
 
 
-export default class TagFolderPlugin extends Plugin {
+export default class TagFolderPlugin extends Plugin implements PluginHost {
 
 	settings: TagFolderPluginSettings = DEFAULT_SETTINGS;
   private readonly HIDE_OBSIDIAN_METADATA_CLASS = 'tag-folder-hide-metadata';
@@ -232,6 +235,7 @@ export default class TagFolderPlugin extends Plugin {
   async onload() {
 
     await this.loadSettings();
+    initWindows(this.app);
     this.applyObsMetadataVisibility();
 
 		logger.debug('Tag Folder Plugin loaded');
@@ -299,7 +303,7 @@ export default class TagFolderPlugin extends Plugin {
 		this.treeRoot = await TreeRoot.create(this.app, this.settings);
 		
 		// Initialize controller interface for frontend access
-		const orchestrator = new Orchestrator(this.app, this.treeRoot, this);
+		const orchestrator = new Orchestrator(this.app, this.treeRoot, this, (busy) => inconsistencyFlag.set(busy));
 		this.controller = new ControllerInterface(orchestrator);
 		
 		logger.debug('Tag tree constructed successfully (metadata cache resolved)');
@@ -391,6 +395,7 @@ export default class TagFolderPlugin extends Plugin {
 	onunload() {
 		logger.debug('Tag Folder Plugin unloaded');
     document.body.classList.remove(this.HIDE_OBSIDIAN_METADATA_CLASS);
+    disposeWindows();
 		
 		// Clean up the tree reference
 		this.treeRoot = null;

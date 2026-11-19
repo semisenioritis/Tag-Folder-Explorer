@@ -3,21 +3,27 @@ import { App, TFile, WorkspaceLeaf } from "obsidian";
 
 
 
-const app = (window as any).app as App;
+// The plugin hands over `app` in onload and clears it in onunload, so these helpers
+// do not reach for a global.
+let app: App | null = null;
 
+export function initWindows(appInstance: App): void {
+	app = appInstance;
+}
 
-// above is okish, but just to be type safe:
-// here is a better solution with a custom interface
+export function disposeWindows(): void {
+	app = null;
+}
 
-// interface ObsidianWindow extends Window {
-//     app: App;
-// }
-//
-// const app = (window as ObsidianWindow).app;
+function requireApp(): App {
+	if (!app) throw new Error("Tag Folder Explorer: windows helpers used before the plugin loaded.");
+	return app;
+}
 
 
 
 export async function openFileInNewTab(pathToFile: string) {
+    const app = requireApp();
  
      
 
@@ -43,6 +49,7 @@ export async function openFileInNewTab(pathToFile: string) {
 const VIEW_TYPE_TAG_EXPLORER = 'tag-explorer-view';
 
 export async function openTagExplorerInNewTab(tagPath: string) {
+    const app = requireApp();
     const normalizedPath = (tagPath ?? '').trim().replace(/^#/, '').replace(/^\/+|\/+$/g, '');
 
     const leaf = app.workspace.getLeaf('tab');
@@ -58,6 +65,7 @@ export async function openTagExplorerInNewTab(tagPath: string) {
 }
 
 export async function openRaindropInSidebar(raindropUrl: string) {
+    const app = requireApp();
     
     const rightSplit = app.workspace.rightSplit;
     if (rightSplit && rightSplit.collapsed) {

@@ -4,9 +4,7 @@ import { FileLeaf } from "./FileLeaf";
 import * as fileEditor from "./fileEditor";
 import type { ITagNode, IFileLeaf } from "./interfaces";
 
-import TagFolderPlugin from "./main";
-
-import { inconsistencyFlag } from './store';
+import type { PluginHost } from "./types";
 
 import  {InputModal, ConfirmationModal, SingleSelectModal}  from "./modals";
 import { logger } from './utils/logger';
@@ -26,12 +24,17 @@ import { logger } from './utils/logger';
 export class Orchestrator {
     private app: App;
     private treeRoot: TreeRoot;
-    private plugin: TagFolderPlugin;
+    private plugin: PluginHost;
+    private onBusyChanged: (busy: boolean) => void;
 
-    constructor(app: App, treeRoot: TreeRoot, plugin: TagFolderPlugin) {
+    /**
+     * @param onBusyChanged - called (on a microtask) whenever the busy flag changes, so the UI can reflect it
+     */
+    constructor(app: App, treeRoot: TreeRoot, plugin: PluginHost, onBusyChanged: (busy: boolean) => void) {
         this.app = app;
         this.treeRoot = treeRoot;
         this.plugin = plugin;
+        this.onBusyChanged = onBusyChanged;
     }
 
     /**
@@ -48,7 +51,7 @@ export class Orchestrator {
         this.plugin.setTagExplorerInconsistentStateFlag(value);
         // Defer the store update to avoid Svelte state_unsafe_mutation during render
         queueMicrotask(() => {
-            inconsistencyFlag.set(value);
+            this.onBusyChanged(value);
         });
     }
 
