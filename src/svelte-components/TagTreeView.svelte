@@ -1,5 +1,6 @@
 <script lang="ts">
   import { logger } from '../utils/logger';
+  import { handleDragStart, getDragPayload } from '../ui/dnd';
   // import { getleftSidebarTree} from '../modelInterface'
 
   import { openFileInNewTab } from '../windows'
@@ -102,86 +103,6 @@
 	}
 
 
-  function handleDragStart(event: DragEvent, type: 'folder' | 'file', path: string, parentPath: string) {
-    if (event.dataTransfer) {
-      event.dataTransfer.setData('application/json', JSON.stringify({ type, path, parentPath }));
-      event.dataTransfer.effectAllowed = 'move';
-    }
-  }
-
-  interface DragPayload {
-    type: 'folder' | 'file';
-    path: string;
-    parentPath: string;
-    source: 'internal' | 'external'
-  }
-
-  function parseObsidianOpenUri(raw: string): string | null {
-    try {
-      const url = new URL(raw);
-      if (url.protocol !== 'obsidian:') return null;
-
-      const fileParam = url.searchParams.get('file');
-      if (!fileParam) return null;
-
-      return decodeURIComponent(fileParam).trim() || null;
-    } catch {
-      return null;
-    }
-  }
-
-  function parseExternalFilePath(raw: string): string | null {
-    const trimmed = raw.trim();
-    if (!trimmed) return null;
-
-    const firstLine = trimmed
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .find((line) => line.length > 0 && !line.startsWith('#'));
-
-    if (!firstLine) return null;
-
-    const obsidianPath = parseObsidianOpenUri(firstLine);
-    if (obsidianPath) return obsidianPath;
-
-    const wikiMatch = firstLine.match(/^\[\[([^\]|]+)(?:\|[^\]]+)?\]\]$/);
-    if (wikiMatch?.[1]) {
-      return wikiMatch[1].trim() || null;
-    }
-
-    return firstLine;
-  }
-
-  function getDragPayload(event: DragEvent): DragPayload | null {
-    const dataTransfer = event.dataTransfer;
-    if (!dataTransfer) return null;
-
-    // Internal plugin drag payload
-    const internalJson = dataTransfer.getData('application/json');
-    if (internalJson) {
-      try {
-        const data = JSON.parse(internalJson) as Partial<DragPayload>;
-        if ((data.type === 'folder' || data.type === 'file') && typeof data.path === 'string') {
-          return {
-            type: data.type,
-            path: data.path,
-            parentPath: typeof data.parentPath === 'string' ? data.parentPath : '',
-            source: "internal"
-          };
-        }
-      } catch {
-      }
-    }
-
-    // External drag payload from Obsidian file explorer
-    const textUriList = dataTransfer.getData('text/uri-list');
-    const uriPath = parseExternalFilePath(textUriList);
-    if (uriPath && uriPath.length >0) {
-      return { type: 'file', path: uriPath, parentPath: '', source: "external" };
-    }
-
-    return null;
-  }
 
   function handleDragOver(event: DragEvent) {
     event.preventDefault(); // Necessary to allow dropping

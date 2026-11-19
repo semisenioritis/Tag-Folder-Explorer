@@ -1,5 +1,8 @@
 <script lang="ts">
   import { logger } from '../utils/logger';
+  import { handleDragStart, getDragPayload } from '../ui/dnd';
+  import { formatDate } from '../ui/format';
+  import { getColorForName } from '../ui/colors';
   import { onDestroy } from 'svelte';
   import { Menu } from 'obsidian';
   // import { getmainViewData, ModelInterface, readLegendStatusOfFile, readLegendStatusOfFolder } from '../modelInterface'
@@ -17,8 +20,6 @@
     refreshKey?: number;  // Key to force re-derivation of mainViewData
     controller: ControllerInterface | null | undefined;
     model: ModelInterface | null | undefined;
-    colorDictionary:Record<string, string>
-    getColorForName: (name: string) => string;
     onItemDrop: (sourceType: 'folder' | 'file', sourcePath: string, sourceParentPath: string, targetType: 'folder', targetPath: string, targetParentPath: string, source: 'internal' | 'external', ctrlPressed: boolean) => void;
     mainViewSortFlag: boolean;
     viewForm: "blocks" | "list" | "details";
@@ -26,7 +27,7 @@
   }
 
 
-  let { currentPath, onUpdate, onFocusChange, refreshKey = 0, controller, model, colorDictionary, getColorForName, onItemDrop, mainViewSortFlag, viewForm}:Props = $props();
+  let { currentPath, onUpdate, onFocusChange, refreshKey = 0, controller, model, onItemDrop, mainViewSortFlag, viewForm}:Props = $props();
   // let { currentPath }: Props = $props();
 
 
@@ -573,89 +574,6 @@
   }
 
 
-  function handleDragStart(event: DragEvent, type: 'folder' | 'file', path: string, parentPath: string) {
-    if (event.dataTransfer) {
-      event.dataTransfer.setData('application/json', JSON.stringify({ type, path, parentPath }));
-      event.dataTransfer.effectAllowed = 'move';
-    }
-  }
-
-  interface DragPayload {
-    type: 'folder' | 'file';
-    path: string;
-    parentPath: string;
-    source: 'internal' | 'external';
-  }
-
-  function parseObsidianOpenUri(raw: string): string | null {
-    try {
-      const url = new URL(raw);
-      if (url.protocol !== 'obsidian:') return null;
-
-      const fileParam = url.searchParams.get('file');
-      if (!fileParam) return null;
-
-      return decodeURIComponent(fileParam).trim() || null;
-    } catch {
-      return null;
-    }
-  }
-
-  function parseExternalFilePath(raw: string): string | null {
-    const trimmed = raw.trim();
-    if (!trimmed) return null;
-
-    const firstLine = trimmed
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .find((line) => line.length > 0 && !line.startsWith('#'));
-
-    if (!firstLine) return null;
-
-    const obsidianPath = parseObsidianOpenUri(firstLine);
-    if (obsidianPath) return obsidianPath;
-
-    const wikiMatch = firstLine.match(/^\[\[([^\]|]+)(?:\|[^\]]+)?\]\]$/);
-    if (wikiMatch?.[1]) {
-      return wikiMatch[1].trim() || null;
-    }
-
-    return firstLine;
-  }
-
-  function getDragPayload(event: DragEvent): DragPayload | null {
-    const dataTransfer = event.dataTransfer;
-    if (!dataTransfer) return null;
-
-    // Internal plugin drag payload
-    const internalJson = dataTransfer.getData('application/json');
-    if (internalJson) {
-      try {
-        const data = JSON.parse(internalJson) as Partial<DragPayload>;
-        if ((data.type === 'folder' || data.type === 'file') && typeof data.path === 'string') {
-          return {
-            type: data.type,
-            path: data.path,
-            parentPath: typeof data.parentPath === 'string' ? data.parentPath : '',
-            source: "internal"
-          };
-        }
-      } catch {
-
-      }
-    }
-
-    // External drag payload from Obsidian file explorer
-    const textUriList = dataTransfer.getData('text/uri-list');
-    const uriPath = parseExternalFilePath(textUriList);
-    if (uriPath) {
-      return { type: 'file', path: uriPath, parentPath: '', source: "external" };
-    }
-
-
-    return null;
-  }
-
 
   function getDropTargetKey(type: 'folder' | 'file', path: string, parentPath: string): string {
     return `${type}|${path}|${parentPath}`;
@@ -833,19 +751,7 @@ onDestroy(() => {
 });
 
 
-function formatDate(dateString: string): string {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-        hour12: false, 
-        year: 'numeric', 
-        month: 'numeric', 
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-    }).replace(',', '');
-}
+const formatDetailDate = (value: string | number | null | undefined) => formatDate(value, 'numeric');
 
 
 </script>
@@ -1232,8 +1138,8 @@ ondragleave={handleBackgroundDragLeave}
                         <!-- promise was fulfilled -->
                         <div class="details-data-cell details-long-text" role="cell">{details?.description}</div>
                         <div class="details-data-cell details-center-align " role="cell">/{child.path}</div>
-                        <div class="details-data-cell details-center-align details-single-line" role="cell">{formatDate(details?.created)}</div>
-                        <div class="details-data-cell details-center-align details-single-line" role="cell">{formatDate(details?.modified)}</div>
+                        <div class="details-data-cell details-center-align details-single-line" role="cell">{formatDetailDate(details?.created)}</div>
+                        <div class="details-data-cell details-center-align details-single-line" role="cell">{formatDetailDate(details?.modified)}</div>
                         
                         {/await}
                         <div class="details-data-cell details-long-text" role="cell">-</div>
@@ -1288,8 +1194,8 @@ ondragleave={handleBackgroundDragLeave}
                           <!-- promise was fulfilled -->
                           <div class="details-data-cell details-long-text" role="cell">{details?.filemetadata["description"]}</div>
                           <div class="details-data-cell details-center-align " role="cell">{file.path}</div>
-                          <div class="details-data-cell details-center-align details-single-line" role="cell">{formatDate(details?.fileobsdata.ctime)}</div>
-                          <div class="details-data-cell details-center-align details-single-line" role="cell">{formatDate(details?.fileobsdata.mtime)}</div>
+                          <div class="details-data-cell details-center-align details-single-line" role="cell">{formatDetailDate(details?.fileobsdata.ctime)}</div>
+                          <div class="details-data-cell details-center-align details-single-line" role="cell">{formatDetailDate(details?.fileobsdata.mtime)}</div>
                           <div class="details-data-cell details-long-text" role="cell">{details?.fileinitial}</div>
                           
                           {/await}
@@ -1350,8 +1256,8 @@ ondragleave={handleBackgroundDragLeave}
                         <!-- promise was fulfilled -->
                         <div class="details-data-cell details-long-text" role="cell">{details?.description}</div>
                         <div class="details-data-cell details-center-align " role="cell">/{child.path}</div>
-                        <div class="details-data-cell details-center-align details-single-line" role="cell">{formatDate(details?.created)}</div>
-                        <div class="details-data-cell details-center-align details-single-line" role="cell">{formatDate(details?.modified)}</div>
+                        <div class="details-data-cell details-center-align details-single-line" role="cell">{formatDetailDate(details?.created)}</div>
+                        <div class="details-data-cell details-center-align details-single-line" role="cell">{formatDetailDate(details?.modified)}</div>
                         
                         {/await}
                         <div class="details-data-cell details-long-text" role="cell">-</div>
@@ -1406,8 +1312,8 @@ ondragleave={handleBackgroundDragLeave}
                           <!-- promise was fulfilled -->
                           <div class="details-data-cell details-long-text" role="cell">{details?.filemetadata["description"]}</div>
                           <div class="details-data-cell details-center-align " role="cell">{file.path}</div>
-                          <div class="details-data-cell details-center-align details-single-line" role="cell">{formatDate(details?.fileobsdata.ctime)}</div>
-                          <div class="details-data-cell details-center-align details-single-line" role="cell">{formatDate(details?.fileobsdata.mtime)}</div>
+                          <div class="details-data-cell details-center-align details-single-line" role="cell">{formatDetailDate(details?.fileobsdata.ctime)}</div>
+                          <div class="details-data-cell details-center-align details-single-line" role="cell">{formatDetailDate(details?.fileobsdata.mtime)}</div>
                           <div class="details-data-cell details-long-text" role="cell">{details?.fileinitial}</div>
                           
                           {/await}

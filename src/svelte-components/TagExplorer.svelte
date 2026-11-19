@@ -262,26 +262,6 @@
     window.removeEventListener('mouseup', stopResize);
   }
 
-  // Color dictionary mapping color names to CSS color values
-  const colorDictionary: Record<string, string> = {
-      'red': '#ff0000',
-      'green': '#00ff00',
-      'blue': '#0000ff',
-      'yellow': '#ffff00',
-      'orange': '#ff8800',
-      'purple': '#800080'
-  };
-
-  function getColorForName(colorName: string): string {
-      const normalizedName = colorName.toLowerCase().trim();
-      // Check if it's a known color name
-      if (colorDictionary[normalizedName]) {
-          return colorDictionary[normalizedName];
-      }
-      // Default fallback color
-      return 'none';
-  }
-
 
 
   async function onItemDrop(
@@ -708,8 +688,6 @@ function toggleTreeView(){
       refreshKey={mainViewRefreshKey}
       controller={controller}
       model={model}
-      colorDictionary = {colorDictionary}
-      getColorForName = {getColorForName}
       onItemDrop = {onItemDrop}
       mainViewSortFlag = {mainViewSortFlag}
       viewForm = {viewForm}
@@ -759,7 +737,6 @@ function toggleTreeView(){
           fieldsToSkip={settings?.fieldsToSkip}
           controller={controller}
           model= {model}
-          getColorForName = {getColorForName}
         />
       </div>
     {/if}

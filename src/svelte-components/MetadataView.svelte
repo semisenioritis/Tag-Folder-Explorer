@@ -1,5 +1,7 @@
 <script lang="ts">
   import { logger } from '../utils/logger';
+  import { formatDate } from '../ui/format';
+  import { getColorForName } from '../ui/colors';
 
 //   import { getrightSidebarData } from '../modelInterface'
     import type { ControllerInterface } from '../controllerInterface';
@@ -16,11 +18,10 @@
         fieldsToSkip?: string;
         controller: ControllerInterface | null | undefined;
         model: ModelInterface | null | undefined;
-        getColorForName: (name: string) => string;
     }
 
 
-    let { currentPath, focusedObjectType, focusedObjectPath, focusedObjectParent, showObsMetaData = true, fieldsToSkip = '', controller, model, getColorForName}:Props = $props();
+    let { currentPath, focusedObjectType, focusedObjectPath, focusedObjectParent, showObsMetaData = true, fieldsToSkip = '', controller, model}:Props = $props();
     
 
     if (!model) {
@@ -90,33 +91,6 @@
         return !fieldsToSkipSet.has(fieldName.toLowerCase());
     }
  
-    function formatDate(dateString: string): string {
-        if (!dateString) return 'N/A';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-        });
-    }
-
-
-    function formatTimestamp(timestamp: number): string {
-        if (!timestamp) return 'N/A';
-        const date = new Date(timestamp);
-        return date.toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-        });
-    }
-
     function formatFieldName(fieldName: string): string {
         // Convert field names like "modified" to "Modified"
         return fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
@@ -495,11 +469,11 @@
           <summary class="metadata-title">Obsidian Information</summary>
           <div class="metadata-field">
               <span class="field-label">Created Time:</span>
-              <span class="field-value">{formatTimestamp(metadataViewData.fileobsdata.ctime)}</span>
+              <span class="field-value">{formatDate(metadataViewData.fileobsdata.ctime)}</span>
           </div>
           <div class="metadata-field">
               <span class="field-label">Modified Time:</span>
-              <span class="field-value">{formatTimestamp(metadataViewData.fileobsdata.mtime)}</span>
+              <span class="field-value">{formatDate(metadataViewData.fileobsdata.mtime)}</span>
           </div>
       </details>
       {/if}

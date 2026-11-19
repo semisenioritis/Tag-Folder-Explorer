@@ -44,7 +44,7 @@ export class InputModal extends Modal {
 
     });
 
-    this.inputEl.addClass("modal-input");
+    this.inputEl.addClass("tfe-modal-input");
     
 
     this.inputEl.addEventListener("keydown", (event) => {
@@ -56,7 +56,7 @@ export class InputModal extends Modal {
 
     const buttonContainer = contentEl.createEl("div");
 
-    buttonContainer.addClass("modal-button-container");
+    buttonContainer.addClass("tfe-modal-button-container");
 
 
     // Confirm button
@@ -64,7 +64,7 @@ export class InputModal extends Modal {
       text: this.config.confirmText ?? "Confirm",
     });
 
-      confirmBtn.addClass("modal-left-button");
+      confirmBtn.addClass("tfe-modal-left-button");
 
     confirmBtn.onclick = () => {
       const value = this.inputEl.value;
@@ -77,7 +77,7 @@ export class InputModal extends Modal {
       text: this.config.cancelText ?? "Cancel",
     });
 
-      cancelBtn.addClass("modal-right-button");
+      cancelBtn.addClass("tfe-modal-right-button");
 
     cancelBtn.onclick = () => {
       this.config.onCancel();
@@ -114,7 +114,7 @@ export class ConfirmationModal extends Modal {
 
     const buttonContainer = contentEl.createEl("div");
 
-    buttonContainer.addClass("modal-button-container");
+    buttonContainer.addClass("tfe-modal-button-container");
 
 
     // Confirm button
@@ -122,7 +122,7 @@ export class ConfirmationModal extends Modal {
       text: this.config.confirmButton ?? "Confirm",
     });
 
-    confirmBtn.addClass("modal-left-button");
+    confirmBtn.addClass("tfe-modal-left-button");
 
     confirmBtn.onclick = () => {
       this.config.onConfirm(); 
@@ -134,7 +134,7 @@ export class ConfirmationModal extends Modal {
       text: this.config.cancelText ?? "Cancel",
     });
 
-    cancelBtn.addClass("modal-right-button");
+    cancelBtn.addClass("tfe-modal-right-button");
 
     cancelBtn.onclick = () => {
       this.config.onCancel();
@@ -193,7 +193,7 @@ export class SingleSelectModal extends Modal {
     // Select dropdown
     this.selectEl = contentEl.createEl("select");
 
-    this.selectEl.addClass("modal-input");
+    this.selectEl.addClass("tfe-modal-input");
 
     this.config.options.forEach((optionText) => {
       const optionEl = this.selectEl.createEl("option", {
@@ -207,14 +207,14 @@ export class SingleSelectModal extends Modal {
 
     const buttonContainer = contentEl.createEl("div");
 
-    buttonContainer.addClass("modal-button-container");
+    buttonContainer.addClass("tfe-modal-button-container");
 
     // Confirm button
     const confirmBtn = buttonContainer.createEl("button", {
       text: this.config.confirmButtonText ?? "Confirm",
     });
 
-    confirmBtn.addClass("modal-left-button");
+    confirmBtn.addClass("tfe-modal-left-button");
     
     confirmBtn.onclick = () => {
       const value = this.selectEl.value;
@@ -227,7 +227,7 @@ export class SingleSelectModal extends Modal {
       text: this.config.cancelButtonText ?? "Cancel",
     });
 
-    cancelBtn.addClass("modal-right-button");
+    cancelBtn.addClass("tfe-modal-right-button");
 
     cancelBtn.onclick = () => {
       this.config.onCancel();
