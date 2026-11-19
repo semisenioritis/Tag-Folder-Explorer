@@ -1,4 +1,4 @@
-import { Editor, MarkdownView, Plugin, ItemView, WorkspaceLeaf } from 'obsidian'
+import { Plugin, ItemView, WorkspaceLeaf } from 'obsidian'
 
 
 import { TreeRoot } from './TreeRoot';
@@ -8,18 +8,6 @@ import { Orchestrator } from './orchestrator';
 import { EventListener } from './eventlistener';
 import {shiftTagsFromBodyToMetadata} from "./fileEditor";
 
-
-/*
-
-
-
-**/
-
-
-
-// Import the Counter Svelte component and the `mount` and `unmount` methods.
-
-// step 1
 
 import TagExplorer from './svelte-components/TagExplorer.svelte';
 
@@ -34,66 +22,7 @@ import type {TagFolderPluginSettings} from "./settings";
 
 
 
-// const VIEW_TYPE_EXPLORER = 'explorer-view'
 const VIEW_TYPE_TAG_EXPLORER = 'tag-explorer-view'
-
-
-
-
-// class ExplorerView extends ItemView {
-
-//   // step 2
-
-//   sidebar: ReturnType<typeof testsidebar> | undefined;
-
-
-//   constructor(leaf: WorkspaceLeaf) { super(leaf) }
-
-//   getViewType() { return VIEW_TYPE_EXPLORER }
-
-//   getDisplayText() { return 'Explorer view' }
-
- 
-//   async onOpen() {
-//     this.renderView()
-//   }
-  
-  
-  
-//   private renderView(){
-//     const c = this.contentEl
-//     c.empty()
-//     // c.createEl('h4', { text: 'Explorer view' })
-// 	  // Attach the Svelte component to the ItemViews content element and provide the needed props.
-    
-//     // step 3
-//     // this.counter = mount(Counter, {
-//     //   target: this.contentEl,
-//     //   props: {
-//     //     startCount: 5,
-//     //   }
-//     // });
-
-
-
-
-//     this.sidebar = mount(testsidebar, {
-//       target: this.contentEl
-//     });    
-//     console.log("sidebar mounted")
-//   }
-
-
-  
-//   async onClose() {
-//     if (this.sidebar) {
-//       // Remove the Counter from the ItemView.
-//       unmount(this.sidebar);
-//     }
-
-
-//   }
-// }
 
 
 
@@ -244,7 +173,6 @@ class TagExplorerView extends ItemView {
         controller: this.plugin.controller,
         model: this.plugin.model,
         initialTreeData: treeData,
-        initialVersion: version,
         initialCurrentPath: this.savedState.currentPath,
         initialBackPaths: this.savedState.backPaths,
         initialForwardPaths: this.savedState.forwardPaths,
@@ -308,7 +236,6 @@ export default class TagFolderPlugin extends Plugin {
 
 		console.log('Tag Folder Plugin loaded');
 
-    // this.registerView(VIEW_TYPE_EXPLORER, leaf => new ExplorerView(leaf))
     this.registerView(VIEW_TYPE_TAG_EXPLORER, leaf => new TagExplorerView(leaf, this))
 
 		// Wait for the metadata cache to be fully resolved before computing the tree
@@ -329,7 +256,6 @@ export default class TagFolderPlugin extends Plugin {
 		});
 
 
-    // this.addRibbonIcon('dice', 'Open Explorer', () => this.activateView())
     this.addRibbonIcon('folder-tree', 'Open Tag Explorer', () => this.activateTagExplorerView())
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
@@ -391,17 +317,6 @@ export default class TagFolderPlugin extends Plugin {
 		// When tree is modified later (e.g., by orchestrator), call this.broadcastTreeUpdate()
 	}
 
-  // async activateView() {
-  //   const w = this.app.workspace
-    
-  //   let leaf = w.getLeaf(true)
-  //   await leaf.setViewState({ type: VIEW_TYPE_EXPLORER, active: true })
-    
-  //   w.revealLeaf(leaf)
-  // }
-
-
-
   async activateTagExplorerView() {
     const w = this.app.workspace
     let leaf = w.getLeaf(true)
@@ -449,20 +364,6 @@ export default class TagFolderPlugin extends Plugin {
    * @returns number - The current tree version counter
    */
   getTreeVersion(): number {
-
- 
-    // let counter_temp = 0 
-    // this.activeViews.forEach(view => {
-    //   // Check if the view is a TagExplorerView and its container element is visible in the UI
-    //   if (view instanceof TagExplorerView && view.containerEl.isShown()) {
-    //     counter_temp += 1
-    //   }
-    // });
-
-    // console.log("number of active views with my plugin leaf:", counter_temp)
-
-
-
     return this.treeRoot?.getTreeVersion() ?? 0;
 
   }
@@ -484,7 +385,6 @@ export default class TagFolderPlugin extends Plugin {
       // Check if the view is a TagExplorerView and its container element is visible in the UI
       if (view instanceof TagExplorerView && view.containerEl.isShown()) {
         view.updateTree(serializedTree, version);
-        // console.log("Broadcasted tree update to view with version:", version);
       }
     });
   }

@@ -2,7 +2,6 @@
   // import { getleftSidebarTree} from '../modelInterface'
 
   import { openFileInNewTab } from '../windows'
-  import type { ControllerInterface } from '../controllerInterface';
   import type { ModelInterface } from '../modelInterface';
   import { openTagExplorerInNewTab } from '../windows';
   import type { FileData, TagNodeData, SerializedTreeData} from '../interfaces';
@@ -16,15 +15,13 @@
     refreshKey?: number;  
     treeViewSortFlag: boolean;
     initialTreeData?: unknown;
-    initialVersion?: number;
-    controller: ControllerInterface | null | undefined;
     model: ModelInterface | null | undefined;
     onItemDrop: (sourceType: 'folder' | 'file', sourcePath: string, sourceParentPath: string, targetType: 'folder', targetPath: string, targetParentPath: string, source: 'internal' | 'external', ctrlPressed: boolean) => void;
     treeView: "tree" | "untagged" | "emptyfolders" | "allfiles" | "allfolders";
   }
   
 
-  let { currentPath, onUpdate, onFocusChange, refreshKey, treeViewSortFlag, initialTreeData, initialVersion = 0, controller, model, onItemDrop, treeView }:Props = $props();
+  let { currentPath, onUpdate, onFocusChange, refreshKey, treeViewSortFlag, initialTreeData, model, onItemDrop, treeView }:Props = $props();
   
   if (!model) {
       throw new Error("model is not initialized");
@@ -37,11 +34,8 @@
       : (model!.getleftSidebarTree(treeViewSortFlag).tree as SerializedTreeData)
   );
 
-  // console.log("test")
-  // console.log(treeData) 
   // console.log($state.snapshot(treeData));
   // $inspect(treeData)
-  let treeVersion = $state<number>(initialVersion);
   let expandedTags = $state<Set<string>>(new Set())
   const ROOT_TAGS_NODE_PATH = '__root_tags__';
 
@@ -50,7 +44,6 @@
    */
   export function updateTreeData(newTreeData: unknown, newVersion: number): void {
     treeData = model!.getleftSidebarTree(treeViewSortFlag).tree as SerializedTreeData;
-    treeVersion = newVersion;
     console.log("TagTreeView updated to version:", newVersion);
   }
 
@@ -81,8 +74,6 @@
 
     }else{
       let folderpath = folder
-      // console.log('Folder clicked!');
-      // console.log(foldername+" "+folderpath)
   
       onUpdate(folderpath);
   
@@ -97,7 +88,6 @@
 
   function handleFileClick(file:string, parentPath: string = '') {
 
-		// console.log('File clicked!');
     let filepath = file
 
     
@@ -105,35 +95,12 @@
       onFocusChange('file', filepath, parentPath);
     }
 
-    // console.log(filepath)
     openFileInNewTab(filepath)
 
-    // console.log("file path from tree view")
-    // console.log(filepath)
 
 
 	}
 
-
-
-  function handleDragOverDisabled(event: DragEvent){
-    event.preventDefault(); // Necessary to allow dropping
-    if (event.dataTransfer) {
-
-      event.dataTransfer.dropEffect = 'none';
-    }
-  }
-
-  function handleDropDisabled(event: DragEvent, targetType: 'folder' | 'file', targetPath: string, parentPath:string) {
-    event.preventDefault();
-    if (event.dataTransfer) {
-      try {
-        event.dataTransfer.dropEffect = 'none';
-      } catch (e) {
-        console.error("Failed to parse drag data:", e);
-      }
-    }
-  }
 
   function handleDragStart(event: DragEvent, type: 'folder' | 'file', path: string, parentPath: string) {
     if (event.dataTransfer) {

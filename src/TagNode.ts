@@ -1,8 +1,7 @@
-import { App, TFile, TFolder } from 'obsidian';
+import { App } from 'obsidian';
 import { FileSystemAdapter } from "obsidian";
 import { createHash } from 'crypto';
 import type { ITagNode, IFileLeaf, ISerializedTagNode  } from './interfaces';
-import { FileLeaf } from './FileLeaf';
 import * as fs from 'fs';
 import * as path from 'path';
 import {metadataAddNewProperty, metadataReplaceExistingProperty, metadataAppendToProperty} from "./fileEditor"

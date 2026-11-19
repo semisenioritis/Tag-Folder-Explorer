@@ -574,10 +574,9 @@ export class TreeRoot implements ITreeRoot {
      * Used when: Node lookup, node-based operations, tree navigation
      */
     public getNode(tagpath: string): ITagNode | null {
-        if (!tagpath || tagpath.trim() === '') {{
-            let rootNode = this.rootTagNode
-            return rootNode;
-        }}
+        if (!tagpath || tagpath.trim() === '') {
+            return this.rootTagNode;
+        }
         
         // Split the tag path into segments
         const tagSegments = tagpath.split('/').filter(segment => segment.length > 0);
@@ -683,8 +682,6 @@ export class TreeRoot implements ITreeRoot {
         this.cachedSerializedTree.asc = null;
         this.cachedSerializedTree.desc = null;
 
-        // console.log("test map")
-        // console.log(this.filePathToLeafMap)
     }
     
     /**
@@ -1026,7 +1023,6 @@ export class TreeRoot implements ITreeRoot {
                 // Check if this tag path already exists in the tree
                 const existingNode = this.getNode(tagPath);
 
-                // console.log(tagPath+"   "+(existingNode) )
                 
                 if (existingNode) {
                     // Node already exists, move on
@@ -1071,7 +1067,6 @@ export class TreeRoot implements ITreeRoot {
             if (tagnodePath.startsWith('#')) {
                 tagnodePath = tagnodePath.slice(1);
             }
-            const crypto = require('crypto');
 
             function hashPath(path:string) {
 

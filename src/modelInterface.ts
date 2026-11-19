@@ -1,8 +1,7 @@
 import type { TreeRoot } from './TreeRoot';
-import { App, TFile } from "obsidian";
-import type { ISerializedTagNode, ITagNode } from './interfaces'
+import { App } from "obsidian";
+import type { ISerializedTagNode } from './interfaces'
 
-import {metadataReadAllFrontmatter} from "./fileEditor";
 
 
 export class ModelInterface {
@@ -35,15 +34,6 @@ export class ModelInterface {
     }
 
 
-    /**
-     * Get only the current tree version without the full tree data
-     * Used for checking if a view needs to update
-     */
-    getTreeVersion(): number {
-        return this.treeObj?.getTreeVersion() ?? 0;
-    }
-
-
 
     /**
      * Get data for the right sidebar (placeholder)
@@ -52,9 +42,6 @@ export class ModelInterface {
 
 
         
-        // console.log("from inside modelInterface")
-        // console.log(type)
-        // console.log(path)
 
     
 
@@ -64,7 +51,6 @@ export class ModelInterface {
             return foldermetadata
         }
         if (type =='file'){
-            // console.log("from inside file")
             let filename = path.split("/").pop()?.replace(/\.[^/.]+$/, "") ?? "";
             const file = this.treeObj?.getFile(filename, path, parentfolder)
             let filenamestring = file?.getName()
@@ -75,10 +61,6 @@ export class ModelInterface {
 
 
 
-            // console.log(filemetadata)
-            // console.log(fileinitial)
-            // console.log(fileobsdata)
-            // console.log("++++++++")
             return {filemetadata, fileinitial, fileobsdata, filenamestring, filepathstring}
         }
         return this.treeObj;

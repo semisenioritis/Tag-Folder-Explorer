@@ -15,12 +15,11 @@
         fieldsToSkip?: string;
         controller: ControllerInterface | null | undefined;
         model: ModelInterface | null | undefined;
-        colorDictionary:Record<string, string>
         getColorForName: (name: string) => string;
     }
 
 
-    let { currentPath, focusedObjectType, focusedObjectPath, focusedObjectParent, showObsMetaData = true, fieldsToSkip = '', controller, model, colorDictionary, getColorForName}:Props = $props();
+    let { currentPath, focusedObjectType, focusedObjectPath, focusedObjectParent, showObsMetaData = true, fieldsToSkip = '', controller, model, getColorForName}:Props = $props();
     
 
     if (!model) {
