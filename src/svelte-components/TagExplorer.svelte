@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { logger } from '../utils/logger';
   import { inconsistencyFlag } from '../store';
   import { fade } from 'svelte/transition';
   import TagTreeView from './TagTreeView.svelte';
@@ -135,10 +136,6 @@
     focusedObjectType = type;
     focusedObjectPath = path;
     focusedObjectParent = parentpath
-    console.log("__")
-    console.log(type)
-    console.log(path)
-    console.log("__")
   }
 
   function handleUpdate(newData: string) {
@@ -304,7 +301,7 @@
         await controller!.addFileToTagpath(targetPath, sourcePath)
       }
     } else {
-      console.log(`Item dropped: source (${sourceType}) ${sourcePath}  ${sourceParentPath} -> target (${targetType}) ${targetPath}  ${targetParentPath} `);
+      logger.debug(`Item dropped: source (${sourceType}) ${sourcePath}  ${sourceParentPath} -> target (${targetType}) ${targetPath}  ${targetParentPath} `);
 
       if (sourceType === "file"){
   
@@ -354,55 +351,37 @@ let treeViewSortFlag = $state(true)
 function flipMainViewSortFlag(){
   mainViewSortFlag = !mainViewSortFlag;
 
-  console.log(mainViewRefreshKey)
   mainViewRefreshKey += 1
-  console.log(mainViewRefreshKey)
 }
 
 function flipLeftSidebarViewSortFlag(){
   treeViewSortFlag = !treeViewSortFlag
 
-  console.log(mainViewRefreshKey)
   mainViewRefreshKey += 1
-  console.log(mainViewRefreshKey)
 }
 
 
 async function renameSelectedItem(type: 'folder' | 'file', path: string, parentpath: string){
-  console.log("renameSelectedItem")
 
-    console.log(type)
-    console.log(path)
-    console.log(parentpath)
     await controller!.triggerRenameModal(type, path, parentpath)
 
 }
 
 async function createNewFileInFolder(type:'file', parentpath: string){
-  console.log("createNewFileInFolder")
 
-    console.log(type)
-    console.log(parentpath)
     await controller!.triggerNewFileOrFolderModal(type, parentpath)
 
 }
 
 async function createNewFolderInFolder(type: 'folder', parentpath: string){
-  console.log("createNewFolderInFolder")
 
-    console.log(type)
-    console.log(parentpath)
     await controller!.triggerNewFileOrFolderModal(type, parentpath)
 
 }
 
 
 async function deleteSelectedItem(type: 'folder' | 'file', path: string, parentpath: string){
-  console.log("delteSelectedItem")
 
-    console.log(type)
-    console.log(path)
-    console.log(parentpath)
     await controller!.triggerDeleteModal(type, path, parentpath)
 
 }

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { logger } from '../utils/logger';
   import { onDestroy } from 'svelte';
   import { Menu } from 'obsidian';
   // import { getmainViewData, ModelInterface, readLegendStatusOfFile, readLegendStatusOfFolder } from '../modelInterface'
@@ -526,8 +527,6 @@
       mainViewData!.files.map(async (file) => [file.path, await getFileButtonColor(file)])
     );
     fileButtonColors = Object.fromEntries(entries);
-    console.log("🔵🔵🔵🔵🔵🔵")
-    console.log(fileButtonColors)
   }
 
   // Load all pinned statuses initially
@@ -536,8 +535,6 @@
       mainViewData!.files.map(async (file) => [file.path, await getFilePinnedStatus(file)])
     );
     filePinnedStatuses = Object.fromEntries(entries);
-    console.log("🟣🟣🟣🟣🟣🟣")
-    console.log(filePinnedStatuses)
   }
 
   async function loadFileData(){
@@ -570,7 +567,7 @@
       try {
         event.dataTransfer.dropEffect = 'none';
       } catch (e) {
-        console.error("Failed to parse drag data:", e);
+        logger.error("Failed to parse drag data:", e);
       }
     }
   }
@@ -709,7 +706,7 @@
       onItemDrop(payload.type, payload.path, payload.parentPath, targetType, targetPath, targetParentPath, payload.source, event.ctrlKey || event.metaKey);
 
     } catch (e) {
-      console.error("Failed to parse drag data:", e);
+      logger.error("Failed to parse drag data:", e);
     }
   }
 
@@ -734,7 +731,7 @@
         }
       }
     } catch (e) {
-      console.error("Failed to parse drag data:", e);
+      logger.error("Failed to parse drag data:", e);
     }
   }
 

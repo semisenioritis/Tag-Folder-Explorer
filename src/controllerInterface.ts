@@ -696,7 +696,6 @@ export class ControllerInterface {
         tagPath: string,
         owner: boolean = true
     ): Promise<{ success: boolean; error?: any }> {
-        console.log("attempting to call orchestrator")
         return await this.orchestrator.cycleLegendForFolder(tagPath, owner);
     }
 

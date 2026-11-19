@@ -5,6 +5,7 @@ import type { ITagNode, IFileLeaf, ISerializedTagNode  } from './interfaces';
 import * as fs from 'fs';
 import * as path from 'path';
 import {metadataAddNewProperty, metadataReplaceExistingProperty, metadataAppendToProperty} from "./fileEditor"
+import { logger } from './utils/logger';
 
 /**
  * TagNode class - represents tag nodes in the hierarchical tag tree
@@ -129,7 +130,7 @@ export class TagNode implements ITagNode {
             
             return true;
         } catch (error) {
-            console.error('Error adding child node:', error);
+            logger.error('Error adding child node:', error);
             return false;
         }
     }
@@ -169,14 +170,14 @@ export class TagNode implements ITagNode {
             if (fileLeaf){
                 this.files.add(fileLeaf);
             }else{
-                console.error('File map did not contain the required FileLeaf');
+                logger.error('File map did not contain the required FileLeaf');
                 return false
             }
             
             
             return true;
         } catch (error) {
-            console.error('Error creating new file:', error);
+            logger.error('Error creating new file:', error);
             return false;
         }
     }
@@ -234,7 +235,7 @@ export class TagNode implements ITagNode {
             
             return true;
         } catch (error) {
-            console.error('Error creating metadata file:', error);
+            logger.error('Error creating metadata file:', error);
             return false;
         }
     }
@@ -386,7 +387,7 @@ export class TagNode implements ITagNode {
             
             return metadata;
         } catch (error) {
-            console.error('Error reading metadata file:', error);
+            logger.error('Error reading metadata file:', error);
             return {};
         }
     }    
@@ -425,7 +426,7 @@ export class TagNode implements ITagNode {
             
             return true;
         } catch (error) {
-            console.error('Error renaming node:', error);
+            logger.error('Error renaming node:', error);
             return false;
         }
     }
@@ -464,7 +465,7 @@ export class TagNode implements ITagNode {
             
             return true;
         } catch (error) {
-            console.error('Error editing path:', error);
+            logger.error('Error editing path:', error);
             return false;
         }
     }
@@ -502,11 +503,11 @@ export class TagNode implements ITagNode {
                 case 'append':
                     return metadataAppendToProperty(this.app, this.path, payload);
                 default:
-                    console.error('Invalid operation type:', operation);
+                    logger.error('Invalid operation type:', operation);
                     return false;
             }
         } catch (error) {
-            console.error('Error updating metadata file:', error);
+            logger.error('Error updating metadata file:', error);
             return false;
         }
     }
@@ -543,7 +544,7 @@ export class TagNode implements ITagNode {
             
             return true;
         } catch (error) {
-            console.error('Error removing child node:', error);
+            logger.error('Error removing child node:', error);
             return false;
         }
     }
@@ -573,7 +574,7 @@ export class TagNode implements ITagNode {
             
             return false; // File not found
         } catch (error) {
-            console.error('Error removing file:', error);
+            logger.error('Error removing file:', error);
             return false;
         }
     }
@@ -630,7 +631,7 @@ export class TagNode implements ITagNode {
             
             return true;
         } catch (error) {
-            console.error('Error moving metadata file to trash:', error);
+            logger.error('Error moving metadata file to trash:', error);
             return false;
         }
     }
@@ -743,13 +744,13 @@ export class TagNode implements ITagNode {
         // Check if old path exists in the map
         const fileLeaf = this.refFilePathToLeafMap.get(oldfilepath);
         if (!fileLeaf) {
-            console.error(`Old file path not found in map: ${oldfilepath}`);
+            logger.error(`Old file path not found in map: ${oldfilepath}`);
             return false;
         }
         
         // Check if new path already exists (avoid overwriting)
         if (this.refFilePathToLeafMap.has(newfilepath)) {
-            console.error(`New file path already exists in map: ${newfilepath}`);
+            logger.error(`New file path already exists in map: ${newfilepath}`);
             return false;
         }
         

@@ -8,6 +8,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import  type { TagFolderPluginSettings } from './settings';
+import { logger } from './utils/logger';
 /**
  * TreeRoot class - represents the root of the tag tree
  * 
@@ -256,13 +257,13 @@ export class TreeRoot implements ITreeRoot {
         // Check if old path exists in the map
         const fileLeaf = this.filePathToLeafMap.get(oldfilepath);
         if (!fileLeaf) {
-            console.error(`Old file path not found in map: ${oldfilepath}`);
+            logger.error(`Old file path not found in map: ${oldfilepath}`);
             return false;
         }
         
         // Check if new path already exists (avoid overwriting)
         if (this.filePathToLeafMap.has(newfilepath)) {
-            console.error(`New file path already exists in map: ${newfilepath}`);
+            logger.error(`New file path already exists in map: ${newfilepath}`);
             return false;
         }
         
@@ -380,7 +381,7 @@ export class TreeRoot implements ITreeRoot {
                     
                     return true;
                 } catch (error) {
-                    console.error('Error adding child node to root:', error);
+                    logger.error('Error adding child node to root:', error);
                     return false;
                 }
             },
@@ -410,14 +411,14 @@ export class TreeRoot implements ITreeRoot {
                     if (fileLeaf){
                         this.untaggedFiles.add(fileLeaf);
                     }else{
-                        console.error('File map did not contain the required FileLeaf');
+                        logger.error('File map did not contain the required FileLeaf');
                         return false
                     }
                     
                     
                     return true;
                 } catch (error) {
-                    console.error('Error creating new file in root:', error);
+                    logger.error('Error creating new file in root:', error);
                     return false;
                 }
             },
@@ -468,7 +469,7 @@ export class TreeRoot implements ITreeRoot {
                         return false
                     }
                 } catch (error) {
-                    console.error('Error removing child node from root:', error);
+                    logger.error('Error removing child node from root:', error);
                     return false;
                 }
             },
@@ -485,7 +486,7 @@ export class TreeRoot implements ITreeRoot {
                     }
                     return false; // File not found
                 } catch (error) {
-                    console.error('Error removing file from root:', error);
+                    logger.error('Error removing file from root:', error);
                     return false;
                 }
             },
@@ -539,13 +540,13 @@ export class TreeRoot implements ITreeRoot {
                 // Check if old path exists in the map
                 const fileLeaf = this.filePathToLeafMap.get(oldfilepath);
                 if (!fileLeaf) {
-                    console.error(`Old file path not found in map: ${oldfilepath}`);
+                    logger.error(`Old file path not found in map: ${oldfilepath}`);
                     return false;
                 }
                 
                 // Check if new path already exists (avoid overwriting)
                 if (this.filePathToLeafMap.has(newfilepath)) {
-                    console.error(`New file path already exists in map: ${newfilepath}`);
+                    logger.error(`New file path already exists in map: ${newfilepath}`);
                     return false;
                 }
                 
@@ -662,7 +663,7 @@ export class TreeRoot implements ITreeRoot {
         // Get all files from vault
         const vaultRoot = this.app.vault.getRoot();
         if (!vaultRoot || !(vaultRoot instanceof TFolder)) {
-            console.error('Cannot access vault root');
+            logger.error('Cannot access vault root');
             return;
         }
         
@@ -805,7 +806,7 @@ export class TreeRoot implements ITreeRoot {
         // Get vault root
         const vaultRoot = this.app.vault.getRoot();
         if (!vaultRoot || !(vaultRoot instanceof TFolder)) {
-            console.error('Cannot access vault root for building file path dictionary');
+            logger.error('Cannot access vault root for building file path dictionary');
             return fileMap;
         }
         
@@ -827,7 +828,7 @@ export class TreeRoot implements ITreeRoot {
                         const fileLeaf = new FileLeaf(child.basename, child.path, this.app);
                         fileMap.set(child.path, fileLeaf);
                     } catch (error) {
-                        console.error(`Error creating FileLeaf for ${child.path}:`, error);
+                        logger.error(`Error creating FileLeaf for ${child.path}:`, error);
                     }
                 }
             }
@@ -894,12 +895,12 @@ export class TreeRoot implements ITreeRoot {
                     }
                 }
             }else{
-                console.error('File map did not contain the required FileLeaf');
+                logger.error('File map did not contain the required FileLeaf');
 
                 throw new Error("File map did not contain the required FileLeaf");
                 }
         } catch (error) {
-            console.error(`Error processing file ${file.path}:`, error);
+            logger.error(`Error processing file ${file.path}:`, error);
         }
     }
     
@@ -1033,7 +1034,7 @@ export class TreeRoot implements ITreeRoot {
                 this.createTagNodeHierarchy(tagPath);
             }
         } catch (error) {
-            console.error('Error populating empty tag folders from metadata:', error);
+            logger.error('Error populating empty tag folders from metadata:', error);
         }
     }
     
@@ -1082,7 +1083,7 @@ export class TreeRoot implements ITreeRoot {
 
 
         } catch (error) {
-            console.error(`Error extracting tag path from filename ${filename}:`, error);
+            logger.error(`Error extracting tag path from filename ${filename}:`, error);
             return '';
         }
     }

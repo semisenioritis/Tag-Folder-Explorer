@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { logger } from '../utils/logger';
 
 //   import { getrightSidebarData } from '../modelInterface'
     import type { ControllerInterface } from '../controllerInterface';
@@ -30,7 +31,6 @@
 
 
 	let descriptionValue = $derived.by(() => {
-        console.log("derivation was triggered")
         let tempdescriptionValue
         if (focusedObjectType== "folder"){
             if (metadataViewData?.description) {
@@ -50,7 +50,6 @@
 	});
 
 	let raindropUrlValue = $derived.by(() => {
-        console.log("derivation was triggered")
         let tempraindropUrlValue
         if (focusedObjectType== "folder"){
             if (metadataViewData?.raindropLink) {
@@ -63,7 +62,6 @@
 	});
 
 	let legendValue = $derived.by(() => {
-        console.log("derivation was triggered")
         let templegendValue
         if (focusedObjectType== "folder"){
             if (metadataViewData?.legend){
@@ -173,7 +171,7 @@
 
             await recomputeMetadata()
         } catch (error) {
-            console.error('Failed to update description:', error);
+            logger.error('Failed to update description:', error);
         }
     }
 
@@ -189,7 +187,7 @@
 
 
                 if (!pattern.test(urlValidationValue)) {
-                    console.log("Invalid Raindrop URL");
+                    logger.warn("Invalid Raindrop URL");
                     raindropUrlValue = ""
                     // probably should display a notice on the ui that this is invalid
                     return;
@@ -201,13 +199,12 @@
             }
             await recomputeMetadata()
         } catch (error) {
-            console.error('Failed to update raindrop url:', error);
+            logger.error('Failed to update raindrop url:', error);
         }
     }
 
 
     async function handleLegendUpdate() {
-        console.log("updating legend")
         if (!controller) return;
 
         try {
@@ -216,12 +213,11 @@
                     legend: legendValue
                 });
                 
-                console.log('Legend update successful');
-                console.log("Result",result)
+                logger.debug('Legend update successful');
             }
             await recomputeMetadata()
         } catch (error) {
-            console.error('Failed to update legend:', error);
+            logger.error('Failed to update legend:', error);
         }
     }
 

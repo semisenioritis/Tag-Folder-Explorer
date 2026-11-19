@@ -2,6 +2,7 @@
 
 import { App, Plugin, TAbstractFile, TFile, TFolder } from "obsidian";
 import { Orchestrator } from "./orchestrator";
+import { logger } from './utils/logger';
 
 export class EventListener {
     private app: App;
@@ -44,7 +45,7 @@ export class EventListener {
                 return;
             }
 
-            console.log(`[Tag Folder Explorer] Detected file creation: ${file.path}`);
+            logger.debug(`Detected file creation: ${file.path}`);
             await this.orchestrator.syncExternalFileCreation(file);
             
         }
@@ -61,7 +62,7 @@ export class EventListener {
                 return;
             }
 
-            console.log(`[Tag Folder Explorer] Detected file rename from ${oldPath} to ${file.path}`);
+            logger.debug(`Detected file rename from ${oldPath} to ${file.path}`);
             
             // Route the file and old path to Orchestrator
             await this.orchestrator.syncExternalFileRename(file, oldPath);
@@ -79,7 +80,7 @@ export class EventListener {
                 return;
             }
     
-            console.log(`[Tag Folder Explorer] Detected file modification : ${file.path}`);
+            logger.debug(`Detected file modification : ${file.path}`);
             await this.orchestrator.syncExternalFileModify(file);
             
 
@@ -97,7 +98,7 @@ export class EventListener {
                 return;
             }
 
-            console.log(`[Tag Folder Explorer] Detected file deletion: ${file.path}`);
+            logger.debug(`Detected file deletion: ${file.path}`);
             
             await this.orchestrator.syncExternalFileDelete(file);
         }

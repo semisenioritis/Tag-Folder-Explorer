@@ -17,6 +17,7 @@ import { mount, unmount } from 'svelte';
 
 
 import {DEFAULT_SETTINGS, TagFolderSettingTab} from "./settings";
+import { logger, setDebugLogging } from "./utils/logger";
 import type {TagFolderPluginSettings} from "./settings";
 
 
@@ -183,7 +184,6 @@ class TagExplorerView extends ItemView {
       }
     });
     
-    console.log("Tag Explorer mounted with version:", version)
   }
   
   async onClose() {
@@ -234,7 +234,7 @@ export default class TagFolderPlugin extends Plugin {
     await this.loadSettings();
     this.applyObsMetadataVisibility();
 
-		console.log('Tag Folder Plugin loaded');
+		logger.debug('Tag Folder Plugin loaded');
 
     this.registerView(VIEW_TYPE_TAG_EXPLORER, leaf => new TagExplorerView(leaf, this))
 
@@ -269,7 +269,7 @@ export default class TagFolderPlugin extends Plugin {
 
           const activeFile = this.app.workspace.getActiveFile();
           if (!activeFile) {
-              console.log('No active file');
+              logger.warn('No active file');
               return;
           }
 
@@ -302,8 +302,7 @@ export default class TagFolderPlugin extends Plugin {
 		const orchestrator = new Orchestrator(this.app, this.treeRoot, this);
 		this.controller = new ControllerInterface(orchestrator);
 		
-		console.log('Tag tree constructed successfully (metadata cache resolved)');
-    console.log(this.treeRoot)
+		logger.debug('Tag tree constructed successfully (metadata cache resolved)');
 
     this.model = new ModelInterface(this.treeRoot, this.app)
 
@@ -390,7 +389,7 @@ export default class TagFolderPlugin extends Plugin {
   }
 
 	onunload() {
-		console.log('Tag Folder Plugin unloaded');
+		logger.debug('Tag Folder Plugin unloaded');
     document.body.classList.remove(this.HIDE_OBSIDIAN_METADATA_CLASS);
 		
 		// Clean up the tree reference
@@ -404,10 +403,12 @@ export default class TagFolderPlugin extends Plugin {
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<TagFolderPluginSettings>);
+		setDebugLogging(this.settings.debugLogging);
 	}
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+		setDebugLogging(this.settings.debugLogging);
     this.applyObsMetadataVisibility();
 	}  
 

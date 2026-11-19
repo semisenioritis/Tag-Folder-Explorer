@@ -5,13 +5,14 @@ export interface TagFolderPluginSettings {
 	folderPathsToSkip: string;
 	showObsMetaData: boolean;
 	fieldsToSkip: string;
-
+	debugLogging: boolean;
 }
 
 export const DEFAULT_SETTINGS: TagFolderPluginSettings = {
 	folderPathsToSkip: '',
 	showObsMetaData: false,
-	fieldsToSkip: ''
+	fieldsToSkip: '',
+	debugLogging: false
 }
 
 export class TagFolderSettingTab extends PluginSettingTab {
@@ -120,5 +121,14 @@ export class TagFolderSettingTab extends PluginSettingTab {
 		});
 
 
+		new Setting(containerEl)
+			.setName('Debug logging')
+			.setDesc('Write diagnostic messages to the developer console. Turn on the Verbose level in the console to see them. Errors and warnings are always shown.')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.debugLogging)
+				.onChange(async (value) => {
+					this.plugin.settings.debugLogging = value;
+					await this.plugin.saveSettings();
+				}));
 	}
 }

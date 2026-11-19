@@ -9,6 +9,7 @@ import TagFolderPlugin from "./main";
 import { inconsistencyFlag } from './store';
 
 import  {InputModal, ConfirmationModal, SingleSelectModal}  from "./modals";
+import { logger } from './utils/logger';
 
 /**
  * Orchestrator class - coordinates all write operations between file system and tree structure
@@ -80,7 +81,7 @@ export class Orchestrator {
             
             return { success: true };
         } catch (error) {
-            console.error("Error in writeToRollbackRegister:", error);
+            logger.error("Error in writeToRollbackRegister:", error);
             return { success: false, error };
         }
     }
@@ -158,7 +159,7 @@ export class Orchestrator {
             this.plugin.broadcastTreeUpdate();
 
         } catch (error) {
-            console.error("Error in syncExternalFileCreation:", error);
+            logger.error("Error in syncExternalFileCreation:", error);
         }
     }
 
@@ -225,7 +226,7 @@ export class Orchestrator {
             this.plugin.broadcastTreeUpdate();
 
         } catch (error) {
-            console.error("Error in syncExternalFileRename:", error);
+            logger.error("Error in syncExternalFileRename:", error);
         }
     }
 
@@ -320,7 +321,7 @@ export class Orchestrator {
             this.plugin.broadcastTreeUpdate();
 
         } catch (error) {
-            console.error("Error in syncExternalFileModify:", error);
+            logger.error("Error in syncExternalFileModify:", error);
         }
     }
 
@@ -382,7 +383,7 @@ export class Orchestrator {
             this.plugin.broadcastTreeUpdate();
 
         } catch (error) {
-            console.error("Error in syncExternalFileDelete:", error);
+            logger.error("Error in syncExternalFileDelete:", error);
         }
     }
 
@@ -510,7 +511,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in createFileInTagFolder:", error);
+            logger.error("Error in createFileInTagFolder:", error);
             return { success: false, error };
         }
         
@@ -609,7 +610,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in createFolderInFolder:", error);
+            logger.error("Error in createFolderInFolder:", error);
             return { success: false, error };
         }
     }
@@ -691,7 +692,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in renameFile:", error);
+            logger.error("Error in renameFile:", error);
             return { success: false, error };
         }
     }
@@ -922,7 +923,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in renameFolder:", error);
+            logger.error("Error in renameFolder:", error);
             return { success: false, error };
         }
     }
@@ -1059,7 +1060,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in removeFileFromFolder:", error);
+            logger.error("Error in removeFileFromFolder:", error);
             return { success: false, error };
         }
     }
@@ -1136,7 +1137,7 @@ export class Orchestrator {
                                 );
                                 // Continue even if removal fails (tag might not exist)
                                 if (!removeSuccess) {
-                                    console.warn(`Failed to remove tag ${tagPath} from file: ${fileLeaf.getPath()}`);
+                                    logger.warn(`Failed to remove tag ${tagPath} from file: ${fileLeaf.getPath()}`);
                                 }
 
                                 // Construct home and locked paths
@@ -1191,7 +1192,7 @@ export class Orchestrator {
                             const deleteSuccess = node.deleteMeta();
                             // Continue even if deletion fails (metadata might not exist)
                             if (!deleteSuccess) {
-                                console.warn(`Failed to delete metadata for: ${node.getPath()}`);
+                                logger.warn(`Failed to delete metadata for: ${node.getPath()}`);
                             }
                             
                             // Collect children for next level
@@ -1260,7 +1261,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in removeFolderFromFolder:", error);
+            logger.error("Error in removeFolderFromFolder:", error);
             return { success: false, error };
         }
     }
@@ -1355,7 +1356,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in hardDeleteFile:", error);
+            logger.error("Error in hardDeleteFile:", error);
             return { success: false, error };
         }
     }
@@ -1531,7 +1532,7 @@ export class Orchestrator {
                                     oldTagPath
                                 );
                                 if (!removeSuccess) {
-                                    console.warn(`Failed to remove old tag from file: ${fileLeaf.getPath()}`);
+                                    logger.warn(`Failed to remove old tag from file: ${fileLeaf.getPath()}`);
                                 }
                                 
                                 // Add new tag
@@ -1699,7 +1700,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in moveFolderToFolder:", error);
+            logger.error("Error in moveFolderToFolder:", error);
             return { success: false, error };
         }
     }
@@ -1773,7 +1774,7 @@ export class Orchestrator {
                         sourceFolderTagPath
                     );
                     if (!removeSuccess) {
-                        console.warn(`Failed to remove source tag from file: ${filePath}`);
+                        logger.warn(`Failed to remove source tag from file: ${filePath}`);
                     }
 
                     // Construct home and locked paths
@@ -1848,7 +1849,7 @@ export class Orchestrator {
                     // if(sourceTagNode.getPath() != ""){
                         const removeFromSourceSuccess = sourceTagNode.removeFile(filePath);
                         if (!removeFromSourceSuccess) {
-                            console.warn(`Failed to remove file from source tag node: ${sourceFolderTagPath}`);
+                            logger.warn(`Failed to remove file from source tag node: ${sourceFolderTagPath}`);
                         }
                     // }
                     // Append fileleaf reference to destinationtagnode
@@ -1872,7 +1873,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in moveFileToFolder:", error);
+            logger.error("Error in moveFileToFolder:", error);
             return { success: false, error };
         }
     }
@@ -1987,7 +1988,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in copyFileToFolder:", error);
+            logger.error("Error in copyFileToFolder:", error);
             return { success: false, error };
         }
     }
@@ -2048,7 +2049,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in updateFolderDescription:", error);
+            logger.error("Error in updateFolderDescription:", error);
             return { success: false, error };
         }
     }
@@ -2107,7 +2108,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in updateFolderRaindropioLink:", error);
+            logger.error("Error in updateFolderRaindropioLink:", error);
             return { success: false, error };
         }
     }
@@ -2170,7 +2171,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in updateFolderLegend:", error);
+            logger.error("Error in updateFolderLegend:", error);
             return { success: false, error };
         }
     }
@@ -2238,7 +2239,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in updateFileDescription:", error);
+            logger.error("Error in updateFileDescription:", error);
             return { success: false, error };
         }
     }
@@ -2335,7 +2336,7 @@ export class Orchestrator {
                                 newTagPath
                             );
                             if (!addSuccess) {
-                                console.warn(`Failed to add new tag to file: ${fileLeaf.getPath()}`);
+                                logger.warn(`Failed to add new tag to file: ${fileLeaf.getPath()}`);
                             }
 
                             // Construct home and locked paths
@@ -2575,7 +2576,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in duplicateFolder:", error);
+            logger.error("Error in duplicateFolder:", error);
             return { success: false, error };
         }
     }
@@ -2687,7 +2688,7 @@ export class Orchestrator {
                                 newTagPath
                             );
                             if (!addSuccess) {
-                                console.warn(`Failed to add new tag to file: ${fileLeaf.getPath()}`);
+                                logger.warn(`Failed to add new tag to file: ${fileLeaf.getPath()}`);
                             }
 
                             // Construct home and locked paths
@@ -2941,7 +2942,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in recreateFolder:", error);
+            logger.error("Error in recreateFolder:", error);
             return { success: false, error };
         }
     }
@@ -2998,7 +2999,7 @@ export class Orchestrator {
 
             return { success: true };
         } catch (error) {
-            console.error("Error in copyFilesAndFolders:", error);
+            logger.error("Error in copyFilesAndFolders:", error);
             return { success: false, error };
         }
     }
@@ -3055,7 +3056,7 @@ export class Orchestrator {
 
             return { success: true };
         } catch (error) {
-            console.error("Error in cutFilesAndFolders:", error);
+            logger.error("Error in cutFilesAndFolders:", error);
             return { success: false, error };
         }
     }
@@ -3234,7 +3235,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in pasteFilesAndFolders:", error);
+            logger.error("Error in pasteFilesAndFolders:", error);
             return { success: false, error };
         }
     }
@@ -3309,9 +3310,6 @@ export class Orchestrator {
                 fileStatusList.push(prefixedTagPath);
 
                 
-                console.log("fileStatusList")
-                console.log(structuredClone(fileStatusList))
-                console.log("🔴 ------------------")
 
                 // Write new status list to file
                 const fileUpdateContent: Record<string, any> = {};
@@ -3336,7 +3334,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in addToLegend:", error);
+            logger.error("Error in addToLegend:", error);
             return { success: false, error };
         }
     }
@@ -3446,7 +3444,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in removeFromLegend:", error);
+            logger.error("Error in removeFromLegend:", error);
             return { success: false, error };
         }
     }
@@ -3642,7 +3640,7 @@ export class Orchestrator {
 
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in cycleLegend:", error);
+            logger.error("Error in cycleLegend:", error);
             return { success: false, error };
         }
     }
@@ -3835,7 +3833,7 @@ export class Orchestrator {
 
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in cycleLegend:", error);
+            logger.error("Error in cycleLegend:", error);
             return { success: false, error };
         }
     }
@@ -3943,7 +3941,7 @@ export class Orchestrator {
 
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in addToLegendLock:", error);
+            logger.error("Error in addToLegendLock:", error);
             return { success: false, error };
         }
     }
@@ -4051,7 +4049,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in removeFromLegendLock:", error);
+            logger.error("Error in removeFromLegendLock:", error);
             return { success: false, error };
         }
     }
@@ -4149,7 +4147,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in addToPinned:", error);
+            logger.error("Error in addToPinned:", error);
             return { success: false, error };
         }
     }
@@ -4252,7 +4250,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in removeFromPinned:", error);
+            logger.error("Error in removeFromPinned:", error);
             return { success: false, error };
         }
     }
@@ -4340,7 +4338,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in cyclePinned:", error);
+            logger.error("Error in cyclePinned:", error);
             return { success: false, error };
         }
     }
@@ -4440,7 +4438,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in addToPinnedLock:", error);
+            logger.error("Error in addToPinnedLock:", error);
             return { success: false, error };
         }
     }
@@ -4542,7 +4540,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in removeFromPinnedLock:", error);
+            logger.error("Error in removeFromPinnedLock:", error);
             return { success: false, error };
         }
     }
@@ -4657,7 +4655,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in addToPinnedForFolder:", error);
+            logger.error("Error in addToPinnedForFolder:", error);
             return { success: false, error };
         }
     }
@@ -4778,7 +4776,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in removeFromPinnedForFolder:", error);
+            logger.error("Error in removeFromPinnedForFolder:", error);
             return { success: false, error };
         }
     }
@@ -4899,7 +4897,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in cyclePinnedForFolder:", error);
+            logger.error("Error in cyclePinnedForFolder:", error);
             return { success: false, error };
         }
     }
@@ -5019,7 +5017,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in addToPinnedLockForFolder:", error);
+            logger.error("Error in addToPinnedLockForFolder:", error);
             return { success: false, error };
         }
     }
@@ -5116,7 +5114,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in removeFromPinnedLockForFolder:", error);
+            logger.error("Error in removeFromPinnedLockForFolder:", error);
             return { success: false, error };
         }
     }
@@ -5206,7 +5204,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in addToBookmarked:", error);
+            logger.error("Error in addToBookmarked:", error);
             return { success: false, error };
         }
     }
@@ -5303,7 +5301,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in removeFromBookmarked:", error);
+            logger.error("Error in removeFromBookmarked:", error);
             return { success: false, error };
         }
     }
@@ -5382,7 +5380,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in cycleBookmarked:", error);
+            logger.error("Error in cycleBookmarked:", error);
             return { success: false, error };
         }
     }
@@ -5464,7 +5462,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in addToBookmarkedForFolder:", error);
+            logger.error("Error in addToBookmarkedForFolder:", error);
             return { success: false, error };
         }
     }
@@ -5548,7 +5546,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in removeFromBookmarkedForFolder:", error);
+            logger.error("Error in removeFromBookmarkedForFolder:", error);
             return { success: false, error };
         }
     }
@@ -5637,7 +5635,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in cycleBookmarkedForFolder:", error);
+            logger.error("Error in cycleBookmarkedForFolder:", error);
             return { success: false, error };
         }
     }
@@ -5708,7 +5706,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in addLegendToFolder:", error);
+            logger.error("Error in addLegendToFolder:", error);
             return { success: false, error };
         }
     }
@@ -5777,7 +5775,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in removeLegendFromFolder:", error);
+            logger.error("Error in removeLegendFromFolder:", error);
             return { success: false, error };
         }
     }
@@ -5807,7 +5805,6 @@ export class Orchestrator {
                     return { success: false, error: `TagNode not found for path: ${tagPath}` };
                 }
 
-                console.log("inside orchestrator")
 
 
                 // Maintain list of colors
@@ -5834,9 +5831,6 @@ export class Orchestrator {
                 const nextColor = colorList[nextIndex];
 
 
-                console.log(currentIndex)
-                console.log(nextIndex)
-                console.log(nextColor)
 
 
                 // Check if SelfLegend is not present or if SelfLegend.locked is false or not present
@@ -5860,7 +5854,6 @@ export class Orchestrator {
                     );
 
 
-                    console.log("im hoping this went well")
                     if (owner){this.setInconsistencyFlag(false)}
                     return { success: true };
                 } else if (selfLegendValue.locked !== true) {
@@ -5884,7 +5877,6 @@ export class Orchestrator {
                     );
 
 
-                    console.log("im hoping this went well")
                     if (owner){this.setInconsistencyFlag(false)}
                     return { success: true };
                 } else {
@@ -5897,7 +5889,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in cycleLegendForFolder:", error);
+            logger.error("Error in cycleLegendForFolder:", error);
             return { success: false, error };
         }
     }
@@ -5931,7 +5923,6 @@ export class Orchestrator {
                     return { success: false, error: `TagNode not found for path: ${tagPath}` };
                 }
 
-                console.log("inside orchestrator")
 
 
                 // Maintain list of colors
@@ -5954,7 +5945,6 @@ export class Orchestrator {
                 // Extract next index color from color list
                 const nextColor = newColor
 
-                console.log(nextColor)
 
 
                 // Check if SelfLegend is not present or if SelfLegend.locked is false or not present
@@ -5978,7 +5968,6 @@ export class Orchestrator {
                     );
 
 
-                    console.log("im hoping this went well")
                     if (owner){this.setInconsistencyFlag(false)}
                     return { success: true };
                 } else if (selfLegendValue.locked !== true) {
@@ -6002,7 +5991,6 @@ export class Orchestrator {
                     );
 
 
-                    console.log("im hoping this went well")
                     if (owner){this.setInconsistencyFlag(false)}
                     return { success: true };
                 } else {
@@ -6015,7 +6003,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in cycleLegendForFolder:", error);
+            logger.error("Error in cycleLegendForFolder:", error);
             return { success: false, error };
         }
     }
@@ -6086,7 +6074,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in addLockedLegendToFolder:", error);
+            logger.error("Error in addLockedLegendToFolder:", error);
             return { success: false, error };
         }
     }
@@ -6149,7 +6137,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in removeLegendLockFromFolder:", error);
+            logger.error("Error in removeLegendLockFromFolder:", error);
             return { success: false, error };
         }
     }
@@ -6173,7 +6161,7 @@ export class Orchestrator {
                 if (owner){this.setInconsistencyFlag(true)}
 
                 if (!this.treeRoot) {
-                    console.warn("treeRoot not initialized in readLegendStatusOfFile");
+                    logger.warn("treeRoot not initialized in readLegendStatusOfFile");
                     if (owner){this.setInconsistencyFlag(false)}
                     return { color: "" , status: "notlocked" };
                 }
@@ -6248,7 +6236,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in readLegendStatus:", error);
+            logger.error("Error in readLegendStatus:", error);
             return { color: "" , status: "notlocked" };
         }
     }
@@ -6336,7 +6324,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in readPinnedStatus:", error);
+            logger.error("Error in readPinnedStatus:", error);
             return { pinned: false };
         }
     }
@@ -6410,7 +6398,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in readBookmarkedStatus:", error);
+            logger.error("Error in readBookmarkedStatus:", error);
             return { bookmarked: false };
         }
     }
@@ -6432,12 +6420,12 @@ export class Orchestrator {
 
 
                 if (!this.treeRoot) {
-                    console.warn("treeObj not initialized in readLegendStatusOfFolder");
+                    logger.warn("treeObj not initialized in readLegendStatusOfFolder");
                     if (owner){this.setInconsistencyFlag(false)}
                     return { legend: "", locked: false };
                 }
                 if (!this.app) {
-                    console.warn("app not initialized in readLegendStatusOfFolder");
+                    logger.warn("app not initialized in readLegendStatusOfFolder");
                     if (owner){this.setInconsistencyFlag(false)}
                     return { legend: "", locked: false };
                 }
@@ -6472,7 +6460,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in readLegendStatusForFolder:", error);
+            logger.error("Error in readLegendStatusForFolder:", error);
             return { legend: "", locked: false };
         }
     }
@@ -6525,7 +6513,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in readPinnedStatusForFolder:", error);
+            logger.error("Error in readPinnedStatusForFolder:", error);
             return { pinned: false, locked: false };
         }
     }
@@ -6577,7 +6565,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in readBookmarkedStatusForFolder:", error);
+            logger.error("Error in readBookmarkedStatusForFolder:", error);
             return { bookmarked: false };
         }
     }
@@ -6604,12 +6592,10 @@ export class Orchestrator {
                 const fileLeaf = this.treeRoot.fileLeafRetriever(filePath);
                 if (!fileLeaf) {
                     if (owner){this.setInconsistencyFlag(false)}
-                    console.log("here?")
                     return { success: false, error: `FileLeaf not found for path: ${filePath}` };
                 }
 
 
-                console.log("fileleaf found and tagnode found")
 
                 // Extract destinationtagnode object from the tree using tagPath
                 const destinationTagNode = this.treeRoot.getNode(tagPath);
@@ -6677,7 +6663,7 @@ export class Orchestrator {
             }
         } catch (error) {
             if (owner){this.setInconsistencyFlag(false)}
-            console.error("Error in addFileToTagpath:", error);
+            logger.error("Error in addFileToTagpath:", error);
             return { success: false, error };
         }
     }
@@ -6756,7 +6742,7 @@ export class Orchestrator {
                 
                 return { success: true };
         } catch (error) {
-            console.error("Error in addFileToTagpath:", error);
+            logger.error("Error in addFileToTagpath:", error);
             return { success: false, error };
         }
     }
@@ -6842,12 +6828,11 @@ export class Orchestrator {
                 this.plugin.broadcastTreeUpdate();
                 // ---(Frontend Refresh End)---
                 
-                console.log("the modal caller terminated terminated ")
                 
                 return { success: true };
 
         } catch (error) {
-            console.error("Error in addFileToTagpath:", error);
+            logger.error("Error in addFileToTagpath:", error);
             return { success: false, error };
         }
     }
@@ -6943,7 +6928,7 @@ export class Orchestrator {
                 
                 return { success: true };
         } catch (error) {
-            console.error("Error in addFileToTagpath:", error);
+            logger.error("Error in addFileToTagpath:", error);
             return { success: false, error };
         }
     }
@@ -7033,7 +7018,7 @@ export class Orchestrator {
                 
                 return { success: true };
         } catch (error) {
-            console.error("Error in addFileToTagpath:", error);
+            logger.error("Error in addFileToTagpath:", error);
             return { success: false, error };
         }
     }
@@ -7123,7 +7108,7 @@ export class Orchestrator {
                 
                 return { success: true };
         } catch (error) {
-            console.error("Error in addFileToTagpath:", error);
+            logger.error("Error in addFileToTagpath:", error);
             return { success: false, error };
         }
     }
@@ -7212,7 +7197,7 @@ export class Orchestrator {
                 
                 return { success: true };
         } catch (error) {
-            console.error("Error in addFileToTagpath:", error);
+            logger.error("Error in addFileToTagpath:", error);
             return { success: false, error };
         }
     }
@@ -7249,7 +7234,7 @@ export class Orchestrator {
         }
 
         if (leaves.length === 0) {
-            console.warn('Could not open file explorer');
+            logger.warn('Could not open file explorer');
             return;
         }
 

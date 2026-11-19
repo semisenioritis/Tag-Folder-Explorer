@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { logger } from '../utils/logger';
   // import { getleftSidebarTree} from '../modelInterface'
 
   import { openFileInNewTab } from '../windows'
@@ -44,7 +45,6 @@
    */
   export function updateTreeData(newTreeData: unknown, newVersion: number): void {
     treeData = model!.getleftSidebarTree(treeViewSortFlag).tree as SerializedTreeData;
-    console.log("TagTreeView updated to version:", newVersion);
   }
 
   $effect(() => {
@@ -175,11 +175,8 @@
 
     // External drag payload from Obsidian file explorer
     const textUriList = dataTransfer.getData('text/uri-list');
-    console.log(textUriList)
     const uriPath = parseExternalFilePath(textUriList);
     if (uriPath && uriPath.length >0) {
-      console.log(uriPath)
-      console.log("hi")
       return { type: 'file', path: uriPath, parentPath: '', source: "external" };
     }
 
@@ -207,7 +204,7 @@
       onItemDrop(payload.type, payload.path, payload.parentPath, targetType, targetPath, targetParentPath, payload.source, event.ctrlKey || event.metaKey);
 
     } catch (e) {
-      console.error("Failed to parse drag data:", e);
+      logger.error("Failed to parse drag data:", e);
     }
   }
 
@@ -234,7 +231,7 @@
         }
 
       } catch (e) {
-        console.error("Failed to parse drag data:", e);
+        logger.error("Failed to parse drag data:", e);
       }
     }
   }
@@ -261,7 +258,7 @@
         }
 
       } catch (e) {
-        console.error("Failed to parse drag data:", e);
+        logger.error("Failed to parse drag data:", e);
       }
     }
   }

@@ -1,5 +1,6 @@
 import { TFile, App } from 'obsidian';
 import type { IFileLeaf } from './interfaces';
+import { logger } from './utils/logger';
 
 /**
  * FileLeaf class - Represents individual files as leaf nodes in the tag tree
@@ -150,7 +151,7 @@ export class FileLeaf implements IFileLeaf {
 
             return allTags;
         } catch (error) {
-            console.error('Failed to retrieve all paths:', error);
+            logger.error('Failed to retrieve all paths:', error);
             return [];
         }
     }
@@ -176,7 +177,7 @@ export class FileLeaf implements IFileLeaf {
             });
             return metadataData;
         } catch (error) {
-            console.error('Failed to retrieve file metadata:', error);
+            logger.error('Failed to retrieve file metadata:', error);
             return {};
         }
     }
@@ -238,7 +239,7 @@ export class FileLeaf implements IFileLeaf {
             // Return first k characters
             return content.length > k ? content.substring(0, k) + '...' : content;
         } catch (error) {
-            console.error('Failed to read initial content:', error);
+            logger.error('Failed to read initial content:', error);
             return '';
         }
     }

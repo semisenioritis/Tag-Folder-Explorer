@@ -1,6 +1,7 @@
 import { App, TFile, normalizePath } from "obsidian";
 import * as path from 'path';
 import * as fs from 'fs';
+import { logger } from './utils/logger';
 
 
 /**
@@ -35,7 +36,7 @@ export async function createNewFile(
 		const file = await app.vault.create(fullPath, "");
 		return { success: true, file };
 	} catch (error) {
-		console.error("Error creating file:", error);
+		logger.error("Error creating file:", error);
 		return { success: false, file: null };
 	}
 }
@@ -54,15 +55,15 @@ export async function createTagsFrontMatter(
 		await app.fileManager.processFrontMatter(file, (frontmatter) => {
 			// Initialize tags array if it doesn't exist
 			if (!frontmatter.tags) {
-				console.log('Creating frontmatter for file.')
+				logger.debug('Creating frontmatter for file.')
 				frontmatter.tags = [];
 			}else{
-				console.log('Frontmatter tags already exists. No changes made.');
+				logger.debug('Frontmatter tags already exists. No changes made.');
 			}
 		})
 		return { success: true, file };
 	} catch (error) {
-		console.error("Error creating frontmatter:", error);
+		logger.error("Error creating frontmatter:", error);
 		return { success: false, file };
 	}
 }
@@ -109,7 +110,7 @@ export async function renameFile(
 		
 		return { success: true, file };
 	} catch (error) {
-		console.error("Error renaming file:", error);
+		logger.error("Error renaming file:", error);
 		return { success: false, file };
 	}
 }
@@ -145,7 +146,7 @@ export async function extractAllTagsFromFileBody(
 		
 		return bodyTags;
 	} catch (error) {
-		console.error("Error extracting tags from file body:", error);
+		logger.error("Error extracting tags from file body:", error);
 		return [];
 	}
 }
@@ -200,7 +201,7 @@ export async function removeTagFromFileYaml(
 		
 		return true;
 	} catch (error) {
-		console.error("Error removing tag from frontmatter:", error);
+		logger.error("Error removing tag from frontmatter:", error);
 		return false;
 	}
 }
@@ -252,7 +253,7 @@ export async function addTagToFileYaml(
 		
 		return true;
 	} catch (error) {
-		console.error("Error adding tag to frontmatter:", error);
+		logger.error("Error adding tag to frontmatter:", error);
 		return false;
 	}
 }
@@ -313,7 +314,7 @@ export async function shiftTagsFromBodyToMetadata(
 		
 		return true;
 	} catch (error) {
-		console.error("Error shifting tags from body to metadata:", error);
+		logger.error("Error shifting tags from body to metadata:", error);
 		return false;
 	}
 }
@@ -353,7 +354,7 @@ export async function replaceMetadataSection(
 		
 		return true;
 	} catch (error) {
-		console.error("Error replacing metadata section:", error);
+		logger.error("Error replacing metadata section:", error);
 		return false;
 	}
 }
@@ -401,7 +402,7 @@ export function checkIfTagIsValid(tag: string): boolean {
 		
 		return true;
 	} catch (error) {
-		console.error("Error validating tag:", error);
+		logger.error("Error validating tag:", error);
 		return false;
 	}
 }
@@ -421,7 +422,7 @@ export function metadataRecomputeName( app: App, tagPath: string): string {
 	
 	// Validate the tag path
 	if (!checkIfTagIsValid(tagPath)) {
-		console.error('Invalid tag path:', tagPath);
+		logger.error('Invalid tag path:', tagPath);
 		return '';
 	}
 
@@ -533,13 +534,13 @@ export function metadataRenameFile(
 		
 		// Check if the old file exists
 		if (!fs.existsSync(oldFilename)) {
-			console.error("Old metadata file does not exist:", oldFilename);
+			logger.error("Old metadata file does not exist:", oldFilename);
 			return false;
 		}
 		
 		// Check if the new filename already exists
 		if (fs.existsSync(newFilename)) {
-			console.error("New metadata file already exists:", newFilename);
+			logger.error("New metadata file already exists:", newFilename);
 			return false;
 		}
 		
@@ -548,7 +549,7 @@ export function metadataRenameFile(
 		
 		return true;
 	} catch (error) {
-		console.error("Error renaming metadata file:", error);
+		logger.error("Error renaming metadata file:", error);
 		return false;
 	}
 }
@@ -572,7 +573,7 @@ export function metadataReadAllFrontmatter(
 		
 		// Check if file exists
 		if (!fs.existsSync(computedFilename)) {
-			console.warn("Metadata file does not exist:", computedFilename);
+			logger.warn("Metadata file does not exist:", computedFilename);
 			return null;
 		}
 		
@@ -583,7 +584,7 @@ export function metadataReadAllFrontmatter(
 		const jsonData = JSON.parse(fileContent);
 		return jsonData;
 	} catch (error) {
-		console.error("Error reading metadata frontmatter:", error);
+		logger.error("Error reading metadata frontmatter:", error);
 		return null;
 	}
 }
@@ -626,7 +627,7 @@ export function metadataAddNewProperty(
 		
 		return true;
 	} catch (error) {
-		console.error("Error adding new metadata properties:", error);
+		logger.error("Error adding new metadata properties:", error);
 		return false;
 	}
 }
@@ -652,7 +653,7 @@ export function metadataReplaceExistingProperty(
 		
 		// If file doesn't exist, nothing to replace
 		if (!existingData) {
-			console.warn("Metadata file does not exist, nothing to replace");
+			logger.warn("Metadata file does not exist, nothing to replace");
 			return true;
 		}
 		
@@ -670,7 +671,7 @@ export function metadataReplaceExistingProperty(
 		
 		return true;
 	} catch (error) {
-		console.error("Error replacing existing metadata properties:", error);
+		logger.error("Error replacing existing metadata properties:", error);
 		return false;
 	}
 }
@@ -732,7 +733,7 @@ export function metadataAppendToProperty(
 		
 		return true;
 	} catch (error) {
-		console.error("Error appending to metadata properties:", error);
+		logger.error("Error appending to metadata properties:", error);
 		return false;
 	}
 }
