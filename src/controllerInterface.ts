@@ -1,5 +1,6 @@
 import { TFile } from "obsidian";
 import { Orchestrator } from "./orchestrator";
+import type { OperationResult } from "./types";
 
 /**
  * ControllerInterface - Safe wrapper around Orchestrator functions for frontend access
@@ -61,7 +62,7 @@ export class ControllerInterface {
     async removeFileFromFolder(
         folderTagPath: string,
         filePath: string
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.removeFileFromFolder(folderTagPath, filePath);
     }
 
@@ -77,7 +78,7 @@ export class ControllerInterface {
         folderTagPath: string,
         fileName: string,
         filePath: string
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.hardDeleteFile(folderTagPath, fileName, filePath);
     }
 
@@ -94,7 +95,7 @@ export class ControllerInterface {
         sourceFolderTagPath: string,
         destinationFolderTagPath: string,
         filePath: string
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.moveFileToFolder(
             sourceFolderTagPath,
             destinationFolderTagPath,
@@ -114,7 +115,7 @@ export class ControllerInterface {
         sourceFolderTagPath: string,
         destinationFolderTagPath: string,
         filePath: string
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.copyFileToFolder(
             sourceFolderTagPath,
             destinationFolderTagPath,
@@ -160,7 +161,7 @@ export class ControllerInterface {
      */
     async removeFolderFromFolder(
         childFolderPath: string
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.removeFolderFromFolder(childFolderPath);
     }
 
@@ -197,7 +198,7 @@ export class ControllerInterface {
     async updateFolderDescription(
         folderTagPath: string,
         jsonObject: Record<string, any>
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.updateFolderDescription(folderTagPath, jsonObject);
     }
 
@@ -211,7 +212,7 @@ export class ControllerInterface {
     async updateFolderRaindropioLink(
         folderTagPath: string,
         jsonObject: Record<string, any>
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.updateFolderRaindropioLink(folderTagPath, jsonObject);
     }
 
@@ -225,7 +226,7 @@ export class ControllerInterface {
     async updateFolderLegend(
         folderTagPath: string,
         jsonObject: Record<string, any>
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.updateFolderLegend(folderTagPath, jsonObject);
     }
 
@@ -242,7 +243,7 @@ export class ControllerInterface {
         folderTagPath: string,
         filePath: string,
         jsonObject: Record<string, any>
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.updateFileDescription(folderTagPath, filePath, jsonObject);
     }
 
@@ -284,7 +285,7 @@ export class ControllerInterface {
         listOfFilePaths: string[],
         listOfTagPaths: string[],
         parentTagPath: string
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.copyFilesAndFolders(listOfFilePaths, listOfTagPaths, parentTagPath);
     }
 
@@ -300,7 +301,7 @@ export class ControllerInterface {
         listOfFilePaths: string[],
         listOfTagPaths: string[],
         parentTagPath: string
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.cutFilesAndFolders(listOfFilePaths, listOfTagPaths, parentTagPath);
     }
 
@@ -337,7 +338,7 @@ export class ControllerInterface {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.addLegendToFile(legendColor, filePath, tagPath, owner);
     }
 
@@ -355,7 +356,7 @@ export class ControllerInterface {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.removeLegendFromFile(legendColor, filePath, tagPath, owner);
     }
 
@@ -372,7 +373,7 @@ export class ControllerInterface {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.cycleLegendOfFile(filePath, tagPath, owner);
     }
 
@@ -390,7 +391,7 @@ export class ControllerInterface {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.addLegendLockToFile(legendColor, filePath, tagPath, owner);
     }
 
@@ -408,7 +409,7 @@ export class ControllerInterface {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.removeLegendLockFromFile(legendColor, filePath, tagPath, owner);
     }
 
@@ -424,7 +425,7 @@ export class ControllerInterface {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.addPinnedToFile(filePath, tagPath, owner);
     }
 
@@ -440,7 +441,7 @@ export class ControllerInterface {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.removePinnedFromFile(filePath, tagPath, owner);
     }
 
@@ -456,7 +457,7 @@ export class ControllerInterface {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.cyclePinnedOfFile(filePath, tagPath, owner);
     }
 
@@ -472,7 +473,7 @@ export class ControllerInterface {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.addPinnedLockToFile(filePath, tagPath, owner);
     }
 
@@ -488,7 +489,7 @@ export class ControllerInterface {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.removePinnedLockFromFile(filePath, tagPath, owner);
     }
 
@@ -502,7 +503,7 @@ export class ControllerInterface {
     async addPinnedToFolder(
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.addPinnedToFolder(tagPath, owner);
     }
 
@@ -516,7 +517,7 @@ export class ControllerInterface {
     async removePinnedFromFolder(
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.removePinnedFromFolder(tagPath, owner);
     }
 
@@ -530,7 +531,7 @@ export class ControllerInterface {
     async cyclePinnedOfFolder(
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.cyclePinnedOfFolder(tagPath, owner);
     }
 
@@ -544,7 +545,7 @@ export class ControllerInterface {
     async addPinnedLockToFolder(
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.addPinnedLockToFolder(tagPath, owner);
     }
 
@@ -558,7 +559,7 @@ export class ControllerInterface {
     async removePinnedLockFromFolder(
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.removePinnedLockFromFolder(tagPath, owner);
     }
 
@@ -574,7 +575,7 @@ export class ControllerInterface {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.addBookmarkToFile(filePath, tagPath, owner);
     }
 
@@ -590,7 +591,7 @@ export class ControllerInterface {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.removeBookmarkFromFile(filePath, tagPath, owner);
     }
 
@@ -606,7 +607,7 @@ export class ControllerInterface {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.cycleBookmarkOfFile(filePath, tagPath, owner);
     }
 
@@ -621,7 +622,7 @@ export class ControllerInterface {
     async addBookmarkToFolder(
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.addBookmarkToFolder(tagPath, owner);
     }
 
@@ -635,7 +636,7 @@ export class ControllerInterface {
     async removeBookmarkFromFolder(
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.removeBookmarkFromFolder(tagPath, owner);
     }
 
@@ -649,7 +650,7 @@ export class ControllerInterface {
     async cycleBookmarkOfFolder(
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.cycleBookmarkOfFolder(tagPath, owner);
     }
 
@@ -666,7 +667,7 @@ export class ControllerInterface {
         legendColor: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.addLegendToFolder(legendColor, tagPath, owner);
     }
 
@@ -680,7 +681,7 @@ export class ControllerInterface {
     async removeLegendFromFolder(
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.removeLegendFromFolder(tagPath, owner);
     }
 
@@ -695,7 +696,7 @@ export class ControllerInterface {
     async cycleLegendForFolder(
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.cycleLegendForFolder(tagPath, owner);
     }
 
@@ -711,7 +712,7 @@ export class ControllerInterface {
         legendColor: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.addLegendLockToFolder(legendColor, tagPath, owner);
     }
 
@@ -727,7 +728,7 @@ export class ControllerInterface {
         legendColor: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.removeLegendLockFromFolder(legendColor, tagPath, owner);
     }
 
@@ -828,7 +829,7 @@ export class ControllerInterface {
     async addFileToTagpath(
         tagPath: string,
         filePath: string
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.addFileToTagpath(
             tagPath,
             filePath
@@ -847,7 +848,7 @@ export class ControllerInterface {
         path: string, 
         parentpath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.triggerRenameModal(
             type,
             path,
@@ -866,7 +867,7 @@ export class ControllerInterface {
         type: 'folder' | 'file', 
         parentpath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.triggerNewFileOrFolderModal(
             type,
             parentpath
@@ -885,7 +886,7 @@ export class ControllerInterface {
         path: string, 
         parentpath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.triggerDeleteModal(
             type,
             path,
@@ -907,7 +908,7 @@ export class ControllerInterface {
         path: string, 
         parentpath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.triggerMoveModal(
             type,
             path,
@@ -928,7 +929,7 @@ export class ControllerInterface {
         path: string, 
         parentpath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.triggerCopyModal(
             type,
             path,
@@ -949,7 +950,7 @@ export class ControllerInterface {
         path: string, 
         parentpath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         return await this.orchestrator.triggerLegendModal(
             type,
             path,

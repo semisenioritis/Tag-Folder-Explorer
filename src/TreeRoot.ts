@@ -1,6 +1,4 @@
 import { App, TFile, TFolder } from 'obsidian';
-import { FileSystemAdapter } from 'obsidian';
-import { createHash } from 'crypto';
 import type { ITreeRoot, ITagNode, IFileLeaf, ISerializedTagNode, SerializedTreeData} from './interfaces';
 import { TagNode } from './TagNode';
 import { FileLeaf } from './FileLeaf';
@@ -9,6 +7,9 @@ import * as path from 'path';
 
 import  type { TagFolderPluginSettings } from './settings';
 import { logger } from './utils/logger';
+import { sanitizeTagName } from './utils/sanitize';
+import { getVaultBasePath } from './utils/vaultPath';
+import { hashTagPath, metadataFolderPath } from './utils/metadataPath';
 /**
  * TreeRoot class - represents the root of the tag tree
  * 
@@ -364,7 +365,7 @@ export class TreeRoot implements ITreeRoot {
                         return false;
                     }
                     
-                    newChildTagName = newChildTagName.replace(/\s+/g, '_').replace(/[^\p{L}\p{N}_\-\p{Extended_Pictographic}]/gu, '')
+                    newChildTagName = sanitizeTagName(newChildTagName)
             
                     const childName = newChildTagName.trim();
                     
@@ -905,64 +906,92 @@ export class TreeRoot implements ITreeRoot {
     }
     
     /**
-     * Adds a file to a specific tag path, creating nodes as needed
-     * 
-     * @param fileLeaf - The file to add
+     * Walks a tag path from the root and creates every missing node on the way.
+     * Returns the node at the end of the path.
+     *
+     * Two modes keep the exact behavior of the four loops this replaced. The difference
+     * between them is kept on purpose and is reconciled in Block 2 task 04:
+     * - "build" (computing the tree): the first segment becomes a root tag built directly,
+     *   WITHOUT name sanitizing. Later segments go through `addChildNode`, which sanitizes.
+     *   If a node cannot be created the walk stops and returns null. An empty path returns null.
+     * - "sync" (external file events): every segment, including the first, goes through
+     *   `addChildNode` on the root node (sanitizing). If a node cannot be created the walk
+     *   stays on the parent. An empty path returns the root node.
+     *
      * @param tagPath - The nested tag path (e.g., "subject/math")
+     * @param mode - "build" or "sync" (see above)
      */
-    private addFileToTagPath(fileLeaf: IFileLeaf, tagPath: string): void {
-        // Split the tag path into segments
+    public ensureTagPath(tagPath: string, mode: 'build' | 'sync' = 'build'): ITagNode | null {
         const tagSegments = tagPath.split('/').filter(segment => segment.length > 0);
-        
-        if (tagSegments.length === 0) {
-            return;
+
+        if (mode === 'sync') {
+            let currentNode: ITagNode = this.rootTagNode;
+            for (const segmentName of tagSegments) {
+                let childNode = currentNode.getChild(segmentName);
+                if (!childNode) {
+                    currentNode.addChildNode(segmentName);
+                    childNode = currentNode.getChild(segmentName);
+                }
+                if (childNode) {
+                    currentNode = childNode;
+                }
+            }
+            return currentNode;
         }
-        
-        // Navigate or create the tag node hierarchy
+
+        if (tagSegments.length === 0) {
+            return null;
+        }
+
         let currentNode: ITagNode | null = null;
         let currentPath = '';
-        
+
         for (let i = 0; i < tagSegments.length; i++) {
             const segmentName = tagSegments[i];
             currentPath = i === 0 ? segmentName : `${currentPath}/${segmentName}`;
-            
+
             if (i === 0) {
                 // First segment - check if it exists in root tags
-                let rootTag = null;
-                rootTag = this.getRootTagByName(segmentName);
-                
+                let rootTag = this.getRootTagByName(segmentName);
+
                 if (!rootTag) {
                     // Create new root tag
                     rootTag = new TagNode(segmentName, currentPath, this.rootTagNode, this.app, this.filePathToLeafMap);
                     this.rootTags.add(rootTag);
-                    this.rootTagsByName[segmentName] =  rootTag
+                    this.rootTagsByName[segmentName] = rootTag;
                 }
-                
+
                 currentNode = rootTag;
             } else {
                 // Subsequent segments - check if it exists as a child
                 if (!currentNode) {
-                    return; // Safety check
+                    return null; // Safety check
                 }
-                
+
                 let childNode: ITagNode | null = currentNode.getChild(segmentName);
                 if (!childNode) {
                     // Create new child node
                     currentNode.addChildNode(segmentName);
                     childNode = currentNode.getChild(segmentName);
                 }
-                
+
                 currentNode = childNode;
             }
         }
-        
-        // Add the file to the final node
-        if (currentNode) {
-            // currentNode.createNewFile(fileLeaf.getName(), fileLeaf.getPath());
-            currentNode.addFileLeaftoFiles(fileLeaf)
-        }
+
+        return currentNode;
     }
-    
+
+    /**
+     * Adds a file to a specific tag path, creating nodes as needed
+     *
+     * @param fileLeaf - The file to add
+     * @param tagPath - The nested tag path (e.g., "subject/math")
+     */
+    private addFileToTagPath(fileLeaf: IFileLeaf, tagPath: string): void {
+        this.ensureTagPath(tagPath, 'build')?.addFileLeaftoFiles(fileLeaf);
+    }
+
     /**
      * Checks if a folder path should be excluded from tree computation
      * 
@@ -996,8 +1025,7 @@ export class TreeRoot implements ITreeRoot {
     private populateEmptyTagFoldersFromMetadata(): void {
         try {
             // Get the vault's base path
-            const vaultPath = (this.app.vault.adapter as FileSystemAdapter).getBasePath() || '';
-            const metaFolderPath = path.join(vaultPath, '.TagNodeMeta');
+            const metaFolderPath = metadataFolderPath(getVaultBasePath(this.app));
             
             // Check if .TagNodeMeta folder exists
             if (!fs.existsSync(metaFolderPath)) {
@@ -1069,13 +1097,7 @@ export class TreeRoot implements ITreeRoot {
                 tagnodePath = tagnodePath.slice(1);
             }
 
-            function hashPath(path:string) {
-
-                return createHash('sha256').update(path).digest('hex'); 
-            
-            }
-
-            const expectedBaseName = hashPath(tagnodePath);
+            const expectedBaseName = hashTagPath(tagnodePath);
             const actualBaseName = path.parse(filename).name;
 
             return actualBaseName === expectedBaseName ? tagnodePath : '';
@@ -1098,51 +1120,7 @@ export class TreeRoot implements ITreeRoot {
      * @returns void
      */
     private createTagNodeHierarchy(tagPath: string): void {
-        // Split the tag path into segments
-        const tagSegments = tagPath.split('/').filter(segment => segment.length > 0);
-        
-        if (tagSegments.length === 0) {
-            return;
-        }
-        
-        // Navigate or create the tag node hierarchy
-        let currentNode: ITagNode | null = null;
-        let currentPath = '';
-        
-        for (let i = 0; i < tagSegments.length; i++) {
-            const segmentName = tagSegments[i];
-            currentPath = i === 0 ? segmentName : `${currentPath}/${segmentName}`;
-            
-            if (i === 0) {
-                // First segment - check if it exists in root tags
-                let rootTag: ITagNode | null = null;
-                rootTag = this.getRootTagByName(segmentName);
-
-                
-                if (!rootTag) {
-                    // Create new root tag
-                    rootTag = new TagNode(segmentName, currentPath, this.rootTagNode, this.app, this.filePathToLeafMap);
-                    this.rootTags.add(rootTag);
-                    this.rootTagsByName[segmentName] =  rootTag
-                }
-                
-                currentNode = rootTag;
-            } else {
-                // Subsequent segments - check if it exists as a child
-                if (!currentNode) {
-                    return; // Safety check
-                }
-                
-                let childNode: ITagNode | null = currentNode.getChild(segmentName);
-                if (!childNode) {
-                    // Create new child node
-                    currentNode.addChildNode(segmentName);
-                    childNode = currentNode.getChild(segmentName);
-                }
-                
-                currentNode = childNode;
-            }
-        }
+        this.ensureTagPath(tagPath, 'build');
     }
     
     /**

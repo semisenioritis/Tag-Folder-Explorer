@@ -1,11 +1,12 @@
 import { App } from 'obsidian';
-import { FileSystemAdapter } from "obsidian";
-import { createHash } from 'crypto';
 import type { ITagNode, IFileLeaf, ISerializedTagNode  } from './interfaces';
 import * as fs from 'fs';
 import * as path from 'path';
 import {metadataAddNewProperty, metadataReplaceExistingProperty, metadataAppendToProperty} from "./fileEditor"
 import { logger } from './utils/logger';
+import { sanitizeTagName } from './utils/sanitize';
+import { getVaultBasePath } from './utils/vaultPath';
+import { metadataFilePath } from './utils/metadataPath';
 
 /**
  * TagNode class - represents tag nodes in the hierarchical tag tree
@@ -110,7 +111,7 @@ export class TagNode implements ITagNode {
                 return false;
             }
             
-            newChildTagName = newChildTagName.replace(/\s+/g, '_').replace(/[^\p{L}\p{N}_\-\p{Extended_Pictographic}]/gu, '')
+            newChildTagName = sanitizeTagName(newChildTagName)
             
             const childName = newChildTagName.trim();
             
@@ -344,18 +345,7 @@ export class TagNode implements ITagNode {
      * @returns string - The absolute file system path to the metadata file
      */
     private getMetadataFilePath(): string {
-        // Get the vault's base path from the app
-        const vaultPath = (this.app.vault.adapter as any).getBasePath() || '';
-         
-        function hashPath(path:string) {
-
-            return createHash('sha256').update(path).digest('hex'); 
-        }
-
-        const filename = `${hashPath(this.path)}.json`;
-        
-        // Return absolute path
-        return path.join(vaultPath, '.TagNodeMeta', filename);
+        return metadataFilePath(getVaultBasePath(this.app), this.path);
     }
     
 
@@ -606,7 +596,7 @@ export class TagNode implements ITagNode {
             }
             
             // Get vault path
-            const vaultPath = (this.app.vault.adapter as FileSystemAdapter).getBasePath() || '';
+            const vaultPath = getVaultBasePath(this.app);
             
             // Create .trash folder if it doesn't exist
             const trashPath = path.join(vaultPath, '.trash');

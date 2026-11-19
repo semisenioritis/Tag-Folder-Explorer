@@ -11,3 +11,11 @@ getTagExplorerInconsistentStateFlag(): boolean;
 setTagExplorerInconsistentStateFlag(value: boolean): void;
 broadcastTreeUpdate(): void;
 }
+/**
+ * Result returned by write operations in the orchestrator and the controller.
+ * `error` stays `any` so existing callers that read `error.message` keep compiling.
+ */
+export interface OperationResult {
+	success: boolean;
+	error?: any;
+}

@@ -2,6 +2,9 @@ import { App, TFile, normalizePath } from "obsidian";
 import * as path from 'path';
 import * as fs from 'fs';
 import { logger } from './utils/logger';
+import { sanitizeFileName } from './utils/sanitize';
+import { getVaultBasePath } from './utils/vaultPath';
+import { metadataFilePath } from './utils/metadataPath';
 
 
 /**
@@ -21,7 +24,7 @@ export async function createNewFile(
 		const extension = ".md"
 		// Build the full path
 		const folderPath = path ? `${path}/` : "";
-		fileName = fileName.replace(/[\[\]#^|\\\/:\?]/g, '').trim();
+		fileName = sanitizeFileName(fileName);
 		
 		// Find a unique file name
 		let finalName = fileName + extension;
@@ -83,7 +86,7 @@ export async function renameFile(
 	try {
 		const extension = file.extension;
 		const folderPath = file.parent ? `${file.parent.path}` : "";
-		newName = newName.replace(/[\[\]#^|\\\/:\?]/g, '').trim();
+		newName = sanitizeFileName(newName);
 
 		
 		// Find a unique file name
@@ -426,24 +429,7 @@ export function metadataRecomputeName( app: App, tagPath: string): string {
 		return '';
 	}
 
-	// Get the vault's base path from the app
-	const vaultPath = (app.vault.adapter as any).basePath || '';
-
-	// Normalize the tag path by removing leading '#' if present
-	const normalizedPath = tagPath.startsWith('#') ? tagPath.slice(1) : tagPath;
-	
-
-	const crypto = require('crypto');
-
-	function hashPath(path:string) {
-	return crypto.createHash('sha256').update(path).digest('hex');
-	}
-
-	const filename = `${hashPath(normalizedPath)}.json`;
-
-
-	// Return absolute path
-	return path.join(vaultPath, '.TagNodeMeta', filename);
+	return metadataFilePath(getVaultBasePath(app), tagPath);
 }
 
 /**

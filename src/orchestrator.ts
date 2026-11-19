@@ -4,10 +4,11 @@ import { FileLeaf } from "./FileLeaf";
 import * as fileEditor from "./fileEditor";
 import type { ITagNode, IFileLeaf } from "./interfaces";
 
-import type { PluginHost } from "./types";
+import type { PluginHost, OperationResult } from "./types";
 
 import  {InputModal, ConfirmationModal, SingleSelectModal}  from "./modals";
 import { logger } from './utils/logger';
+import { sanitizeTagName, sanitizeFileName } from './utils/sanitize';
 
 /**
  * Orchestrator class - coordinates all write operations between file system and tree structure
@@ -64,7 +65,7 @@ export class Orchestrator {
      */
     async writeToRollbackRegister(
         jsonObject: Record<string, any>
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             const filePath = ".obsidian/plugins/Tag-Folder-Explorer/rollback-register.ndjson";
             
@@ -134,22 +135,7 @@ export class Orchestrator {
             } else {
                 for (const tagPath of tagPaths) {
 
-                    const tagSegments = tagPath.split('/').filter(segment => segment.length > 0);
-                    let currentNode = this.treeRoot.getRootNode();
-
-                    for (const segmentName of tagSegments) {
-                        let childNode = currentNode.getChild(segmentName);
-                        if (!childNode) {
-                            currentNode.addChildNode(segmentName);
-                            childNode = currentNode.getChild(segmentName);
-                        }
-                        if (childNode) {
-                            currentNode = childNode;
-                        }
-                    }
-                    
-                    currentNode.addFileLeaftoFiles(fileLeaf);
-                    // this.treeRoot.getNode(tagPath)?.addFileLeaftoFiles(fileLeaf);
+                    this.treeRoot.ensureTagPath(tagPath, 'sync')?.addFileLeaftoFiles(fileLeaf);
 
                 }
             }
@@ -296,21 +282,7 @@ export class Orchestrator {
                         for (const tagPath of extraInNew) {
                             // this.treeRoot.getNode(tagPath)?.addFileLeaftoFiles(currFileLeaf)
 
-                            const tagSegments = tagPath.split('/').filter(segment => segment.length > 0);
-                            let currentNode = this.treeRoot.getRootNode();
-
-                            for (const segmentName of tagSegments) {
-                                let childNode = currentNode.getChild(segmentName);
-                                if (!childNode) {
-                                    currentNode.addChildNode(segmentName);
-                                    childNode = currentNode.getChild(segmentName);
-                                }
-                                if (childNode) {
-                                    currentNode = childNode;
-                                }
-                            }
-                            
-                            currentNode.addFileLeaftoFiles(currFileLeaf);
+                            this.treeRoot.ensureTagPath(tagPath, 'sync')?.addFileLeaftoFiles(currFileLeaf);
                         }
 
                     }
@@ -417,7 +389,7 @@ export class Orchestrator {
                 if (owner){this.setInconsistencyFlag(true)}
 
                 let createdFile: TFile | null = null;
-                fileName = this.toSafeFileName(fileName)
+                fileName = sanitizeFileName(fileName)
         // 🔴 write action divider
         // 🔴 write action start
         // 🔴 write action plan
@@ -554,7 +526,7 @@ export class Orchestrator {
                         return { success: false, error: `Parent tag node not found for path: ${folderTagPath}` };
                     }
 
-                    folderName = this.toHashtagSafe(folderName)
+                    folderName = sanitizeTagName(folderName)
                     // Check if tagfolder with same name exists and find unique name
                     let finalFolderName = folderName;
                     let counter = 1;
@@ -656,7 +628,7 @@ export class Orchestrator {
                         return { success: false, error: `TFile not found at path: ${filePath}` };
                     }
 
-                    newFileName = this.toSafeFileName(newFileName)
+                    newFileName = sanitizeFileName(newFileName)
 
                     // Rename the physical file
                     const renameResult = await fileEditor.renameFile(this.app, tFile, newFileName);
@@ -730,7 +702,7 @@ export class Orchestrator {
                 }
 
                 let oldTagName = targetNode.getName()
-                newTagName = newTagName.replace(/\s+/g, '_').replace(/[^\p{L}\p{N}_\-\p{Extended_Pictographic}]/gu, '')
+                newTagName = sanitizeTagName(newTagName)
 
                 // Retrieve parent tagnode
                 const parentNode = targetNode.getParent();
@@ -949,7 +921,7 @@ export class Orchestrator {
         folderTagPath: string,
         filePath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -1084,7 +1056,7 @@ export class Orchestrator {
     async removeFolderFromFolder(
         childFolderPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> { 
+    ): Promise<OperationResult> { 
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -1288,7 +1260,7 @@ export class Orchestrator {
         fileName: string,
         filePath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -1730,7 +1702,7 @@ export class Orchestrator {
         destinationFolderTagPath: string,
         filePath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -1899,7 +1871,7 @@ export class Orchestrator {
         destinationFolderTagPath: string,
         filePath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -2010,7 +1982,7 @@ export class Orchestrator {
         folderTagPath: string,
         jsonObject: Record<string, any>,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -2069,7 +2041,7 @@ export class Orchestrator {
         folderTagPath: string,
         jsonObject: Record<string, any>,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -2132,7 +2104,7 @@ export class Orchestrator {
         folderTagPath: string,
         jsonObject: Record<string, any>,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -2195,7 +2167,7 @@ export class Orchestrator {
         filePath: string,
         jsonObject: Record<string, any>,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -2967,7 +2939,7 @@ export class Orchestrator {
         listOfTagPaths: string[],
         parentTagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             // Construct payload object
             const payload = {
@@ -3024,7 +2996,7 @@ export class Orchestrator {
         listOfTagPaths: string[],
         parentTagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             // Construct payload object
             const payload = {
@@ -3260,7 +3232,7 @@ export class Orchestrator {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -3359,7 +3331,7 @@ export class Orchestrator {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -3469,7 +3441,7 @@ export class Orchestrator {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -3665,7 +3637,7 @@ export class Orchestrator {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -3859,7 +3831,7 @@ export class Orchestrator {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -3966,7 +3938,7 @@ export class Orchestrator {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -4072,7 +4044,7 @@ export class Orchestrator {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -4170,7 +4142,7 @@ export class Orchestrator {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -4273,7 +4245,7 @@ export class Orchestrator {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -4361,7 +4333,7 @@ export class Orchestrator {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -4461,7 +4433,7 @@ export class Orchestrator {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -4563,7 +4535,7 @@ export class Orchestrator {
     async addPinnedToFolder(
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -4678,7 +4650,7 @@ export class Orchestrator {
     async removePinnedFromFolder(
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -4799,7 +4771,7 @@ export class Orchestrator {
     async cyclePinnedOfFolder(
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -4920,7 +4892,7 @@ export class Orchestrator {
     async addPinnedLockToFolder(
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -5040,7 +5012,7 @@ export class Orchestrator {
     async removePinnedLockFromFolder(
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -5137,7 +5109,7 @@ export class Orchestrator {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -5227,7 +5199,7 @@ export class Orchestrator {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -5324,7 +5296,7 @@ export class Orchestrator {
         filePath: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -5401,7 +5373,7 @@ export class Orchestrator {
     async addBookmarkToFolder(
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -5483,7 +5455,7 @@ export class Orchestrator {
     async removeBookmarkFromFolder(
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -5567,7 +5539,7 @@ export class Orchestrator {
     async cycleBookmarkOfFolder(
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -5658,7 +5630,7 @@ export class Orchestrator {
         legendColor: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -5727,7 +5699,7 @@ export class Orchestrator {
     async removeLegendFromFolder(
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -5796,7 +5768,7 @@ export class Orchestrator {
     async cycleLegendForFolder(
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -5914,7 +5886,7 @@ export class Orchestrator {
         newColor: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -6026,7 +5998,7 @@ export class Orchestrator {
         legendColor: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -6097,7 +6069,7 @@ export class Orchestrator {
         legendColor: string,
         tagPath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -6586,7 +6558,7 @@ export class Orchestrator {
         tagPath: string,
         filePath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
             if ((!this.getInconsistencyFlag() && owner) || !owner){
                 if (owner){this.setInconsistencyFlag(true)}
@@ -6685,7 +6657,7 @@ export class Orchestrator {
         path: string, 
         parentpath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
                 let cleanPath = path.replace(/\/+$/, ""); 
                 let parts = cleanPath.split("/");
@@ -6763,7 +6735,7 @@ export class Orchestrator {
         type: 'folder' | 'file',  
         parentpath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
                 if(type == "file"){
                     const modal = new InputModal(this.app, {
@@ -6841,28 +6813,6 @@ export class Orchestrator {
     }
 
 
-    toHashtagSafe(str: string) {
-    return str
-        // Replace spaces with underscores
-        .replace(/\s+/g, '_')
-        // Remove anything not allowed:
-        // - Letters (a-z, A-Z)
-        // - Numbers (0-9)
-        // - Underscore (_)
-        // - Hyphen (-)
-        // - Unicode characters (including emojis)
-        .replace(/[^\p{L}\p{N}_\-\p{Extended_Pictographic}]/gu, '');
-    }
-
-
-    toSafeFileName(name: string) {
-    return name
-        // Remove forbidden characters: [] # ^ | \ / : ?
-        .replace(/[\[\]#^|\\\/:\?]/g, '')
-        // Optional: trim whitespace from start/end
-        .trim();
-    }
-
     /**
      * Create a file/Folder given the tagpath, by triggering the New File modal.
      * 
@@ -6875,7 +6825,7 @@ export class Orchestrator {
         path: string,
         parentpath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
                 if(type == "file"){
                     const modal = new ConfirmationModal(this.app, {
@@ -6950,7 +6900,7 @@ export class Orchestrator {
         path: string, 
         parentpath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
                 let cleanPath = path.replace(/\/+$/, ""); 
                 let parts = cleanPath.split("/");
@@ -7039,7 +6989,7 @@ export class Orchestrator {
         path: string, 
         parentpath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
                 let cleanPath = path.replace(/\/+$/, ""); 
                 let parts = cleanPath.split("/");
@@ -7130,7 +7080,7 @@ export class Orchestrator {
         path: string, 
         parentpath: string,
         owner: boolean = true
-    ): Promise<{ success: boolean; error?: any }> {
+    ): Promise<OperationResult> {
         try {
                 let cleanPath = path.replace(/\/+$/, ""); 
                 let parts = cleanPath.split("/");
