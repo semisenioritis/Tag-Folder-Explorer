@@ -4,7 +4,7 @@
 	"version": "1.0.1",
 	"minAppVersion": "1.7.2",
 	"description": "A tag folder based explorer. Uses the nested tags feature to create virtual folders, allowing individual files to exist in multiple locations, inside a single vault.",
-	"author": "semisemioritis",
+	"author": "semisenioritis",
 	"authorUrl": "https://atharvadhamankar.github.io/",
 	"isDesktopOnly": true
 }
