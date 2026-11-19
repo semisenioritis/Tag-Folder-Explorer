@@ -1,9 +1,9 @@
 import esbuild from "esbuild";
 import process from "process";
 import builtins from "builtin-modules";
-import esbuildSvelte from 'esbuild-svelte';
-import { sveltePreprocess } from 'svelte-preprocess';
-import { existsSync, copyFileSync, mkdirSync } from "fs";
+import esbuildSvelte from "esbuild-svelte";
+import { copyFileSync, existsSync, mkdirSync } from "fs";
+import svelteConfig from "./svelte.config.mjs";
 
 const banner =
 `/*
@@ -14,65 +14,64 @@ if you want to view the source, please visit the github repository of this plugi
 
 const prod = (process.argv[2] === "production");
 
+/** Copy the release files into dist/ so dist/ always mirrors the latest build. */
+function copyToDist() {
+mkdirSync("dist", { recursive: true });
+if (existsSync("main.js")) copyFileSync("main.js", "dist/main.js");
+copyFileSync("manifest.json", "dist/manifest.json");
+copyFileSync("styles.css", "dist/styles.css");
+}
+
+const copyToDistPlugin = {
+name: "copy-to-dist",
+setup(build) {
+build.onEnd((result) => {
+if (result.errors.length === 0) copyToDist();
+});
+},
+};
+
 const context = await esbuild.context({
-	banner: {
-		js: banner,
-	},
-	entryPoints: ["src/main.ts"],
-	bundle: true,
-	external: [
-		"obsidian",
-		"electron",
-		"@codemirror/autocomplete",
-		"@codemirror/collab",
-		"@codemirror/commands",
-		"@codemirror/language",
-		"@codemirror/lint",
-		"@codemirror/search",
-		"@codemirror/state",
-		"@codemirror/view",
-		"@lezer/common",
-		"@lezer/highlight",
-		"@lezer/lr",
-		...builtins],
-	format: "cjs",
-	target: "es2020",
-	logLevel: "info",
-	sourcemap: prod ? false : "inline",
-	treeShaking: true,
-	outfile: "main.js",
-	minify: prod,
-	plugins: [
-		esbuildSvelte({
-		compilerOptions: { 
-			css: 'injected',
-			experimental: {
-				async: true
-			}
-		},
-		preprocess: sveltePreprocess(),
-		}),
-	]
+banner: {
+js: banner,
+},
+entryPoints: ["src/main.ts"],
+bundle: true,
+external: [
+"obsidian",
+"electron",
+"@codemirror/autocomplete",
+"@codemirror/collab",
+"@codemirror/commands",
+"@codemirror/language",
+"@codemirror/lint",
+"@codemirror/search",
+"@codemirror/state",
+"@codemirror/view",
+"@lezer/common",
+"@lezer/highlight",
+"@lezer/lr",
+...builtins],
+format: "cjs",
+target: "es2020",
+logLevel: "info",
+sourcemap: prod ? false : "inline",
+treeShaking: true,
+outfile: "main.js",
+minify: prod,
+plugins: [
+esbuildSvelte({
+compilerOptions: { ...svelteConfig.compilerOptions, css: "injected" },
+preprocess: svelteConfig.preprocess,
+}),
+copyToDistPlugin,
+],
 });
 
 if (prod) {
-	await context.rebuild();
-
-	// ensure dist exists
-	mkdirSync("dist", { recursive: true });
-
-	// copy required files
-	copyFileSync("main.js", "dist/main.js");
-	copyFileSync("manifest.json", "dist/manifest.json");
-	copyFileSync("styles.css", "dist/styles.css");
-
-	process.exit(0);
+await context.rebuild();
+await context.dispose();
+process.exit(0);
 } else {
-	await context.watch();
-
-	// also copy once in dev
-	mkdirSync("dist", { recursive: true });
-	if (existsSync("main.js")) {copyFileSync("main.js", "dist/main.js")}
-	copyFileSync("manifest.json", "dist/manifest.json");
-	copyFileSync("styles.css", "dist/styles.css");
+await context.watch();
 }

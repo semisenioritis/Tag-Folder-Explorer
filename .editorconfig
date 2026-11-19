@@ -1,6 +1,8 @@
 # top-most EditorConfig file
 root = true
 
+# New and edited code uses tabs. Existing files mix tabs and 2/4-space indents;
+# they are not reformatted wholesale (see codebase_plan, Block 1 task 02).
 [*]
 charset = utf-8
 end_of_line = lf

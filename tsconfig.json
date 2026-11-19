@@ -2,34 +2,17 @@
   "extends": "@tsconfig/svelte/tsconfig.json",
   "compilerOptions": {
     "baseUrl": ".",
-    
-    "inlineSources": true,
     "module": "ESNext",
     "target": "ESNext",
     "allowJs": true,
-    "noImplicitAny": true,
+    "strict": true,
     "moduleResolution": "node",
     "importHelpers": true,
     "isolatedModules": true,
-    "strictNullChecks": true,
-    "lib": [
-      "DOM",
-      "ES5",
-      "ES6",
-      "ES7",
-      "ES2017"
-    ], 
+    "lib": ["DOM", "ES2020"],
     "verbatimModuleSyntax": true,
-    "skipLibCheck": true,
-    
-    "paths": {
-      "$lib": ["./src/lib"],
-      "$lib/*": ["./src/lib/*"]
-    }    
-    
+    "skipLibCheck": true
   },
-  "include": [
-    "**/*.ts",
-    "**/*.svelte"
-, "mainold.ts.txtt"  ]
+  "include": ["src/**/*.ts", "src/**/*.svelte"],
+  "exclude": ["node_modules", "dist"]
 }

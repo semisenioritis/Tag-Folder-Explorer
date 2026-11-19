@@ -6,6 +6,5 @@
 	"description": "A tag folder based explorer. Uses the nested tags feature to create virtual folders, allowing individual files to exist in multiple locations, inside a single vault.",
 	"author": "semisemioritis",
 	"authorUrl": "https://atharvadhamankar.github.io/",
-	"fundingUrl": "",
 	"isDesktopOnly": true
 }
