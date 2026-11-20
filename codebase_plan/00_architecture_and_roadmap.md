@@ -32,6 +32,8 @@ The plugin builds and maintains a virtual file structure of all vault files, bas
 12. Defaults still open and changeable: boundary matching for excluded folders (Block 2 task 07), and moving the six modal triggers to `ui/` (Block 3 task 02).
 13. Multiple explorer tabs are intended, so `getLeaf(true)` behavior stays.
 14. The controller stays as the only UI write entry. Its 35 UI-unused methods are intended API and stay.
+15. Every finding of the Obsidian validator bot is tracked in `00b_validator_findings_traceability.md`. A finding is fixed only when it is gone under the scanner-equivalent lint (Block 2 task 09). Block 2 closes everything except the typing group.
+16. Typing findings (`no-unsafe-*`, `no-explicit-any`, about 1,300 on the published version) get their own task, Block 3 task 07, after the orchestrator split so each module is typed once.
 
 ## 3. Current structure
 
@@ -272,6 +274,7 @@ flowchart LR
     M[06 Atomic ops]
     N[07 API compliance]
     O[08 Release]
+    O2[09 Validator sweep]
   end
   subgraph B3["BLOCK 3"]
     P[01 Orchestrator internals]
@@ -280,6 +283,7 @@ flowchart LR
     S[04 Svelte and shared state]
     T1[05 Commented-out features]
     T2[06 Rollback journal]
+    T3[07 Type safety]
   end
   U[BLOCK 4 Tests]
   H --> I
@@ -299,6 +303,8 @@ flowchart LR
   J --> R
   G --> S
   M --> T2
+  J & K & L & N --> O2
+  P & Q & R --> T3
   K & J & P & R & S -.-> U
 ```
 
@@ -310,6 +316,8 @@ flowchart LR
 - Block 2 / 02 and 03 before Block 3 / 01.
 - Block 1 / 08 (layout) is last in Block 1.
 - Block 1 / 07 is independent and may run alongside 05 and 06.
+- Block 2 / 09 runs after 02, 03, 05 and 07.
+- Block 3 / 07 runs after Block 3 / 01, 02 and 03.
 
 ### Consequences and risks (summary)
 

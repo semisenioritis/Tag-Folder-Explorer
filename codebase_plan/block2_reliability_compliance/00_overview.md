@@ -13,6 +13,7 @@ Fix the problems that threaten user data and block publishing. The owner rates t
 - Correct, debounced external-sync handling.
 - Compound operations that cannot leave a file untagged or a folder half-moved, designed so a crash-recovery journal can be added later.
 - Obsidian API compliance and release readiness.
+- Every finding of the Obsidian validator bot, tracked in `codebase_plan/00b_validator_findings_traceability.md`, with a scanner-equivalent lint gate (task 09).
 
 ## Rules
 
@@ -34,6 +35,7 @@ Fix the problems that threaten user data and block publishing. The owner rates t
 | 06 | Atomic compound operations | `06_atomic_compound_operations.md` |
 | 07 | Obsidian API compliance | `07_obsidian_api_compliance.md` |
 | 08 | Release readiness | `08_release_readiness.md` |
+| 09 | Validator findings sweep and scanner gate | `09_validator_findings_sweep.md` |
 
 ## Dependencies
 
@@ -45,6 +47,7 @@ Fix the problems that threaten user data and block publishing. The owner rates t
 - 07 needs Block 1 task 06 (result type).
 - 08 needs Block 1 tasks 02 and 08.
 - 07 and 08 are otherwise independent and can run in parallel with 01 to 06.
+- 09 needs 02, 03, 05 and 07 (filesystem and promise findings are fixed there first). 09 runs last. Its typing group is closed by Block 3 task 07.
 
 ## Exit criteria
 
@@ -54,7 +57,8 @@ Fix the problems that threaten user data and block publishing. The owner rates t
 - Typing in a note does not trigger a tree broadcast unless its tags changed.
 - Forced failure at each step of a compound operation leaves no untagged file and no half-moved folder.
 - Failures show a `Notice`. Nothing writes to a hardcoded path.
-- A tag produces a release with `main.js`, `manifest.json`, `styles.css`.
+- A tag produces a release with `main.js`, `manifest.json`, `styles.css`, each with an attestation, and the release manifest is identical to the repository manifest.
+- `npm run lint:scanner` and `npm run lint:meta` report 0 findings, except the typing group (`no-unsafe-*`, `no-explicit-any`), which Block 3 task 07 closes.
 
 ## Hand-off
 

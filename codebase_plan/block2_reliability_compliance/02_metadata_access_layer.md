@@ -30,10 +30,11 @@
 - **Empty folders persist only through these files.** Startup discovery is the highest-risk path. Test empty-folder survival across restart.
 - **Rename.** The file name is a hash of the path, so a folder rename is "write new file, delete old" across all descendants. `metadataRenameFile` has a check-then-rename gap today.
 - **Hash input.** One helper must apply the `#` stripping consistently.
+- **Replacing Node `crypto`.** `SubtleCrypto.digest` is async, but the file name is needed synchronously (`metadataFilePath`, the constructor, the cache keys). Use a small synchronous SHA-256 in TypeScript, and prove it identical to the Node `createHash('sha256')` output: golden-test it on the cases already used in Block 1 task 06 plus every file name in the owner's `.TagNodeMeta`, before deleting the `crypto` import. `path.join` becomes `normalizePath`.
 - **Integrity check.** Keep the check that rejects files whose hash does not match their stored path. Corrupt JSON still returns `{}`.
 - **Crash safety.** Write to a temp name then rename, or accept that a crash can leave a partial file. Decide here, because the later journal depends on it.
 - This task is the seam the future journal uses to snapshot and restore folder state.
 
 ## Done when
 
-No `fs`/`path`/Node `crypto` imports remain. Description, legend, pin, bookmark and empty folders survive restart.
+No `fs`/`path`/Node `crypto` imports remain anywhere in `src/` (this clears the validator's "Direct Filesystem Access" finding). Description, legend, pin, bookmark and empty folders survive restart.

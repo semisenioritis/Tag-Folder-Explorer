@@ -16,6 +16,12 @@
 - **Verify by grep:** `innerHTML` use, settings headings (`setHeading`), command names and IDs. Command IDs stay unchanged.
 - `settings.ts`: confirm sentence case and no `.then` chain problems.
 
+### From the validator report
+- **`Vault.trash` to `FileManager.trashFile`** (listed above) clears the "respect the user's deletion preference" finding.
+- **Hardcoded `.obsidian` path** in `writeToRollbackRegister` (`orchestrator.ts` ~70): build it from `app.vault.configDir` and `manifest.dir`. The function is unused until Block 3 task 06, but the finding is reported anyway.
+- **`setTimeout` to `window.setTimeout`** in `revealFileInNavigation` (`orchestrator.ts` ~7177, a fixed 200 ms sleep). Prefer waiting for the file-explorer leaf over a sleep.
+- **Clipboard access.** Copy and cut write a `ClipboardItem` with custom MIME types (`navigator.clipboard.write`), and paste reads it back. The feature is intended, so it stays. Limit the exposure: read the clipboard only inside the user's explicit paste action, ignore anything that is not the plugin's own MIME type, never log clipboard contents. The README discloses it (task 08).
+
 ## Risks and consequences
 
 - `trashFile` follows the user's "Deleted files" setting, so deleted notes may go somewhere different than today.

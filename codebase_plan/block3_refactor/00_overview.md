@@ -22,7 +22,10 @@ Restructure the large files and layers now that Block 2's queue and metadata lay
 | 04 | Svelte and shared tree state | `04_svelte_and_shared_tree_state.md` | Block 1 task 07 |
 | 05 | Commented-out feature review | `05_commented_out_feature_review.md` | none |
 | 06 | Rollback journal (future) | `06_rollback_journal_future.md` | Block 2 task 06 |
+| 07 | Type safety (remove `any`) | `07_type_safety.md` | 01, 02, 03 |
 
 ## Exit criteria
 
 Per task, as written in each file. The owner validates each before the next.
+
+After task 07, the scanner-equivalent lint (`npm run lint:scanner`) reports 0 findings, including the `no-unsafe-*` and `no-explicit-any` rules the validator bot reported.
