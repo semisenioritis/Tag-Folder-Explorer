@@ -1,6 +1,6 @@
 import { TFile } from 'obsidian';
 
-import type {TagFolderPluginSettings} from "./settings";
+import type {TagFolderPluginSettings} from "../settings";
 
 /**
  * Interface for FileLeaf objects - represents individual files as leaf nodes in the tag tree

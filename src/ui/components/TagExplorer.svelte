@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { logger } from '../utils/logger';
+  import { logger } from '../../utils/logger';
   import { inconsistencyFlag } from '../store';
   import { fade } from 'svelte/transition';
   import TagTreeView from './TagTreeView.svelte';
   import MainView from './MainView.svelte';
 	import MetadataView from './MetadataView.svelte';
 
-  import type {TagFolderPluginSettings} from '../settings';
+  import type {TagFolderPluginSettings} from '../../settings';
 
-  // import {getVaultName, doesTagPathExist} from '../modelInterface'
-  import type { ControllerInterface } from '../controllerInterface';
-  import type { ModelInterface } from '../modelInterface';
+  // import {getVaultName, doesTagPathExist} from '../../api/modelInterface'
+  import type { ControllerInterface } from '../../api/controllerInterface';
+  import type { ModelInterface } from '../../api/modelInterface';
 	import BottomStatusBar from './BottomStatusBar.svelte';
 
 

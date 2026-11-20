@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { logger } from '../utils/logger';
-  import { handleDragStart, getDragPayload } from '../ui/dnd';
-  // import { getleftSidebarTree} from '../modelInterface'
+  import { logger } from '../../utils/logger';
+  import { handleDragStart, getDragPayload } from '../dnd';
+  // import { getleftSidebarTree} from '../../api/modelInterface'
 
   import { openFileInNewTab } from '../windows'
-  import type { ModelInterface } from '../modelInterface';
+  import type { ModelInterface } from '../../api/modelInterface';
   import { openTagExplorerInNewTab } from '../windows';
-  import type { FileData, TagNodeData, SerializedTreeData} from '../interfaces';
+  import type { FileData, TagNodeData, SerializedTreeData} from '../../types/interfaces';
   
 
   // Props

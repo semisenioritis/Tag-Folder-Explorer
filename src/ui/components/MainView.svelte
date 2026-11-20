@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { logger } from '../utils/logger';
-  import { handleDragStart, getDragPayload } from '../ui/dnd';
-  import { formatDate } from '../ui/format';
-  import { getColorForName } from '../ui/colors';
+  import { logger } from '../../utils/logger';
+  import { handleDragStart, getDragPayload } from '../dnd';
+  import { formatDate } from '../format';
+  import { getColorForName } from '../colors';
   import { onDestroy } from 'svelte';
   import { Menu } from 'obsidian';
-  // import { getmainViewData, ModelInterface, readLegendStatusOfFile, readLegendStatusOfFolder } from '../modelInterface'
-  import type { ISerializedTagNode, frontendFile, frontendFolder } from '../interfaces'
+  // import { getmainViewData, ModelInterface, readLegendStatusOfFile, readLegendStatusOfFolder } from '../../api/modelInterface'
+  import type { ISerializedTagNode, frontendFile, frontendFolder } from '../../types/interfaces'
   import { openFileInNewTab } from '../windows'
-  import type { ControllerInterface } from '../controllerInterface';
-  import type { ModelInterface } from '../modelInterface';
+  import type { ControllerInterface } from '../../api/controllerInterface';
+  import type { ModelInterface } from '../../api/modelInterface';
   import { openTagExplorerInNewTab } from '../windows';
 
   // Props

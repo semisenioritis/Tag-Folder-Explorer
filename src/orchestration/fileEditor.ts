@@ -1,10 +1,10 @@
 import { App, TFile, normalizePath } from "obsidian";
 import * as path from 'path';
 import * as fs from 'fs';
-import { logger } from './utils/logger';
-import { sanitizeFileName } from './utils/sanitize';
-import { getVaultBasePath } from './utils/vaultPath';
-import { metadataFilePath } from './utils/metadataPath';
+import { logger } from '../utils/logger';
+import { sanitizeFileName } from '../utils/sanitize';
+import { getVaultBasePath } from '../utils/vaultPath';
+import { metadataFilePath } from '../utils/metadataPath';
 
 
 /**

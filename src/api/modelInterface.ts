@@ -1,6 +1,6 @@
-import type { TreeRoot } from './TreeRoot';
+import type { TreeRoot } from '../core/TreeRoot';
 import { App } from "obsidian";
-import type { ISerializedTagNode } from './interfaces'
+import type { ISerializedTagNode } from '../types/interfaces'
 
 
 

@@ -2,7 +2,7 @@
 
 import { App, Plugin, TAbstractFile, TFile, TFolder } from "obsidian";
 import { Orchestrator } from "./orchestrator";
-import { logger } from './utils/logger';
+import { logger } from '../utils/logger';
 
 export class EventListener {
     private app: App;

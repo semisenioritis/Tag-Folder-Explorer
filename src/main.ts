@@ -1,15 +1,15 @@
 import { Plugin, ItemView, WorkspaceLeaf } from 'obsidian'
 
 
-import { TreeRoot } from './TreeRoot';
-import { ControllerInterface } from './controllerInterface';
-import { ModelInterface } from './modelInterface';
-import { Orchestrator } from './orchestrator';
-import { EventListener } from './eventlistener';
-import {shiftTagsFromBodyToMetadata} from "./fileEditor";
+import { TreeRoot } from './core/TreeRoot';
+import { ControllerInterface } from './api/controllerInterface';
+import { ModelInterface } from './api/modelInterface';
+import { Orchestrator } from './orchestration/orchestrator';
+import { EventListener } from './orchestration/EventListener';
+import {shiftTagsFromBodyToMetadata} from "./orchestration/fileEditor";
 
 
-import TagExplorer from './svelte-components/TagExplorer.svelte';
+import TagExplorer from './ui/components/TagExplorer.svelte';
 
 import { mount, unmount } from 'svelte';
 
@@ -18,9 +18,9 @@ import { mount, unmount } from 'svelte';
 
 import {DEFAULT_SETTINGS, TagFolderSettingTab} from "./settings";
 import { logger, setDebugLogging } from "./utils/logger";
-import type { PluginHost } from "./types";
-import { inconsistencyFlag } from "./store";
-import { initWindows, disposeWindows } from "./windows";
+import type { PluginHost } from "./types/common";
+import { inconsistencyFlag } from "./ui/store";
+import { initWindows, disposeWindows } from "./ui/windows";
 import type {TagFolderPluginSettings} from "./settings";
 
 

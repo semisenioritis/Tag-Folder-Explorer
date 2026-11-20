@@ -1,15 +1,15 @@
 import { App, TFile, TFolder } from 'obsidian';
-import type { ITreeRoot, ITagNode, IFileLeaf, ISerializedTagNode, SerializedTreeData} from './interfaces';
+import type { ITreeRoot, ITagNode, IFileLeaf, ISerializedTagNode, SerializedTreeData} from '../types/interfaces';
 import { TagNode } from './TagNode';
 import { FileLeaf } from './FileLeaf';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import  type { TagFolderPluginSettings } from './settings';
-import { logger } from './utils/logger';
-import { sanitizeTagName } from './utils/sanitize';
-import { getVaultBasePath } from './utils/vaultPath';
-import { hashTagPath, metadataFolderPath } from './utils/metadataPath';
+import  type { TagFolderPluginSettings } from '../settings';
+import { logger } from '../utils/logger';
+import { sanitizeTagName } from '../utils/sanitize';
+import { getVaultBasePath } from '../utils/vaultPath';
+import { hashTagPath, metadataFolderPath } from '../utils/metadataPath';
 /**
  * TreeRoot class - represents the root of the tag tree
  * 

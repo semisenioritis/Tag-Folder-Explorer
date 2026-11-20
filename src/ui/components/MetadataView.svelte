@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { logger } from '../utils/logger';
-  import { formatDate } from '../ui/format';
-  import { getColorForName } from '../ui/colors';
+  import { logger } from '../../utils/logger';
+  import { formatDate } from '../format';
+  import { getColorForName } from '../colors';
 
-//   import { getrightSidebarData } from '../modelInterface'
-    import type { ControllerInterface } from '../controllerInterface';
-    import type { ModelInterface } from '../modelInterface';
+//   import { getrightSidebarData } from '../../api/modelInterface'
+    import type { ControllerInterface } from '../../api/controllerInterface';
+    import type { ModelInterface } from '../../api/modelInterface';
     import { openTagExplorerInNewTab, openRaindropInSidebar } from '../windows';
 
     // Props

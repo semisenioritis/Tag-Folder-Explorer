@@ -1,14 +1,14 @@
 import { App, TFile } from "obsidian";
-import { TreeRoot } from "./TreeRoot";
-import { FileLeaf } from "./FileLeaf";
+import { TreeRoot } from "../core/TreeRoot";
+import { FileLeaf } from "../core/FileLeaf";
 import * as fileEditor from "./fileEditor";
-import type { ITagNode, IFileLeaf } from "./interfaces";
+import type { ITagNode, IFileLeaf } from "../types/interfaces";
 
-import type { PluginHost, OperationResult } from "./types";
+import type { PluginHost, OperationResult } from "../types/common";
 
-import  {InputModal, ConfirmationModal, SingleSelectModal}  from "./modals";
-import { logger } from './utils/logger';
-import { sanitizeTagName, sanitizeFileName } from './utils/sanitize';
+import  {InputModal, ConfirmationModal, SingleSelectModal}  from "../ui/modals";
+import { logger } from '../utils/logger';
+import { sanitizeTagName, sanitizeFileName } from '../utils/sanitize';
 
 /**
  * Orchestrator class - coordinates all write operations between file system and tree structure

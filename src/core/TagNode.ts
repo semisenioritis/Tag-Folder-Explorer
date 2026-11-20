@@ -1,12 +1,12 @@
 import { App } from 'obsidian';
-import type { ITagNode, IFileLeaf, ISerializedTagNode  } from './interfaces';
+import type { ITagNode, IFileLeaf, ISerializedTagNode  } from '../types/interfaces';
 import * as fs from 'fs';
 import * as path from 'path';
-import {metadataAddNewProperty, metadataReplaceExistingProperty, metadataAppendToProperty} from "./fileEditor"
-import { logger } from './utils/logger';
-import { sanitizeTagName } from './utils/sanitize';
-import { getVaultBasePath } from './utils/vaultPath';
-import { metadataFilePath } from './utils/metadataPath';
+import {metadataAddNewProperty, metadataReplaceExistingProperty, metadataAppendToProperty} from "../orchestration/fileEditor"
+import { logger } from '../utils/logger';
+import { sanitizeTagName } from '../utils/sanitize';
+import { getVaultBasePath } from '../utils/vaultPath';
+import { metadataFilePath } from '../utils/metadataPath';
 
 /**
  * TagNode class - represents tag nodes in the hierarchical tag tree

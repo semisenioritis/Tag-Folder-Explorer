@@ -1,6 +1,6 @@
 import { TFile } from "obsidian";
-import { Orchestrator } from "./orchestrator";
-import type { OperationResult } from "./types";
+import { Orchestrator } from "../orchestration/orchestrator";
+import type { OperationResult } from "../types/common";
 
 /**
  * ControllerInterface - Safe wrapper around Orchestrator functions for frontend access
