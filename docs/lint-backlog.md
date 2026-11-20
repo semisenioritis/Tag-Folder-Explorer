@@ -49,3 +49,6 @@ Total: 561 errors, 245 warnings across 19 files. 205 are auto-fixable.
 ## Strictness
 
 The plan assumed `strict` was off. It was already on: `@tsconfig/svelte` sets `"strict": true`, and `tsc` passes with it. `tsconfig.json` now states it explicitly. All individual flags the plan listed (`strictFunctionTypes`, `noImplicitThis`, `useUnknownInCatchVariables`, and others) are covered, so there is no `strictness-backlog.md`.
+## Update after Block 1 task 08
+
+After the dead-code removal, the logger and the layout work, `npm run lint` reports 434 errors and 136 warnings across 28 files (down from 561 and 245). The breakdown by rule above is still representative: the large groups are `no-unsafe-member-access`, `no-unsafe-assignment` and `no-explicit-any`. The `obsidianmd/rule-custom-message` findings (45) are gone because the console calls now go through the logger. ESLint is configured with `parserOptions.project` instead of `projectService` because the project service crashes with the pinned TypeScript 5.0.

@@ -11,9 +11,10 @@ globalIgnores(["node_modules", "dist", "main.js", "esbuild.config.mjs", "version
 {
 languageOptions: {
 parserOptions: {
-projectService: {
-allowDefaultProject: ["eslint.config.*"],
-},
+// The classic "project" setting is used because the project service crashes
+// with the pinned TypeScript 5.0 once many files are linted in one run.
+project: ["./tsconfig.json"],
+tsconfigRootDir: import.meta.dirname,
 },
 },
 },
