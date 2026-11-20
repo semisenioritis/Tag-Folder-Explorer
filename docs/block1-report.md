@@ -14,7 +14,7 @@ Branch `chore/baseline-cleanup`, from commit `225f615`. All tasks were done with
 | Active `console.*` calls | 245 | 0 (errors and warnings go through the logger) |
 | Commented-out `console.*` lines | 116 | 12 (next to commented-out feature code, kept) |
 | ESLint | 561 errors, 245 warnings | 434 errors, 136 warnings |
-| Smoke checklist | not run | **pending: needs the owner's vault** |
+| Smoke checklist | not run | 16 of 17 pass; restart with a tab open still fails (baseline failure, Block 2 task 01) |
 
 ## Changes per task
 
@@ -66,7 +66,10 @@ src/
 
 ## Smoke checklist
 
-Pending. Run `docs/smoke-test.md` in the owner's vault. Items to look at especially: the restart-with-a-tab-open case (a known baseline failure, fixed in Block 2 task 01), the plugin's modals (CSS prefix), dragging from Obsidian's file explorer, and an existing empty folder after restart.
+Run by the owner on the final Block 1 build. Results are in `docs/smoke-test.md`.
+
+- Pass (16): ribbon and command open, back and forward, internal and external drag, pin and unpin for files and folders, legend colors, rename and delete for files and folders, file and folder descriptions, create file and folder (an empty folder survives a reload), two tabs in sync.
+- Fail (1): restarting Obsidian with an explorer tab open. This was already failing at baseline (null model at startup) and is the first item in Block 2 task 01. It is not a regression.
 
 ## Hand-off
 
